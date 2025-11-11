@@ -5,8 +5,7 @@
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
 generator client {
-  provider = "prisma-client"
-  output   = "../generated/prisma"
+  provider = "prisma-client-js"
   moduleFormat = "commonjs"
 }
 
@@ -48,15 +47,18 @@ model User {
   createdAt DateTime @default(now())
   sessions  WorkoutSession[]
   templates WorkoutTemplate[]
+  exercises Exercise[]
 }
 
 model Exercise {
-  id          String   @id @default(uuid())
-  name        String
-  muscleGroup MuscleGroup?
-  notes       String?
-  isGlobal    Boolean  @default(true)
-  createdAt   DateTime @default(now())
+  id            String       @id @default(uuid())
+  name          String       @unique
+  muscleGroup   MuscleGroup?
+  notes         String?
+  isGlobal      Boolean      @default(true)
+  createdAt     DateTime     @default(now())
+  createdById   String?
+  createdBy     User?        @relation(fields: [createdById], references: [id])
   templateItems TemplateExercise[]
   sessionItems  SessionExercise[]
   @@index([name])
