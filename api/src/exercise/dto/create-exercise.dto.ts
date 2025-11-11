@@ -1,6 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger'
 import { IsEnum, IsOptional, IsString, IsBoolean } from 'class-validator'
-import { MuscleGroup } from '../../../generated/prisma/enums'
+import { MuscleGroup } from '../../../generated/prisma'
 
 export class CreateExerciseDto {
   @ApiProperty({ example: 'Supino Reto', description: 'Exercise name' })

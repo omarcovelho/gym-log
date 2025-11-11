@@ -9,6 +9,7 @@ export default function Navbar() {
   const links = [
     { to: '/app', label: 'Home' },
     { to: '/app/exercises/new', label: 'New Exercise' },
+    { to: '/app/templates', label: 'Templates' },
   ]
 
   return (
