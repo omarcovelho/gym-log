@@ -1,0 +1,124 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+  moduleFormat = "commonjs"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum MuscleGroup { 
+    CHEST 
+    BACK
+    SHOULDERS 
+    LEGS 
+    BICEPS 
+    TRICEPS 
+    CORE 
+    FULLBODY 
+    OTHER 
+}
+
+enum EffortUnit { 
+    KG 
+    LB 
+}
+
+enum Feeling { 
+    GREAT 
+    GOOD 
+    OKAY 
+    BAD 
+    TERRIBLE 
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  name      String?
+  createdAt DateTime @default(now())
+  sessions  WorkoutSession[]
+  templates WorkoutTemplate[]
+}
+
+model Exercise {
+  id          String   @id @default(uuid())
+  name        String
+  muscleGroup MuscleGroup?
+  notes       String?
+  isGlobal    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  templateItems TemplateExercise[]
+  sessionItems  SessionExercise[]
+  @@index([name])
+}
+
+model WorkoutTemplate {
+  id        String            @id @default(uuid())
+  title     String
+  ownerId   String
+  owner     User              @relation(fields: [ownerId], references: [id])
+  items     TemplateExercise[]
+  createdAt DateTime          @default(now())
+}
+
+model TemplateExercise {
+  id           String          @id @default(uuid())
+  templateId   String
+  template     WorkoutTemplate @relation(fields: [templateId], references: [id])
+  exerciseId   String
+  exercise     Exercise        @relation(fields: [exerciseId], references: [id])
+  defaultSets  Int?
+  defaultReps  Int?
+  defaultLoad  Float?
+  defaultRir   Int?
+  order        Int             @default(0)
+}
+
+model WorkoutSession {
+  id        String            @id @default(uuid())
+  userId    String
+  user      User              @relation(fields: [userId], references: [id])
+  date      DateTime          @default(now())
+  startAt   DateTime?
+  endAt     DateTime?
+  durationM Int?
+  fatigue   Int?
+  feeling   Feeling?
+  notes     String?
+  exercises SessionExercise[]
+  createdAt DateTime          @default(now())
+  @@index([userId, date])
+}
+
+model SessionExercise {
+  id          String         @id @default(uuid())
+  sessionId   String
+  session     WorkoutSession @relation(fields: [sessionId], references: [id])
+  exerciseId  String
+  exercise    Exercise       @relation(fields: [exerciseId], references: [id])
+  order       Int            @default(0)
+  sets        SessionSet[]
+}
+
+model SessionSet {
+  id          String          @id @default(uuid())
+  sessionExId String
+  sessionEx   SessionExercise @relation(fields: [sessionExId], references: [id])
+  setIndex    Int
+  load        Float?
+  unit        EffortUnit?     @default(KG)
+  reps        Int?
+  rir         Int?
+  completed   Boolean         @default(false)
+}
+
