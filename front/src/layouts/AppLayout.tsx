@@ -1,12 +1,24 @@
 import Navbar from '../components/Navbar'
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
-  console.log('✅ AppLayout rendered') // add this log too
-
   return (
     <div className="min-h-screen bg-dark text-gray-100">
+      {/* Navbar fixa no topo */}
       <Navbar />
-      <main className="p-6">{children}</main>
+
+      {/* Espaçamento compensando a altura da navbar */}
+      <main
+        className="
+          pt-16       /* compensa a altura da navbar (aprox 64px) */
+          px-4 sm:px-6 lg:px-8
+          pb-20       /* evita botão colar no final da tela no mobile */
+          max-w-5xl   /* limita largura centralizada */
+          mx-auto
+          w-full
+        "
+      >
+        {children}
+      </main>
     </div>
   )
 }

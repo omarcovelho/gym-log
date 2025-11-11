@@ -66,22 +66,34 @@ model Exercise {
 }
 
 model WorkoutTemplate {
-  id        String            @id @default(uuid())
+  id        String             @id @default(uuid())
   title     String
+  notes     String?
   ownerId   String
-  owner     User              @relation(fields: [ownerId], references: [id])
+  owner     User               @relation(fields: [ownerId], references: [id])
   items     TemplateExercise[]
-  createdAt DateTime          @default(now())
+  createdAt DateTime           @default(now())
 }
 
 model TemplateExercise {
-  id           String          @id @default(uuid())
-  templateId   String
-  template     WorkoutTemplate @relation(fields: [templateId], references: [id])
-  exerciseId   String
-  exercise     Exercise        @relation(fields: [exerciseId], references: [id])
-  order        Int             @default(0)
-  target       String?
+  id            String           @id @default(uuid())
+  templateId    String
+  template      WorkoutTemplate  @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  exerciseId    String
+  exercise      Exercise         @relation(fields: [exerciseId], references: [id])
+  order         Int              @default(0)
+  notes         String?
+  sets          TemplateSet[]
+}
+
+model TemplateSet {
+  id           String           @id @default(uuid())
+  templateExId String
+  templateEx   TemplateExercise @relation(fields: [templateExId], references: [id], onDelete: Cascade)
+  setIndex     Int
+  reps         Int?
+  rir          Int?
+  notes        String?
 }
 
 model WorkoutSession {

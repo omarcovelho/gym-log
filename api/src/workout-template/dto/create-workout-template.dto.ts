@@ -1,31 +1,41 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger'
-import { IsArray, IsInt, IsOptional, IsString, IsUUID, Min, ValidateNested } from 'class-validator'
 import { Type } from 'class-transformer'
+import { IsArray, IsInt, IsNotEmpty, IsOptional, IsString, Min, ValidateNested } from 'class-validator'
 
-class CreateTemplateItemDto {
-  @ApiProperty({ format: 'uuid' })
-  @IsUUID()
-  exerciseId!: string
+export class CreateTemplateSetDto {
+  @IsInt() @Min(0)
+  setIndex: number
 
-  @ApiProperty({ example: 0, minimum: 0 })
-  @IsInt()
-  @Min(0)
-  order!: number
+  @IsOptional() @IsInt() @Min(0)
+  reps?: number
 
-  @ApiPropertyOptional({ example: '3x10 RIR 2' })
-  @IsOptional()
-  @IsString()
-  target?: string
+  @IsOptional() @IsInt() @Min(0)
+  rir?: number
+
+  @IsOptional() @IsString()
+  notes?: string
+}
+
+export class CreateTemplateExerciseDto {
+  @IsString() @IsNotEmpty()
+  exerciseId: string
+
+  @IsInt() @Min(0)
+  order: number
+
+  @IsOptional() @IsString()
+  notes?: string
+
+  @IsArray() @ValidateNested({ each: true }) @Type(() => CreateTemplateSetDto)
+  sets: CreateTemplateSetDto[]
 }
 
 export class CreateWorkoutTemplateDto {
-  @ApiProperty({ example: 'Push Day A' })
-  @IsString()
-  title!: string
+  @IsString() @IsNotEmpty()
+  title: string
 
-  @ApiProperty({ type: [CreateTemplateItemDto] })
-  @IsArray()
-  @ValidateNested({ each: true })
-  @Type(() => CreateTemplateItemDto)
-  items!: CreateTemplateItemDto[]
+  @IsOptional() @IsString()
+  notes?: string
+
+  @IsArray() @ValidateNested({ each: true }) @Type(() => CreateTemplateExerciseDto)
+  items: CreateTemplateExerciseDto[]
 }
