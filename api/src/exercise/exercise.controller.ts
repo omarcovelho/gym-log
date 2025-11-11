@@ -14,6 +14,7 @@ import { ExerciseService } from './exercise.service'
 import { CreateExerciseDto } from './dto/create-exercise.dto'
 import { UpdateExerciseDto } from './dto/update-exercise.dto'
 import { JwtAuthGuard } from 'src/auth/jwt/jwt.guard'
+import { CurrentUser } from 'src/common/decorators/current-user'
 
 @ApiTags('Exercises')
 @ApiBearerAuth()
@@ -26,8 +27,8 @@ export class ExerciseController {
   @ApiOperation({ summary: 'Create a new exercise' })
   @ApiResponse({ status: 201, description: 'Exercise created successfully.' })
   @ApiResponse({ status: 401, description: 'Unauthorized.' })
-  create(@Body() dto: CreateExerciseDto, @Request() req) {
-    return this.exerciseService.create(dto, req.user.id)
+  create(@Body() dto: CreateExerciseDto, @CurrentUser() user) {
+    return this.exerciseService.create(dto, user.id)
   }
 
   @Get()

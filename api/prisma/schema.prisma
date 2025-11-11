@@ -7,6 +7,7 @@
 generator client {
   provider = "prisma-client-js"
   moduleFormat = "commonjs"
+  output   = "../generated/prisma"
 }
 
 datasource db {
@@ -79,11 +80,8 @@ model TemplateExercise {
   template     WorkoutTemplate @relation(fields: [templateId], references: [id])
   exerciseId   String
   exercise     Exercise        @relation(fields: [exerciseId], references: [id])
-  defaultSets  Int?
-  defaultReps  Int?
-  defaultLoad  Float?
-  defaultRir   Int?
   order        Int             @default(0)
+  target       String?
 }
 
 model WorkoutSession {

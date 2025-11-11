@@ -5,6 +5,7 @@ import { ConfigModule } from '@nestjs/config';
 import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './auth/auth.module';
 import { ExerciseModule } from './exercise/exercise.module';
+import { WorkoutTemplateModule } from './workout-template/workout-template.module';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { ExerciseModule } from './exercise/exercise.module';
     PrismaModule,
     AuthModule,
     ExerciseModule,
+    WorkoutTemplateModule,
   ],
   controllers: [AppController],
   providers: [AppService],

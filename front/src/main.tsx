@@ -10,6 +10,9 @@ import Home from '@/pages/Home'
 import Login from '@/pages/Login'
 import Signup from '@/pages/Signup'
 import ExercisesCreate from '@/pages/ExercisesCreate'
+import WorkoutTemplateCreate from '@/pages/WorkoutTemplateCreate'
+import WorkoutTemplatesList from '@/pages/WorkoutTemplatesList'
+import { ToastProvider } from '@/components/ToastProvider'
 import './index.css'
 
 const qc = new QueryClient()
@@ -41,13 +44,35 @@ const router = createBrowserRouter([
       </ProtectedRoute>
     ),
   },
+  {
+    path: '/app/templates/new',
+    element: (
+      <ProtectedRoute>
+        <AppLayout>
+          <WorkoutTemplateCreate />
+        </AppLayout>
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/app/templates',
+    element: (
+      <ProtectedRoute>
+        <AppLayout>
+          <WorkoutTemplatesList />
+        </AppLayout>
+      </ProtectedRoute>
+    ),
+  },
 ])
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <QueryClientProvider client={qc}>
       <AuthProvider>
-        <RouterProvider router={router} />
+        <ToastProvider>
+          <RouterProvider router={router} />
+        </ToastProvider>
       </AuthProvider>
     </QueryClientProvider>
   </React.StrictMode>,
