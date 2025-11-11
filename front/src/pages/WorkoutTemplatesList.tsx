@@ -68,41 +68,52 @@ export default function WorkoutTemplatesList() {
     }
   }
 
-  if (loading) return <p className="text-center mt-10">Loading templates...</p>
+  if (loading)
+    return <p className="text-center mt-12 text-gray-400">Loading templates...</p>
+
   if (error)
-    return <p className="text-center text-red-500 mt-10">{error}</p>
+    return <p className="text-center text-red-500 mt-12">{error}</p>
 
   return (
-    <div className="max-w-3xl mx-auto space-y-6">
+    <div className="max-w-3xl mx-auto space-y-8">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">My Workout Templates</h1>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-100">My Workout Templates</h1>
+          <p className="text-sm text-gray-400 mt-1">
+            Manage your saved workout splits and customize your training days.
+          </p>
+        </div>
+
         <Link
-            to="/app/templates/new"
-            className="
-                px-3 py-1.5
-                bg-primary
-                text-black
-                rounded-md
-                font-medium
-                text-sm
-                shadow-sm
-                hover:brightness-110
-                transition
-            "
-            >
-            + New Template
-            </Link>
+          to="/app/templates/new"
+          className="
+            w-full sm:w-auto
+            px-4 py-2
+            bg-primary
+            text-black
+            rounded-lg
+            font-semibold
+            text-sm
+            shadow-md
+            hover:brightness-110
+            transition
+            text-center
+          "
+        >
+          + New Template
+        </Link>
       </div>
 
+      {/* Empty state */}
       {templates.length === 0 && (
-        <p className="text-gray-400 text-center mt-10">
-          No templates created yet.
+        <p className="text-gray-400 text-center mt-12">
+          No templates created yet. Start by adding one above.
         </p>
       )}
 
       {/* Template cards */}
-      <div className="space-y-4">
+      <div className="space-y-5">
         {templates.map((tpl) => (
           <div
             key={tpl.id}
@@ -120,11 +131,17 @@ export default function WorkoutTemplatesList() {
               hover:border-gray-700
             "
           >
+            {/* Header row */}
             <div className="flex justify-between items-start">
               <div>
                 <h2 className="font-semibold text-lg text-gray-100">
                   {tpl.title}
                 </h2>
+                {tpl.notes && (
+                  <p className="text-xs text-gray-500 italic mt-0.5">
+                    {tpl.notes}
+                  </p>
+                )}
                 <p className="text-xs text-gray-500 mt-0.5">
                   {tpl.items.length} {tpl.items.length === 1 ? 'exercise' : 'exercises'}
                 </p>
@@ -166,34 +183,66 @@ export default function WorkoutTemplatesList() {
 
             {/* Expanded section */}
             {expandedId === tpl.id && (
-              <div className="mt-4 border-t border-gray-800 pt-3 space-y-2">
-                <h3 className="text-sm font-semibold text-gray-300">
-                  Exercises
-                </h3>
-                <ul className="divide-y divide-gray-800">
-                  {tpl.items.map((it) => (
-                    <li
+              <div className="mt-4 border-t border-gray-800 pt-3 space-y-3">
+                {tpl.items.length === 0 ? (
+                  <p className="text-sm text-gray-500 italic">No exercises.</p>
+                ) : (
+                  tpl.items.map((it) => (
+                    <div
                       key={it.id}
-                      className="flex justify-between items-center py-2"
+                      className="bg-[#141414] rounded-lg p-3 border border-gray-800"
                     >
-                      <div>
-                        <span className="font-medium text-gray-100">
-                          {it.exercise.name}
-                        </span>
-                        {it.target && (
-                          <span className="text-gray-400 ml-1">
-                            – {it.target}
+                      <div className="flex justify-between items-center">
+                        <div>
+                          <span className="font-medium text-gray-100">
+                            {it.exercise.name}
+                          </span>
+                          {it.notes && (
+                            <span className="text-gray-400 ml-1 italic text-xs">
+                              – {it.notes}
+                            </span>
+                          )}
+                        </div>
+                        {it.exercise.muscleGroup && (
+                          <span className="text-xs text-gray-500 uppercase">
+                            {it.exercise.muscleGroup}
                           </span>
                         )}
                       </div>
-                      {it.exercise.muscleGroup && (
-                        <span className="text-xs text-gray-500 uppercase">
-                          {it.exercise.muscleGroup}
-                        </span>
+
+                      {/* Sets */}
+                      {it.sets && it.sets.length > 0 && (
+                        <ul className="text-xs text-gray-400 mt-2 space-y-1">
+                          {it.sets.map((s) => (
+                            <li
+                              key={s.id}
+                              className="flex justify-between border-b border-gray-800 pb-1"
+                            >
+                              <div>
+                                <span className="text-gray-300">
+                                  Set {s.setIndex + 1}
+                                </span>
+                                {s.reps != null && (
+                                  <span className="ml-1">– {s.reps} reps</span>
+                                )}
+                                {s.rir != null && (
+                                  <span className="ml-1 text-gray-500">
+                                    · RIR {s.rir}
+                                  </span>
+                                )}
+                                {s.notes && (
+                                  <span className="ml-1 text-gray-500 italic">
+                                    · {s.notes}
+                                  </span>
+                                )}
+                              </div>
+                            </li>
+                          ))}
+                        </ul>
                       )}
-                    </li>
-                  ))}
-                </ul>
+                    </div>
+                  ))
+                )}
               </div>
             )}
 
