@@ -22,6 +22,7 @@ export class ExerciseService {
   }
 
   async findOne(id: string) {
+    console.log(id);
     const exercise = await this.prisma.exercise.findUnique({ where: { id } })
     if (!exercise) throw new NotFoundException('Exercise not found')
     return exercise

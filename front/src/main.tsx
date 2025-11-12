@@ -9,8 +9,9 @@ import Welcome from '@/pages/Welcome'
 import Home from '@/pages/Home'
 import Login from '@/pages/Login'
 import Signup from '@/pages/Signup'
-import ExercisesCreate from '@/pages/ExercisesCreate'
-import WorkoutTemplateCreate from '@/pages/WorkoutTemplateCreate'
+import ExercisesList from '@/pages/ExercisesList'
+import ExerciseCreateEdit from '@/pages/ExerciseCreateEdit'
+import WorkoutTemplateCreateEdit from '@/pages/WorkoutTemplateCreateEdit'
 import WorkoutTemplatesList from '@/pages/WorkoutTemplatesList'
 import { ToastProvider } from '@/components/ToastProvider'
 import './index.css'
@@ -18,62 +19,96 @@ import './index.css'
 const qc = new QueryClient()
 
 const router = createBrowserRouter([
-  // Public routes
-  { path: '/', element: <Welcome /> },
-  { path: '/login', element: <Login /> },
-  { path: '/signup', element: <Signup /> },
+    // Public routes
+    { path: '/', element: <Welcome /> },
+    { path: '/login', element: <Login /> },
+    { path: '/signup', element: <Signup /> },
 
-  // Protected routes (under /app)
-  {
-    path: '/app',
-    element: (
-      <ProtectedRoute>
-        <AppLayout>
-          <Home />
-        </AppLayout>
-      </ProtectedRoute>
-    ),
-  },
-  {
-    path: '/app/exercises/new',
-    element: (
-      <ProtectedRoute>
-        <AppLayout>
-          <ExercisesCreate />
-        </AppLayout>
-      </ProtectedRoute>
-    ),
-  },
-  {
-    path: '/app/templates/new',
-    element: (
-      <ProtectedRoute>
-        <AppLayout>
-          <WorkoutTemplateCreate />
-        </AppLayout>
-      </ProtectedRoute>
-    ),
-  },
-  {
-    path: '/app/templates',
-    element: (
-      <ProtectedRoute>
-        <AppLayout>
-          <WorkoutTemplatesList />
-        </AppLayout>
-      </ProtectedRoute>
-    ),
-  },
+    // Protected routes (under /app)
+    {
+        path: '/app',
+        element: (
+            <ProtectedRoute>
+                <AppLayout>
+                    <Home />
+                </AppLayout>
+            </ProtectedRoute>
+        ),
+    },
+
+    /* ------------------- EXERCISES ------------------- */
+    {
+        path: '/app/exercises',
+        element: (
+            <ProtectedRoute>
+                <AppLayout>
+                    <ExercisesList />
+                </AppLayout>
+            </ProtectedRoute>
+        ),
+    },
+    {
+        path: '/app/exercises/new',
+        element: (
+            <ProtectedRoute>
+                <AppLayout>
+                    <ExerciseCreateEdit />
+                </AppLayout>
+            </ProtectedRoute>
+        ),
+    },
+    {
+        path: '/app/exercises/:id/edit',
+        element: (
+            <ProtectedRoute>
+                <AppLayout>
+                    <ExerciseCreateEdit />
+                </AppLayout>
+            </ProtectedRoute>
+        ),
+    },
+
+    /* ------------------- TEMPLATES ------------------- */
+    {
+        path: '/app/templates',
+        element: (
+            <ProtectedRoute>
+                <AppLayout>
+                    <WorkoutTemplatesList />
+                </AppLayout>
+            </ProtectedRoute>
+        ),
+    },
+    {
+        path: '/app/templates/new',
+        element: (
+            <ProtectedRoute>
+                <AppLayout>
+                    <WorkoutTemplateCreateEdit />
+                </AppLayout>
+            </ProtectedRoute>
+        ),
+    },
+    {
+        path: '/app/templates/:id/edit',
+        element: (
+            <ProtectedRoute>
+                <AppLayout>
+                    <WorkoutTemplateCreateEdit />
+                </AppLayout>
+            </ProtectedRoute>
+        ),
+    },
 ])
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
-  <React.StrictMode>
-    <QueryClientProvider client={qc}>
-      <AuthProvider>
-        <ToastProvider>
-          <RouterProvider router={router} />
-        </ToastProvider>
-      </AuthProvider>
-    </QueryClientProvider>
-  </React.StrictMode>,
+    <React.StrictMode>
+        <QueryClientProvider client={qc}>
+            <AuthProvider>
+                <ToastProvider>
+                    <RouterProvider router={router} />
+                </ToastProvider>
+            </AuthProvider>
+        </QueryClientProvider>
+    </React.StrictMode>,
 )

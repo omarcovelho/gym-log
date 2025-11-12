@@ -163,6 +163,15 @@ export default function WorkoutTemplatesList() {
                 >
                   {expandedId === tpl.id ? 'Hide' : 'View'}
                 </button>
+                <Link
+                    to={`/app/templates/${tpl.id}/edit`}
+                    className="
+                        text-xs px-3 py-1.5 rounded-md font-medium transition
+                        bg-blue-900/40 text-blue-400 hover:bg-blue-900 hover:text-blue-200
+                    "
+                    >
+                    Edit
+                    </Link>
 
                 <button
                   disabled={deletingId === tpl.id}

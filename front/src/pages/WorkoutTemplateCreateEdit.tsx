@@ -1,10 +1,13 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useAuth } from '@/auth/AuthContext'
 import { api } from '@/lib/api'
-import { createWorkoutTemplate } from '@/api/workoutTemplates'
+import {
+  createWorkoutTemplate,
+  updateWorkoutTemplate,
+} from '@/api/workoutTemplates'
 import { useToast } from '@/components/ToastProvider'
 import { ExercisePickerModal, type Exercise } from '@/components/ExercisePickerModal'
 import {
@@ -21,13 +24,7 @@ import {
 
 const setSchema = z.object({
   setIndex: z.number().int().min(0),
-  reps: z
-    .number({
-      required_error: 'Reps are required',
-      invalid_type_error: 'Reps must be a number',
-    })
-    .int()
-    .min(1, 'Must be at least 1 rep'),
+  reps: z.number().int().min(1, 'Must be at least 1 rep'),
   rir: z.number().int().optional(),
   notes: z.string().optional(),
 })
@@ -85,7 +82,6 @@ function ExerciseBlock({
       key={f.id}
       className="bg-[#181818] rounded-lg p-4 border border-gray-800 space-y-4 transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 hover:border-gray-600"
     >
-      {/* Exercise Selector */}
       <div className="flex items-center justify-between">
         <button
           type="button"
@@ -112,7 +108,6 @@ function ExerciseBlock({
         </button>
       </div>
 
-      {/* Validation error */}
       {formState?.errors?.items?.[idx]?.exerciseId && (
         <p className="text-xs text-red-500 mt-1">
           {(formState.errors.items[idx] as any).exerciseId?.message}
@@ -123,26 +118,17 @@ function ExerciseBlock({
         <p className="text-xs text-gray-500 uppercase tracking-wide">{exercise.muscleGroup}</p>
       )}
 
-      {/* Sets Section */}
       <div className="space-y-3">
         <h3 className="text-sm font-medium text-gray-300">Sets</h3>
-
         {setsFA.fields.map((sf, sidx) => {
-          const setError =
-            (formState.errors.items?.[idx] as any)?.sets?.[sidx]?.reps?.message
-
+          const setError = (formState.errors.items?.[idx] as any)?.sets?.[sidx]?.reps?.message
           return (
-            <div
-              key={sf.id}
-              className="bg-[#141414] p-2 rounded-md border border-gray-800 space-y-1"
-            >
+            <div key={sf.id} className="bg-[#141414] p-2 rounded-md border border-gray-800 space-y-1">
               <div className="grid grid-cols-12 gap-2 items-end">
                 <input
                   {...register(`items.${idx}.sets.${sidx}.reps` as const, {
                     setValueAs: (v) =>
-                      v === '' || v == null || isNaN(Number(v))
-                        ? undefined
-                        : Number(v),
+                      v === '' || v == null || isNaN(Number(v)) ? undefined : Number(v),
                   })}
                   type="number"
                   placeholder="Reps *"
@@ -152,25 +138,20 @@ function ExerciseBlock({
                       : 'border-gray-700 focus:border-primary'
                   }`}
                 />
-
                 <input
                   {...register(`items.${idx}.sets.${sidx}.rir` as const, {
                     setValueAs: (v) =>
-                      v === '' || v == null || isNaN(Number(v))
-                        ? undefined
-                        : Number(v),
+                      v === '' || v == null || isNaN(Number(v)) ? undefined : Number(v),
                   })}
                   type="number"
                   placeholder="RIR"
                   className="col-span-3 bg-[#121212] border border-gray-700 rounded-md p-2 text-sm text-gray-200 placeholder-gray-500 focus:border-primary outline-none transition"
                 />
-
                 <input
                   {...register(`items.${idx}.sets.${sidx}.notes` as const)}
                   placeholder="Notes"
                   className="col-span-5 bg-[#121212] border border-gray-700 rounded-md p-2 text-sm text-gray-200 placeholder-gray-500 focus:border-primary outline-none transition"
                 />
-
                 <button
                   type="button"
                   onClick={() => setsFA.remove(sidx)}
@@ -179,31 +160,21 @@ function ExerciseBlock({
                   ✕
                 </button>
               </div>
-
-              {setError && (
-                <p className="text-xs text-red-500 mt-0.5 ml-1">{setError}</p>
-              )}
+              {setError && <p className="text-xs text-red-500 mt-0.5 ml-1">{setError}</p>}
             </div>
           )
         })}
 
-        {/* Add / Clone Buttons */}
         <div className="flex gap-2">
           <button
             type="button"
             onClick={() =>
-              setsFA.append({
-                setIndex: setsFA.fields.length,
-                reps: undefined,
-                rir: undefined,
-                notes: '',
-              })
+              setsFA.append({ setIndex: setsFA.fields.length, reps: undefined, rir: undefined, notes: '' })
             }
             className="text-xs border border-gray-600 px-2 py-1 rounded hover:bg-gray-800 transition"
           >
             + Add set
           </button>
-
           <button
             type="button"
             onClick={() => {
@@ -225,13 +196,12 @@ function ExerciseBlock({
         </div>
       </div>
 
-      {/* Exercise Picker Modal */}
       <ExercisePickerModal
         open={pickerOpen}
         onClose={() => setPickerOpen(false)}
         onSelect={(id) => {
           update(idx, { ...f, exerciseId: id })
-          form?.clearErrors?.(`items.${idx}.exerciseId`) // ✅ limpa erro visual
+          form?.clearErrors?.(`items.${idx}.exerciseId`)
           setPickerOpen(false)
         }}
         exercises={exercises}
@@ -243,7 +213,9 @@ function ExerciseBlock({
 
 /* ----------------------------- MAIN PAGE ----------------------------- */
 
-export default function WorkoutTemplateCreate() {
+export default function WorkoutTemplateCreateEdit() {
+  const { id } = useParams()
+  const isEditing = Boolean(id)
   const { user } = useAuth()
   const navigate = useNavigate()
   const { toast } = useToast()
@@ -251,9 +223,13 @@ export default function WorkoutTemplateCreate() {
   const [exercises, setExercises] = useState<Exercise[]>([])
   const [loadingEx, setLoadingEx] = useState(true)
 
-  useEffect(() => {
-    if (!user) navigate('/login')
-  }, [user, navigate])
+  const methods = useForm<Form>({
+    resolver: zodResolver(schema),
+    defaultValues: { title: '', items: [] },
+  })
+
+  const { register, handleSubmit, control, formState, reset } = methods
+  const itemsFA = useFieldArray({ control, name: 'items' })
 
   const loadExercises = async () => {
     try {
@@ -265,21 +241,32 @@ export default function WorkoutTemplateCreate() {
     }
   }
 
+  const loadTemplate = async () => {
+    if (!isEditing) return
+    const { data } = await api.get(`/workout-templates/${id}`)
+    reset({
+      title: data.title,
+      items: data.items.map((it: any, idx: number) => ({
+        exerciseId: it.exerciseId,
+        order: idx,
+        notes: it.notes ?? '',
+        sets: it.sets.map((s: any, sidx: number) => ({
+          setIndex: sidx,
+          reps: s.reps,
+          rir: s.rir ?? undefined,
+          notes: s.notes ?? '',
+        })),
+      })),
+    })
+  }
+
   useEffect(() => {
+    if (!user) navigate('/login')
     loadExercises()
-  }, [])
+    if (isEditing) loadTemplate()
+  }, [user, navigate])
 
-  const methods = useForm<Form>({
-    resolver: zodResolver(schema),
-    defaultValues: { title: '', items: [] },
-  })
-
-  const { register, handleSubmit, control, formState } = methods
-  const itemsFA = useFieldArray({ control, name: 'items' })
-  const exerciseById = useMemo(
-    () => new Map(exercises.map((e) => [e.id, e] as const)),
-    [exercises]
-  )
+  const exerciseById = useMemo(() => new Map(exercises.map((e) => [e.id, e] as const)), [exercises])
 
   const onSubmit = async (form: Form) => {
     const payload = {
@@ -298,40 +285,35 @@ export default function WorkoutTemplateCreate() {
     }
 
     try {
-      await createWorkoutTemplate(payload)
-      toast({
-        variant: 'success',
-        title: 'Template created',
-        description: 'Your workout template was saved successfully!',
-      })
+      if (isEditing) {
+        await updateWorkoutTemplate(id!, payload)
+        toast({ variant: 'success', title: 'Template updated', description: 'Workout template updated successfully!' })
+      } else {
+        await createWorkoutTemplate(payload)
+        toast({ variant: 'success', title: 'Template created', description: 'Workout template saved successfully!' })
+      }
       navigate('/app/templates')
     } catch (error: any) {
-      toast({
-        variant: 'error',
-        title: 'Error creating template',
-        description: error?.message ?? 'Something went wrong.',
-      })
+      toast({ variant: 'error', title: 'Error saving template', description: error?.message ?? 'Something went wrong.' })
     }
   }
 
   return (
     <FormProvider {...methods}>
-      <form
-        onSubmit={handleSubmit(onSubmit)}
-        className="max-w-2xl mx-auto space-y-8 relative pb-32 md:pb-0"
-      >
+      <form onSubmit={handleSubmit(onSubmit)} className="max-w-2xl mx-auto space-y-8 relative pb-32 md:pb-0">
         <header>
-          <h1 className="text-3xl font-bold mb-2">New Workout Template</h1>
+          <h1 className="text-3xl font-bold mb-2">
+            {isEditing ? 'Edit Workout Template' : 'New Workout Template'}
+          </h1>
           <p className="text-gray-400 text-sm">
-            Build your custom workout — define exercises, sets, reps and RIR.
+            {isEditing
+              ? 'Update your existing template configuration.'
+              : 'Build your custom workout — define exercises, sets, reps and RIR.'}
           </p>
         </header>
 
-        {/* Title */}
         <div>
-          <label className="block text-sm font-medium text-gray-300 mb-1">
-            Template Title
-          </label>
+          <label className="block text-sm font-medium text-gray-300 mb-1">Template Title</label>
           <input
             className="w-full border border-gray-700 bg-dark rounded-lg p-3 text-gray-100 focus:border-primary outline-none transition"
             placeholder="Push Day A, Pull Day B..."
@@ -342,7 +324,6 @@ export default function WorkoutTemplateCreate() {
           )}
         </div>
 
-        {/* Exercises */}
         <section>
           <div className="flex justify-between items-center mb-3">
             <h2 className="text-lg font-semibold text-gray-100">Exercises</h2>
@@ -382,27 +363,18 @@ export default function WorkoutTemplateCreate() {
 
         <div className="h-28 md:hidden" />
 
-        {/* Sticky Save Button */}
-        <div
-          className="
-            fixed bottom-0 left-0 right-0 z-40
-            bg-[#0f0f0f]/95 backdrop-blur-md
-            px-4 py-3 border-t border-gray-800
-            md:static md:px-0 md:py-0 md:border-none md:bg-transparent md:backdrop-blur-none
-          "
-        >
+        <div className="fixed bottom-0 left-0 right-0 z-40 bg-[#0f0f0f]/95 backdrop-blur-md px-4 py-3 border-t border-gray-800 md:static md:px-0 md:py-0 md:border-none md:bg-transparent md:backdrop-blur-none">
           <div className="max-w-2xl mx-auto">
             <button
               type="submit"
               disabled={formState.isSubmitting}
-              className="
-                w-full py-3 rounded-md
-                bg-primary text-black font-semibold text-sm
-                tracking-wide hover:brightness-110 transition
-                disabled:opacity-70
-              "
+              className="w-full py-3 rounded-md bg-primary text-black font-semibold text-sm tracking-wide hover:brightness-110 transition disabled:opacity-70"
             >
-              {formState.isSubmitting ? 'Saving...' : 'Save Template'}
+              {formState.isSubmitting
+                ? 'Saving...'
+                : isEditing
+                ? 'Save Changes'
+                : 'Save Template'}
             </button>
           </div>
         </div>

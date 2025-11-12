@@ -46,3 +46,8 @@ export async function listWorkoutTemplates(): Promise<WorkoutTemplate[]> {
 export async function deleteWorkoutTemplate(id: string) {
   await api.delete(`/workout-templates/${id}`)
 }
+
+export async function updateWorkoutTemplate(id: string, payload: any) {
+  const { data } = await api.put(`/workout-templates/${id}`, payload)
+  return data
+}

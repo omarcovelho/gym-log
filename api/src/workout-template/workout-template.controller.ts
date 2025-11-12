@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Post, Req, UseGuards } from '@nestjs/common'
+import { Body, Controller, Delete, Get, Param, Post, Put, Req, UseGuards } from '@nestjs/common'
 import { CreateWorkoutTemplateDto } from './dto/create-workout-template.dto'
 import { WorkoutTemplateService } from './workout-template.service'
 import { JwtAuthGuard } from 'src/auth/jwt/jwt.guard'
@@ -23,5 +23,19 @@ export class WorkoutTemplateController {
   async remove(@CurrentUser() user: any, @Param('id') id: string) {
     await this.service.delete(id, user.id)
     return { ok: true }
+  }
+
+  @Get(':id')
+  async getTemplate(@Param('id') id: string, @CurrentUser() user: any) {
+    return this.service.getById(id, user.id)
+  }
+
+  @Put(':id')
+  async updateTemplate(
+    @Param('id') id: string,
+    @Body() dto: any,
+    @CurrentUser() user: any,
+  ) {
+    return this.service.update(id, user.id, dto)
   }
 }
