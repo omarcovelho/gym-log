@@ -8,10 +8,12 @@ export default function Navbar() {
   const location = useLocation()
   const [open, setOpen] = useState(false)
 
+  // ✅ agora inclui o link para Workouts
   const links = [
     { to: '/app', label: 'Home' },
     { to: '/app/exercises', label: 'Exercises' },
     { to: '/app/templates', label: 'Templates' },
+    { to: '/app/workouts', label: 'Workouts' },
   ]
 
   return (

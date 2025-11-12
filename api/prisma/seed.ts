@@ -22,6 +22,7 @@ async function main() {
   })
 
   const exercises = [
+    { name: 'Remada Articulada', muscleGroup: MuscleGroup.BACK },
     { name: 'Remada Curvada Barra', muscleGroup: MuscleGroup.BACK },
     { name: 'Puxada Aberta Cabo', muscleGroup: MuscleGroup.BACK },
     { name: 'Remada Baixa Unilateral Cabo', muscleGroup: MuscleGroup.BACK },

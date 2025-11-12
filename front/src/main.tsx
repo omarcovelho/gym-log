@@ -15,6 +15,9 @@ import WorkoutTemplateCreateEdit from '@/pages/WorkoutTemplateCreateEdit'
 import WorkoutTemplatesList from '@/pages/WorkoutTemplatesList'
 import { ToastProvider } from '@/components/ToastProvider'
 import './index.css'
+import WorkoutLogsList from './pages/WorkoutLogsList'
+import WorkoutSessionView from './pages/WorkoutSessionView'
+import WorkoutSessionDetails from './pages/WorkoutSessionDetails'
 
 const qc = new QueryClient()
 
@@ -99,6 +102,37 @@ const router = createBrowserRouter([
             </ProtectedRoute>
         ),
     },
+    {
+        path: '/app/workouts',
+        element: (
+            <ProtectedRoute>
+                <AppLayout>
+                    <WorkoutLogsList />
+                </AppLayout>
+            </ProtectedRoute>
+        ),
+    },
+    {
+        path: '/app/workouts/:id',
+        element: (
+            <ProtectedRoute>
+                <AppLayout>
+                    <WorkoutSessionView />
+                </AppLayout>
+            </ProtectedRoute>
+        ),
+    },
+    {
+        path: '/app/workouts/:id/view',
+        element: (
+            <ProtectedRoute>
+                <AppLayout>
+                    <WorkoutSessionDetails />
+                </AppLayout>
+            </ProtectedRoute>
+        ),
+    },
+
 ])
 
 ReactDOM.createRoot(document.getElementById('root')!).render(

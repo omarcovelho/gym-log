@@ -117,6 +117,14 @@ function ExerciseBlock({
       {exercise?.muscleGroup && (
         <p className="text-xs text-gray-500 uppercase tracking-wide">{exercise.muscleGroup}</p>
       )}
+      <div>
+        <label className="text-xs text-gray-400">Notes</label>
+        <input
+            {...register(`items.${idx}.notes` as const)}
+            placeholder="Notes for this exercise..."
+            className="w-full bg-[#121212] border border-gray-700 rounded-md p-2 text-sm text-gray-200 placeholder-gray-500 focus:border-primary outline-none transition"
+        />
+        </div>
 
       <div className="space-y-3">
         <h3 className="text-sm font-medium text-gray-300">Sets</h3>

@@ -8,6 +8,7 @@ import {
 import { useAuth } from '@/auth/AuthContext'
 import { useToast } from '@/components/ToastProvider'
 import { ConfirmDialog } from '@/components/ConfirmDialog'
+import { startWorkout } from '@/api/workoutSession'
 
 export default function WorkoutTemplatesList() {
   const { user } = useAuth()
@@ -20,6 +21,10 @@ export default function WorkoutTemplatesList() {
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [confirmId, setConfirmId] = useState<string | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
+
+  // 🆕 states para confirmação de start
+  const [startId, setStartId] = useState<string | null>(null)
+  const [startingId, setStartingId] = useState<string | null>(null)
 
   useEffect(() => {
     if (!user) {
@@ -68,6 +73,28 @@ export default function WorkoutTemplatesList() {
     }
   }
 
+  async function handleStartWorkout(templateId: string) {
+    setStartingId(templateId)
+    try {
+      const session = await startWorkout(templateId)
+      toast({
+        variant: 'success',
+        title: 'Workout started',
+        description: 'Your workout session has begun!',
+      })
+      navigate(`/app/workouts/${session.id}`)
+    } catch (e: any) {
+      toast({
+        variant: 'error',
+        title: 'Error starting workout',
+        description: e?.message ?? 'Something went wrong.',
+      })
+    } finally {
+      setStartingId(null)
+      setStartId(null)
+    }
+  }
+
   if (loading)
     return <p className="text-center mt-12 text-gray-400">Loading templates...</p>
 
@@ -87,19 +114,7 @@ export default function WorkoutTemplatesList() {
 
         <Link
           to="/app/templates/new"
-          className="
-            w-full sm:w-auto
-            px-4 py-2
-            bg-primary
-            text-black
-            rounded-lg
-            font-semibold
-            text-sm
-            shadow-md
-            hover:brightness-110
-            transition
-            text-center
-          "
+          className="w-full sm:w-auto px-4 py-2 bg-primary text-black rounded-lg font-semibold text-sm shadow-md hover:brightness-110 transition text-center"
         >
           + New Template
         </Link>
@@ -117,33 +132,18 @@ export default function WorkoutTemplatesList() {
         {templates.map((tpl) => (
           <div
             key={tpl.id}
-            className="
-              bg-[#181818]
-              rounded-xl
-              p-5
-              border border-gray-800
-              shadow-sm
-              transition-all
-              duration-200
-              ease-in-out
-              hover:shadow-lg
-              hover:-translate-y-0.5
-              hover:border-gray-700
-            "
+            className="bg-[#181818] rounded-xl p-5 border border-gray-800 shadow-sm transition-all duration-200 ease-in-out hover:shadow-lg hover:-translate-y-0.5 hover:border-gray-700"
           >
             {/* Header row */}
             <div className="flex justify-between items-start">
               <div>
-                <h2 className="font-semibold text-lg text-gray-100">
-                  {tpl.title}
-                </h2>
+                <h2 className="font-semibold text-lg text-gray-100">{tpl.title}</h2>
                 {tpl.notes && (
-                  <p className="text-xs text-gray-500 italic mt-0.5">
-                    {tpl.notes}
-                  </p>
+                  <p className="text-xs text-gray-500 italic mt-0.5">{tpl.notes}</p>
                 )}
                 <p className="text-xs text-gray-500 mt-0.5">
-                  {tpl.items.length} {tpl.items.length === 1 ? 'exercise' : 'exercises'}
+                  {tpl.items.length}{' '}
+                  {tpl.items.length === 1 ? 'exercise' : 'exercises'}
                 </p>
               </div>
 
@@ -163,15 +163,29 @@ export default function WorkoutTemplatesList() {
                 >
                   {expandedId === tpl.id ? 'Hide' : 'View'}
                 </button>
+
                 <Link
-                    to={`/app/templates/${tpl.id}/edit`}
-                    className="
-                        text-xs px-3 py-1.5 rounded-md font-medium transition
-                        bg-blue-900/40 text-blue-400 hover:bg-blue-900 hover:text-blue-200
-                    "
-                    >
-                    Edit
-                    </Link>
+                  to={`/app/templates/${tpl.id}/edit`}
+                  className="text-xs px-3 py-1.5 rounded-md font-medium transition bg-blue-900/40 text-blue-400 hover:bg-blue-900 hover:text-blue-200"
+                >
+                  Edit
+                </Link>
+
+                {/* ✅ Novo botão Start com confirmação */}
+                <button
+                  onClick={() => setStartId(tpl.id)}
+                  disabled={startingId === tpl.id}
+                  className={`
+                    text-xs px-3 py-1.5 rounded-md font-medium transition
+                    ${
+                      startingId === tpl.id
+                        ? 'opacity-50 cursor-not-allowed'
+                        : 'bg-green-900/40 text-green-400 hover:bg-green-900 hover:text-green-200'
+                    }
+                  `}
+                >
+                  {startingId === tpl.id ? 'Starting...' : 'Start'}
+                </button>
 
                 <button
                   disabled={deletingId === tpl.id}
@@ -255,7 +269,7 @@ export default function WorkoutTemplatesList() {
               </div>
             )}
 
-            {/* Delete confirmation modal */}
+            {/* Delete confirmation */}
             <ConfirmDialog
               open={confirmId === tpl.id}
               title="Delete template"
@@ -264,6 +278,17 @@ export default function WorkoutTemplatesList() {
               cancelText="Cancel"
               onConfirm={() => handleDelete(tpl.id, tpl.title)}
               onCancel={() => setConfirmId(null)}
+            />
+
+            {/* ✅ Start confirmation */}
+            <ConfirmDialog
+              open={startId === tpl.id}
+              title="Start Workout"
+              message={`Start a new workout using "${tpl.title}"?`}
+              confirmText="Start"
+              cancelText="Cancel"
+              onConfirm={() => handleStartWorkout(tpl.id)}
+              onCancel={() => setStartId(null)}
             />
           </div>
         ))}
