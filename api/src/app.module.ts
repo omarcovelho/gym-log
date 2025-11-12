@@ -6,6 +6,7 @@ import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './auth/auth.module';
 import { ExerciseModule } from './exercise/exercise.module';
 import { WorkoutTemplateModule } from './workout-template/workout-template.module';
+import { WorkoutSessionModule } from './workout-session/workout-session.module';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { WorkoutTemplateModule } from './workout-template/workout-template.modul
     AuthModule,
     ExerciseModule,
     WorkoutTemplateModule,
+    WorkoutSessionModule,
   ],
   controllers: [AppController],
   providers: [AppService],

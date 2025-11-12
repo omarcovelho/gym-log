@@ -73,6 +73,8 @@ model WorkoutTemplate {
   owner     User               @relation(fields: [ownerId], references: [id])
   items     TemplateExercise[]
   createdAt DateTime           @default(now())
+
+  workoutSessions WorkoutSession[]
 }
 
 model TemplateExercise {
@@ -98,10 +100,12 @@ model TemplateSet {
 
 model WorkoutSession {
   id        String            @id @default(uuid())
+  title     String?
   userId    String
   user      User              @relation(fields: [userId], references: [id])
-  date      DateTime          @default(now())
-  startAt   DateTime?
+  templateId  String?
+  template    WorkoutTemplate?  @relation(fields: [templateId], references: [id])
+  startAt      DateTime          @default(now())
   endAt     DateTime?
   durationM Int?
   fatigue   Int?
@@ -109,28 +113,33 @@ model WorkoutSession {
   notes     String?
   exercises SessionExercise[]
   createdAt DateTime          @default(now())
-  @@index([userId, date])
+  @@index([userId, startAt])
 }
 
 model SessionExercise {
   id          String         @id @default(uuid())
   sessionId   String
-  session     WorkoutSession @relation(fields: [sessionId], references: [id])
+  session     WorkoutSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
   exerciseId  String
   exercise    Exercise       @relation(fields: [exerciseId], references: [id])
   order       Int            @default(0)
+  notes       String?
   sets        SessionSet[]
 }
 
 model SessionSet {
-  id          String          @id @default(uuid())
-  sessionExId String
-  sessionEx   SessionExercise @relation(fields: [sessionExId], references: [id])
-  setIndex    Int
-  load        Float?
-  unit        EffortUnit?     @default(KG)
-  reps        Int?
-  rir         Int?
-  completed   Boolean         @default(false)
+  id            String          @id @default(uuid())
+  sessionExId   String
+  sessionEx     SessionExercise @relation(fields: [sessionExId], references: [id], onDelete: Cascade)
+  setIndex      Int
+  plannedLoad   Float?
+  plannedReps   Int?
+  plannedRir    Int?
+  actualLoad    Float?
+  actualReps    Int?
+  actualRir     Int?
+  unit          EffortUnit?     @default(KG)
+  completed     Boolean         @default(false)
+  notes         String?         
 }
 
