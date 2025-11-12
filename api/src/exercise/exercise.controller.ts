@@ -8,6 +8,7 @@ import {
   Delete,
   UseGuards,
   Request,
+  Put,
 } from '@nestjs/common'
 import { ApiBearerAuth, ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger'
 import { ExerciseService } from './exercise.service'
@@ -47,7 +48,7 @@ export class ExerciseController {
   }
 
   @UseGuards(JwtAuthGuard)
-  @Patch(':id')
+  @Put(':id')
   @ApiOperation({ summary: 'Update an existing exercise' })
   @ApiResponse({ status: 200, description: 'Exercise updated successfully.' })
   @ApiResponse({ status: 401, description: 'Unauthorized.' })
