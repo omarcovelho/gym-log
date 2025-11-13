@@ -1,5 +1,5 @@
 import { createPortal } from 'react-dom'
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useEffect, useRef } from 'react'
 import { api } from '@/lib/api'
 import { useToast } from './ToastProvider';
 
@@ -27,23 +27,95 @@ export function ExercisePickerModal({
   const [newName, setNewName] = useState('')
   const [newGroup, setNewGroup] = useState('')
   const [loading, setLoading] = useState(false)
+  const [searchResults, setSearchResults] = useState<Exercise[]>([])
+  const [searching, setSearching] = useState(false)
+  const searchTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
+
+  // Busca no backend quando o usuário digita ou muda o grupo muscular (com debounce)
+  useEffect(() => {
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current)
+    }
+
+    const trimmedQuery = query.trim()
+    const shouldSearchBackend = trimmedQuery.length >= 2 || (group !== 'ALL' && trimmedQuery.length === 0)
+    
+    if (shouldSearchBackend) {
+      // Buscar no backend após 300ms de inatividade
+      searchTimeoutRef.current = setTimeout(async () => {
+        try {
+          setSearching(true)
+          const params: any = { page: 1, limit: 100 }
+          
+          // Adicionar busca por texto se houver
+          if (trimmedQuery.length >= 2) {
+            params.search = trimmedQuery
+          }
+          
+          // Adicionar filtro de muscleGroup se não for 'ALL'
+          if (group !== 'ALL') {
+            params.muscleGroup = group
+          }
+          
+          const { data } = await api.get<{ data: Exercise[]; meta: any }>('/exercises', {
+            params,
+          })
+          const results = data.data && Array.isArray(data.data) ? data.data : []
+          setSearchResults(results)
+        } catch (err: any) {
+          console.error('Search error:', err)
+          setSearchResults([])
+        } finally {
+          setSearching(false)
+        }
+      }, 300)
+    } else {
+      // Limpar resultados se não deve buscar no backend
+      setSearchResults([])
+    }
+
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current)
+      }
+    }
+  }, [query, group])
+
+  // Limpar resultados quando o modal fecha
+  useEffect(() => {
+    if (!open) {
+      setQuery('')
+      setSearchResults([])
+    }
+  }, [open])
 
   const groups = useMemo(() => {
     const all = exercises.map(e => e.muscleGroup).filter(Boolean) as string[]
     return ['ALL', ...Array.from(new Set(all))]
   }, [exercises])
 
+  // Determinar se deve usar resultados do backend ou busca local
+  const shouldUseBackendResults = useMemo(() => {
+    const q = query.trim()
+    return q.length >= 2 || (group !== 'ALL' && q.length === 0)
+  }, [query, group])
+
+  // Usar resultados da busca se houver query ou grupo selecionado, senão usar busca local
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
-    return exercises.filter(e => {
+    const source = shouldUseBackendResults ? searchResults : exercises
+    
+    return source.filter(e => {
       const matchGroup = group === 'ALL' || e.muscleGroup === group
-      const matchQuery =
+      // Se já veio da busca do backend, não precisa filtrar por query novamente
+      const matchQuery = shouldUseBackendResults ? true : (
         !q ||
         e.name.toLowerCase().includes(q) ||
         e.muscleGroup?.toLowerCase().includes(q)
+      )
       return matchGroup && matchQuery
     })
-  }, [query, group, exercises])
+  }, [query, group, exercises, searchResults, shouldUseBackendResults])
 
   if (!open) return null
 
@@ -171,7 +243,17 @@ export function ExercisePickerModal({
 
             {/* Results */}
             <div className="flex-1 overflow-y-auto p-3 space-y-2">
-              {filtered.length === 0 && (
+              {searching && (
+                <p className="text-center text-gray-500 text-sm mt-10">
+                  Searching...
+                </p>
+              )}
+              {!searching && filtered.length === 0 && query.trim().length >= 2 && (
+                <p className="text-center text-gray-500 text-sm mt-10">
+                  No exercises found matching your search.
+                </p>
+              )}
+              {!searching && filtered.length === 0 && query.trim().length < 2 && (
                 <p className="text-center text-gray-500 text-sm mt-10">
                   No exercises found.
                 </p>

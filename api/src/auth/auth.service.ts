@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, UnauthorizedException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { JwtService } from '@nestjs/jwt';
 import { SignupDto } from './dto/signup.dto';
@@ -27,15 +27,15 @@ export class AuthService {
 
     async login(dto: LoginDto) {
         const user = await this.prisma.user.findUnique({ where: { email: dto.email } });
-        if (!user) throw new Error('Invalid credentials');
+        if (!user) throw new UnauthorizedException('Invalid credentials');
         const pwMatches = await bcrypt.compare(dto.password, user.password);
-        if (!pwMatches) throw new Error('Invalid credentials');
+        if (!pwMatches) throw new UnauthorizedException('Invalid credentials');
         return this.signToken(user);
     }
 
     async googleLogin(profile: { providerId: string; email?: string; name?: string }) {
         if (!profile.email) {
-            throw new Error('Google profile has no email')
+            throw new BadRequestException('Google profile has no email')
         }
 
         let user = await this.prisma.user.findUnique({

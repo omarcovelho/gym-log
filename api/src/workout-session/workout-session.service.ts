@@ -6,6 +6,8 @@ import {
 import { PrismaService } from 'src/prisma/prisma.service'
 import { UpdateSetDto } from './dto/update-set.dto'
 import { FinishWorkoutDto } from './dto/finish-workout.dto'
+import { UpdateWorkoutExerciseDto } from './dto/update-session.dto'
+import { PaginationDto } from 'src/common/dto/pagination.dto'
 
 @Injectable()
 export class WorkoutSessionService {
@@ -20,7 +22,6 @@ export class WorkoutSessionService {
 
         if (!template) throw new NotFoundException('Template not found')
 
-        console.log(template.title);
         const session = await this.prisma.workoutSession.create({
             data: {
                 title: template.title,
@@ -86,11 +87,26 @@ export class WorkoutSessionService {
     }
 
     /** Atualiza uma série (valores executados) */
-    async updateSet(setId: string, data: UpdateSetDto) {
+    async updateSet(setId: string, userId: string, data: UpdateSetDto) {
+        // Verificar se o set pertence a uma sessão do usuário
+        const set = await this.prisma.sessionSet.findUnique({
+            where: { id: setId },
+            include: {
+                sessionEx: {
+                    include: { session: true },
+                },
+            },
+        });
+
+        if (!set) throw new NotFoundException('Set not found');
+        if (set.sessionEx.session.userId !== userId) {
+            throw new ForbiddenException('Access denied');
+        }
+
         return this.prisma.sessionSet.update({
             where: { id: setId },
             data,
-        })
+        });
     }
 
     /** Finaliza o treino */
@@ -101,7 +117,7 @@ export class WorkoutSessionService {
             where: { id: sessionId },
             select: { startAt: true },
         })
-        if (!session) throw new Error('Session not found')
+        if (!session) throw new NotFoundException('Session not found')
 
         const durationM = session.startAt
             ? Math.round((now.getTime() - session.startAt.getTime()) / 60000)
@@ -125,12 +141,30 @@ export class WorkoutSessionService {
     }
 
     /** Lista sessões do usuário */
-    async findAllForUser(userId: string) {
-        return this.prisma.workoutSession.findMany({
-            where: { userId },
-            include: { exercises: { include: { sets: true, exercise: true } } },
-            orderBy: { startAt: 'desc' },
-        })
+    async findAllForUser(userId: string, pagination: PaginationDto) {
+        const { page = 1, limit = 10 } = pagination;
+        const skip = (page - 1) * limit;
+
+        const [data, total] = await Promise.all([
+            this.prisma.workoutSession.findMany({
+                where: { userId },
+                include: { exercises: { include: { sets: true, exercise: true } } },
+                orderBy: { startAt: 'desc' },
+                skip,
+                take: limit,
+            }),
+            this.prisma.workoutSession.count({ where: { userId } }),
+        ]);
+
+        return {
+            data,
+            meta: {
+                page,
+                limit,
+                total,
+                totalPages: Math.ceil(total / limit),
+            },
+        };
     }
 
     /** Busca sessão específica */
@@ -171,5 +205,46 @@ export class WorkoutSessionService {
             },
         })
     }
+
+    async updateExercise(id: string, userId: string, dto: UpdateWorkoutExerciseDto) {
+        // Verificar se o exercício pertence a uma sessão do usuário
+        const exercise = await this.prisma.sessionExercise.findUnique({
+            where: { id },
+            include: { session: true },
+        });
+
+        if (!exercise) throw new NotFoundException('Exercise not found');
+        if (exercise.session.userId !== userId) {
+            throw new ForbiddenException('Access denied');
+        }
+
+        return this.prisma.sessionExercise.update({
+            where: { id },
+            data: {
+                order: dto.order,
+                notes: dto.notes,
+                sets: {
+                    updateMany: dto.sets?.map(s => ({
+                        where: { id: s.id },
+                        data: {
+                            setIndex: s.setIndex,
+                            plannedReps: s.plannedReps,
+                            plannedRir: s.plannedRir,
+                            actualLoad: s.actualLoad,
+                            actualReps: s.actualReps,
+                            actualRir: s.actualRir,
+                            completed: s.completed,
+                            notes: s.notes,
+                        }
+                    })) ?? [],
+                }
+            },
+            include: {
+                sets: true,
+                exercise: true,
+            }
+        })
+    }
+
 
 }

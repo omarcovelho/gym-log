@@ -1,16 +1,32 @@
 import { api } from '@/lib/api'
 
-/* =========================== TYPES =========================== */
-
+/* ============================================================
+ * TYPES
+ * ============================================================ */
+export type UpdateWorkoutExerciseDto = {
+  order?: number
+  notes?: string | null
+  sets?: {
+    id: string
+    setIndex: number
+    plannedReps?: number | null
+    plannedRir?: number | null
+    actualLoad?: number | null
+    actualReps?: number | null
+    actualRir?: number | null
+    completed?: boolean
+    notes?: string | null
+  }[]
+}
 export type SessionSet = {
   id: string
   setIndex: number
 
-  // planned (do template ou adicionados no AddSetDto)
+  // Planned (template)
   plannedReps?: number | null
   plannedRir?: number | null
 
-  // actual (digitados pelo usuário)
+  // Actual (user)
   actualLoad?: number | null
   actualReps?: number | null
   actualRir?: number | null
@@ -46,7 +62,9 @@ export type WorkoutSession = {
   createdAt: string
 }
 
-/* =========================== DTOS (frontend) =========================== */
+/* ============================================================
+ * DTOS
+ * ============================================================ */
 
 export type AddExerciseDto = {
   exerciseId: string
@@ -69,23 +87,56 @@ export type UpdateSetDto = Partial<{
   notes: string | null
 }>
 
-/* =========================== CALLS =========================== */
+export type UpdateSessionDto = Partial<{
+  title: string
+  notes: string | null
+  feeling: 'GREAT' | 'GOOD' | 'OKAY' | 'BAD' | 'TERRIBLE' | null
+  fatigue: number | null
+}>
 
+/* ============================================================
+ * API CALLS
+ * ============================================================ */
+
+/* ---------- Start workout from template ---------- */
 export async function startWorkout(templateId: string): Promise<WorkoutSession> {
   const { data } = await api.post(`/workouts/start/${templateId}`)
   return data
 }
 
+/* ---------- Start workout manually (no template) ---------- */
+export async function startManualWorkout(): Promise<WorkoutSession> {
+  const { data } = await api.post(`/workouts/free/start`)
+  return data
+}
+
+/* ---------- Retrieve single session ---------- */
 export async function getWorkoutSession(id: string): Promise<WorkoutSession> {
   const { data } = await api.get(`/workouts/${id}`)
   return data
 }
 
-export async function listWorkoutSessions(): Promise<WorkoutSession[]> {
-  const { data } = await api.get(`/workouts`)
+/* ---------- List all user sessions ---------- */
+export async function listWorkoutSessions(
+  page: number = 1,
+  limit: number = 10,
+): Promise<{ data: WorkoutSession[]; meta: { page: number; limit: number; total: number; totalPages: number } }> {
+  const { data } = await api.get(`/workouts`, {
+    params: { page, limit },
+  })
   return data
 }
 
+/* ---------- Update workout session data (title, notes, etc) ---------- */
+export async function updateWorkoutSession(
+  id: string,
+  payload: UpdateSessionDto,
+): Promise<WorkoutSession> {
+  const { data } = await api.patch(`/workouts/${id}`, payload)
+  return data
+}
+
+/* ---------- Add exercise to session ---------- */
 export async function addExerciseToSession(
   sessionId: string,
   payload: AddExerciseDto,
@@ -94,6 +145,7 @@ export async function addExerciseToSession(
   return data
 }
 
+/* ---------- Add set to exercise ---------- */
 export async function addSetToExercise(
   exerciseId: string,
   payload: AddSetDto = {},
@@ -102,25 +154,34 @@ export async function addSetToExercise(
   return data
 }
 
+/* ---------- Update set fields ---------- */
 export async function updateSet(setId: string, payload: UpdateSetDto): Promise<SessionSet> {
   const { data } = await api.patch(`/workouts/sets/${setId}`, payload)
   return data
 }
 
+/* ---------- Finish session ---------- */
 export async function finishWorkoutSession(
   sessionId: string,
-  payload?: { feeling?: 'GREAT' | 'GOOD' | 'OKAY' | 'BAD' | 'TERRIBLE'; fatigue?: number; notes?: string },
+  payload?: {
+    feeling?: 'GREAT' | 'GOOD' | 'OKAY' | 'BAD' | 'TERRIBLE'
+    fatigue?: number
+    notes?: string
+  },
 ): Promise<WorkoutSession> {
   const { data } = await api.post(`/workouts/${sessionId}/finish`, payload ?? {})
   return data
 }
 
+/* ---------- Delete session ---------- */
 export async function deleteWorkoutSession(id: string): Promise<void> {
   await api.delete(`/workouts/${id}`)
 }
 
-export async function startManualWorkout(): Promise<WorkoutSession> {
-  const { data } = await api.post(`/workouts/free/start`)
-  console.log(data);
+export async function updateWorkoutExercise(
+  exerciseId: string,
+  payload: UpdateWorkoutExerciseDto,
+): Promise<SessionExercise> {
+  const { data } = await api.patch(`/workouts/exercises/${exerciseId}`, payload)
   return data
 }

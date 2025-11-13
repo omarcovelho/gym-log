@@ -1,4 +1,5 @@
 import { api } from '@/lib/api'
+import type { PaginationMeta } from '@/components/Pagination'
 
 export type TemplateSetInput = {
   setIndex: number
@@ -38,8 +39,13 @@ export type WorkoutTemplate = {
   }>
 }
 
-export async function listWorkoutTemplates(): Promise<WorkoutTemplate[]> {
-  const { data } = await api.get('/workout-templates')
+export async function listWorkoutTemplates(
+  page: number = 1,
+  limit: number = 10,
+): Promise<{ data: WorkoutTemplate[]; meta: PaginationMeta }> {
+  const { data } = await api.get('/workout-templates', {
+    params: { page, limit },
+  })
   return data
 }
 

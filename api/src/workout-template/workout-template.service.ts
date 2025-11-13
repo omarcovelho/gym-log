@@ -2,6 +2,7 @@ import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/commo
 import { PrismaService } from 'src/prisma/prisma.service'
 import { CreateWorkoutTemplateDto } from './dto/create-workout-template.dto'
 import { UpdateWorkoutTemplateDto } from './dto/update-workout-template.dto'
+import { PaginationDto } from 'src/common/dto/pagination.dto'
 
 @Injectable()
 export class WorkoutTemplateService {
@@ -41,20 +42,38 @@ export class WorkoutTemplateService {
         })
     }
 
-    async listByOwner(ownerId: string) {
-        return this.prisma.workoutTemplate.findMany({
-            where: { ownerId },
-            orderBy: { createdAt: 'desc' },
-            include: {
-                items: {
-                    orderBy: { order: 'asc' },
-                    include: {
-                        exercise: true,
-                        sets: { orderBy: { setIndex: 'asc' } },
+    async listByOwner(ownerId: string, pagination: PaginationDto) {
+        const { page = 1, limit = 10 } = pagination;
+        const skip = (page - 1) * limit;
+
+        const [data, total] = await Promise.all([
+            this.prisma.workoutTemplate.findMany({
+                where: { ownerId },
+                orderBy: { createdAt: 'desc' },
+                include: {
+                    items: {
+                        orderBy: { order: 'asc' },
+                        include: {
+                            exercise: true,
+                            sets: { orderBy: { setIndex: 'asc' } },
+                        },
                     },
                 },
+                skip,
+                take: limit,
+            }),
+            this.prisma.workoutTemplate.count({ where: { ownerId } }),
+        ]);
+
+        return {
+            data,
+            meta: {
+                page,
+                limit,
+                total,
+                totalPages: Math.ceil(total / limit),
             },
-        })
+        };
     }
 
     async delete(id: string, ownerId: string) {

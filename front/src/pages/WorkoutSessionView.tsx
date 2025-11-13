@@ -1,10 +1,14 @@
+// WorkoutSessionView.tsx
+// COMPLETE VERSION — Using Single Endpoint PATCH /workouts/exercises/:id
+
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useAuth } from '@/auth/AuthContext'
 import { useToast } from '@/components/ToastProvider'
 import {
   getWorkoutSession,
-  updateSet,
+  updateWorkoutSession,
+  updateWorkoutExercise,
   addSetToExercise,
   addExerciseToSession,
   finishWorkoutSession,
@@ -32,74 +36,148 @@ export default function WorkoutSessionView() {
   const [session, setSession] = useState<WorkoutSession | null>(null)
   const [loading, setLoading] = useState(true)
   const [expanded, setExpanded] = useState<string | null>(null)
-  const [savingSetId, setSavingSetId] = useState<string | null>(null)
+  const [savingId, setSavingId] = useState<string | null>(null)
   const [pickerOpen, setPickerOpen] = useState(false)
   const [exercises, setExercises] = useState<Exercise[]>([])
   const [finishOpen, setFinishOpen] = useState(false)
 
   useEffect(() => {
-    if (!user) navigate('/login')
+    if (!user) {
+      navigate('/login')
+      return
+    }
     loadSession()
-    api.get<Exercise[]>('/exercises').then(({ data }) => setExercises(data))
+    api.get<{ data: Exercise[]; meta: any }>('/exercises', { params: { page: 1, limit: 100 } }).then(({ data }) => {
+      // Extrair array de data.data se for estrutura paginada, senão usar data diretamente
+      const exercises = data.data && Array.isArray(data.data) ? data.data : (Array.isArray(data) ? data : [])
+      setExercises(exercises)
+    })
   }, [user, navigate, id])
 
   async function loadSession() {
     setLoading(true)
     try {
       const s = await getWorkoutSession(id!)
-      setSession(s)
+      setSession({
+        ...s,
+        title: s.title || 'Free Workout',
+      })
     } finally {
       setLoading(false)
     }
   }
 
-  const debouncedSave = useDebouncedCallback(
-    async (setId: string, patch: Parameters<typeof updateSet>[1]) => {
-      setSavingSetId(setId)
+  const debouncedSaveMeta = useDebouncedCallback(
+    async (patch: Partial<Pick<WorkoutSession, 'title' | 'notes'>>) => {
+      if (!session) return
       try {
-        const updated = await updateSet(setId, patch)
-        setSession((prev) => {
-          if (!prev) return prev
-          const copy = structuredClone(prev)
-          for (const ex of copy.exercises) {
-            const s = ex.sets.find((ss) => ss.id === setId)
-            if (s) Object.assign(s, updated)
-          }
-          return copy
+        await updateWorkoutSession(session.id, patch)
+      } catch {
+        toast({
+          variant: 'error',
+          title: 'Saving failed',
         })
-      } finally {
-        setSavingSetId(null)
       }
     },
-    300,
+    500,
   )
 
-  const handleInput = (setId: string, field: string, value: any) => {
-    let parsed = value
-    if (typeof value === 'boolean') parsed = value
-    else if (field === 'notes') parsed = value
-    else if (value === '' || value == null) parsed = null
-    else parsed = Number(value)
-
-    debouncedSave(setId, { [field]: parsed })
+  const handleSetChange = (exerciseId: string, setId: string, field: string, raw: any) => {
+    let value = raw
+    if (value === '' || value == null) value = null
+    else if (typeof value !== 'boolean') value = Number(value)
 
     setSession((prev) => {
       if (!prev) return prev
       const copy = structuredClone(prev)
-      for (const ex of copy.exercises) {
-        const s = ex.sets.find((ss) => ss.id === setId)
-        if (s) (s as any)[field] = parsed
-      }
+      const ex = copy.exercises.find((e) => e.id === exerciseId)
+      if (!ex) return prev
+      const s = ex.sets.find((ss) => ss.id === setId)
+      if (!s) return prev
+      s[field] = value
       return copy
     })
+
+    persistExercise(exerciseId)
+  }
+
+  function persistExercise(exerciseId: string) {
+    if (!session) return
+    const ex = session.exercises.find((e) => e.id === exerciseId)
+    if (!ex) return
+
+    setSavingId(exerciseId)
+
+    updateWorkoutExercise(exerciseId, {
+      order: ex.order,
+      notes: ex.notes ?? null,
+      sets: ex.sets.map((s) => ({
+        id: s.id,
+        setIndex: s.setIndex,
+        plannedReps: s.plannedReps ?? null,
+        plannedRir: s.plannedRir ?? null,
+        actualLoad: s.actualLoad ?? null,
+        actualReps: s.actualReps ?? null,
+        actualRir: s.actualRir ?? null,
+        completed: s.completed ?? false,
+        notes: s.notes ?? null,
+      })),
+    })
+      .catch(() => {
+        toast({ variant: 'error', title: 'Error saving exercise' })
+      })
+      .finally(() => setSavingId(null))
+  }
+
+  const handleMoveExercise = (exerciseId: string, dir: 'up' | 'down') => {
+    setSession((prev) => {
+      if (!prev) return prev
+      const copy = structuredClone(prev)
+
+      const sorted = [...copy.exercises].sort((a, b) => a.order - b.order)
+      const index = sorted.findIndex((e) => e.id === exerciseId)
+      if (index === -1) return prev
+
+      const newIndex = dir === 'up' ? index - 1 : index + 1
+      if (newIndex < 0 || newIndex >= sorted.length) return prev
+
+      const tmp = sorted[index]
+      sorted[index] = sorted[newIndex]
+      sorted[newIndex] = tmp
+
+      sorted.forEach((e, idx) => (e.order = idx))
+
+      copy.exercises = sorted
+      return copy
+    })
+
+    persistExercise(exerciseId)
+  }
+
+  const handleRemoveExercise = async (exerciseId: string) => {
+    const ok = window.confirm('Remove exercise?')
+    if (!ok) return
+
+    try {
+      await api.delete(`/workouts/exercises/${exerciseId}`)
+      setSession((prev) => {
+        if (!prev) return prev
+        return {
+          ...prev,
+          exercises: prev.exercises.filter((ex) => ex.id !== exerciseId),
+        }
+      })
+    } catch {
+      toast({ variant: 'error', title: 'Error removing exercise' })
+    }
   }
 
   const handleAddSet = async (exercise: SessionExercise) => {
     const nextIndex =
-      exercise.sets.length === 0
-        ? 0
-        : Math.max(...exercise.sets.map((s) => s.setIndex)) + 1
+      exercise.sets.length > 0 ? Math.max(...exercise.sets.map((s) => s.setIndex)) + 1 : 0
+
     const created = await addSetToExercise(exercise.id, { setIndex: nextIndex })
+
     setSession((prev) => {
       if (!prev) return prev
       const copy = structuredClone(prev)
@@ -107,196 +185,287 @@ export default function WorkoutSessionView() {
       if (ex) ex.sets.push(created)
       return copy
     })
+
+    persistExercise(exercise.id)
   }
 
   const handleAddExercise = async (exerciseId: string) => {
+    if (!session) return
+
     const order =
-      session?.exercises?.length
+      session.exercises.length > 0
         ? Math.max(...session.exercises.map((e) => e.order)) + 1
         : 0
-    const created = await addExerciseToSession(session!.id, { exerciseId, order })
+
+    const created = await addExerciseToSession(session.id, { exerciseId, order })
+
     setSession((prev) => {
       if (!prev) return prev
       const copy = structuredClone(prev)
       copy.exercises.push(created)
       return copy
     })
+
     setPickerOpen(false)
   }
 
   const handleFinishWorkout = async (data: FinishWorkoutData) => {
     try {
       await finishWorkoutSession(session!.id, data)
-      toast({ variant: 'success', title: 'Workout finished', description: 'Good job!' })
       navigate('/app')
-    } catch (err: any) {
-      toast({
-        variant: 'error',
-        title: 'Error finishing workout',
-        description: err?.message ?? 'Something went wrong.',
-      })
+    } catch {
+      toast({ variant: 'error', title: 'Could not finish workout' })
     }
   }
 
-  const humanDate = useMemo(() => {
-    if (!session?.startAt) return ''
-    return new Date(session.startAt).toLocaleString()
-  }, [session?.startAt])
+  const handleTitleChange = (value: string) => {
+    setSession((prev) => (prev ? { ...prev, title: value } : prev))
+    debouncedSaveMeta({ title: value || null })
+  }
+
+  const handleNotesChange = (value: string) => {
+    setSession((prev) => (prev ? { ...prev, notes: value || null } : prev))
+    debouncedSaveMeta({ notes: value || null })
+  }
+
+  const totalSets = useMemo(
+    () => session?.exercises.reduce((acc, ex) => acc + ex.sets.length, 0) ?? 0,
+    [session],
+  )
+
+  const completedSets = useMemo(
+    () =>
+      session?.exercises.reduce(
+        (acc, ex) => acc + ex.sets.filter((s) => s.completed).length,
+        0,
+      ) ?? 0,
+    [session],
+  )
 
   if (loading || !session)
-    return <p className="text-center text-gray-400 mt-10">Loading session...</p>
+    return <p className="text-center text-gray-400 mt-10">Loading...</p>
 
   return (
     <div className="max-w-3xl mx-auto space-y-6">
-      <header className="space-y-1">
-        <h1 className="text-3xl font-bold">{session.title}</h1>
-        <p className="text-sm text-gray-400">Started on {humanDate}</p>
+      {/* HEADER */}
+      <header className="space-y-3 border-b border-gray-800 pb-4">
+        <div className="flex justify-between items-start">
+          <div className="flex-1 space-y-2">
+            <input
+              value={session.title ?? ''}
+              onChange={(e) => handleTitleChange(e.target.value)}
+              placeholder="Workout title"
+              className="w-full bg-transparent text-3xl font-bold text-gray-100 border-b border-transparent focus:border-primary focus:outline-none"
+            />
+            <p className="text-sm text-gray-400">
+              Started on {new Date(session.startAt).toLocaleString()}
+            </p>
+          </div>
+
+          <div className="text-xs px-3 py-1 rounded-full bg-gray-900 border border-gray-700 text-gray-300">
+            {completedSets}/{totalSets} sets
+          </div>
+        </div>
+
+        <textarea
+          value={session.notes ?? ''}
+          onChange={(e) => handleNotesChange(e.target.value)}
+          placeholder="Session notes..."
+          className="w-full resize-none rounded-md border border-gray-700 bg-[#111] px-3 py-2 text-sm text-gray-100 placeholder:text-gray-500 focus:border-primary focus:outline-none"
+          rows={2}
+        />
       </header>
 
+      {/* EXERCISE LIST */}
       <div className="space-y-4">
-        {session.exercises.map((ex) => {
-          const doneCount = ex.sets.filter((s) => s.completed).length
-          return (
-            <div
-              key={ex.id}
-              className="rounded-xl border border-gray-800 bg-[#151515] overflow-hidden"
-            >
-              <button
-                onClick={() =>
-                  setExpanded(expanded === ex.id ? null : ex.id)
-                }
-                className="w-full flex justify-between items-center px-4 py-3 text-left hover:bg-[#1c1c1c] transition"
-              >
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-100">
-                    {ex.exercise.name}
-                  </h3>
-                  <p className="text-xs uppercase text-gray-500">
-                    {ex.exercise.muscleGroup ?? ''}
-                  </p>
-                </div>
-                <div className="text-xs text-gray-400">
-                  {doneCount}/{ex.sets.length} done
-                </div>
-              </button>
+        {session.exercises
+          .slice()
+          .sort((a, b) => a.order - b.order)
+          .map((ex, idx, arr) => {
+            const doneCount = ex.sets.filter((s) => s.completed).length
+            const isFirst = idx === 0
+            const isLast = idx === arr.length - 1
 
-              {expanded === ex.id && (
-                <div className="border-t border-gray-800 p-4 space-y-3">
-                  {ex.sets.map((s) => (
-                    <div
-                      key={s.id}
-                      className={`rounded-lg border p-3 transition ${
-                        s.completed
-                          ? 'border-green-600 bg-green-950/20'
-                          : 'border-gray-800 bg-[#101010]'
-                      }`}
-                    >
-                      <div className="flex justify-between items-center mb-2">
-                        <span className="text-xs text-gray-400">
-                          Set {s.setIndex + 1}
-                        </span>
-                        <button
-                          onClick={() =>
-                            handleInput(s.id, 'completed', !s.completed)
-                          }
-                          className={`text-xs rounded-md border px-2 py-1 transition ${
-                            s.completed
-                              ? 'border-green-600 bg-green-700/30 text-green-300'
-                              : 'border-gray-700 text-gray-300 hover:text-primary'
-                          }`}
-                        >
-                          {s.completed ? '✓ Completed' : 'Mark as Done'}
-                        </button>
-                      </div>
-
-                      <div className="grid grid-cols-3 gap-3">
-                        <div>
-                          <label className="text-xs text-gray-400 block mb-1">Load</label>
-                          <input
-                            type="number"
-                            value={s.actualLoad ?? ''}
-                            onChange={(e) =>
-                              handleInput(s.id, 'actualLoad', e.target.value)
-                            }
-                            className="w-full rounded-md border border-gray-700 bg-[#0f0f0f] px-3 py-2 text-sm text-gray-100 focus:border-primary outline-none"
-                          />
-                        </div>
-
-                        <div>
-                          <label className="text-xs text-gray-400 block mb-1">Reps</label>
-                          <input
-                            type="number"
-                            value={s.actualReps ?? ''}
-                            onChange={(e) =>
-                              handleInput(s.id, 'actualReps', e.target.value)
-                            }
-                            className="w-full rounded-md border border-gray-700 bg-[#0f0f0f] px-3 py-2 text-sm text-gray-100 focus:border-primary outline-none"
-                          />
-                          {s.plannedReps != null && (
-                            <p className="text-[10px] text-gray-500 mt-1">
-                              Target: {s.plannedReps}
-                            </p>
-                          )}
-                        </div>
-
-                        <div>
-                          <label className="text-xs text-gray-400 block mb-1">RIR</label>
-                          <input
-                            type="number"
-                            value={s.actualRir ?? ''}
-                            onChange={(e) =>
-                              handleInput(s.id, 'actualRir', e.target.value)
-                            }
-                            className="w-full rounded-md border border-gray-700 bg-[#0f0f0f] px-3 py-2 text-sm text-gray-100 focus:border-primary outline-none"
-                          />
-                          {s.plannedRir != null && (
-                            <p className="text-[10px] text-gray-500 mt-1">
-                              Target: {s.plannedRir}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-
-                      <div className="mt-3">
-                        <label className="text-xs text-gray-400 block mb-1">Notes</label>
-                        <input
-                          type="text"
-                          value={s.notes ?? ''}
-                          onChange={(e) =>
-                            handleInput(s.id, 'notes', e.target.value)
-                          }
-                          className="w-full rounded-md border border-gray-700 bg-[#0f0f0f] px-3 py-2 text-sm text-gray-100 focus:border-primary outline-none"
-                        />
-                      </div>
-                    </div>
-                  ))}
-
+            return (
+              <div key={ex.id} className="rounded-xl border border-gray-800 bg-[#151515]">
+                <div className="flex items-center justify-between px-4 py-3">
                   <button
-                    onClick={() => handleAddSet(ex)}
-                    className="w-full mt-2 rounded-md border border-gray-700 py-2 text-sm text-gray-300 hover:border-primary hover:text-primary transition"
+                    onClick={() => setExpanded(expanded === ex.id ? null : ex.id)}
+                    className="flex-1 text-left flex items-center justify-between gap-3"
                   >
-                    + Add Set
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-100">
+                        {ex.exercise.name}
+                      </h3>
+                      <p className="text-xs text-gray-500 uppercase">
+                        {ex.exercise.muscleGroup ?? ''}
+                      </p>
+                    </div>
+
+                    <div className="text-xs text-gray-400">
+                      {doneCount}/{ex.sets.length}
+                    </div>
                   </button>
+
+                  <div className="flex flex-col gap-1 ml-3">
+                    <button
+                      disabled={isFirst}
+                      onClick={() => handleMoveExercise(ex.id, 'up')}
+                      className="text-[10px] px-2 py-1 border rounded border-gray-700 text-gray-300 disabled:opacity-30"
+                    >
+                      ↑
+                    </button>
+                    <button
+                      disabled={isLast}
+                      onClick={() => handleMoveExercise(ex.id, 'down')}
+                      className="text-[10px] px-2 py-1 border rounded border-gray-700 text-gray-300 disabled:opacity-30"
+                    >
+                      ↓
+                    </button>
+
+                    <button
+                      onClick={() => handleRemoveExercise(ex.id)}
+                      className="text-[10px] px-2 py-1 rounded border border-red-900/60 text-red-400 hover:bg-red-900/40"
+                    >
+                      Remove
+                    </button>
+                  </div>
                 </div>
-              )}
-            </div>
-          )
-        })}
+
+                {expanded === ex.id && (
+                  <div className="border-t border-gray-800 p-4 space-y-3">
+                    {ex.sets.map((s) => (
+                      <div
+                        key={s.id}
+                        className={`rounded-lg border p-3 ${
+                          s.completed
+                            ? 'border-green-600 bg-green-950/20'
+                            : 'border-gray-800 bg-[#101010]'
+                        }`}
+                      >
+                        <div className="flex justify-between items-center mb-2">
+                          <span className="text-xs text-gray-400">
+                            Set {s.setIndex + 1}
+                          </span>
+
+                          <button
+                            onClick={() =>
+                              handleSetChange(
+                                ex.id,
+                                s.id,
+                                'completed',
+                                !s.completed,
+                              )
+                            }
+                            className="text-xs border px-2 py-1 rounded text-gray-300"
+                          >
+                            {s.completed ? '✓ Done' : 'Mark Done'}
+                          </button>
+                        </div>
+
+                        <div className="grid grid-cols-3 gap-3">
+                          <div>
+                            <label className="text-xs text-gray-400 block mb-1">
+                              Load
+                            </label>
+                            <input
+                              type="number"
+                              value={s.actualLoad ?? ''}
+                              onChange={(e) =>
+                                handleSetChange(
+                                  ex.id,
+                                  s.id,
+                                  'actualLoad',
+                                  e.target.value,
+                                )
+                              }
+                              className="w-full rounded-md border border-gray-700 bg-[#0f0f0f] px-3 py-2 text-sm text-gray-100"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="text-xs text-gray-400 block mb-1">
+                              Reps
+                            </label>
+                            <input
+                              type="number"
+                              value={s.actualReps ?? ''}
+                              onChange={(e) =>
+                                handleSetChange(
+                                  ex.id,
+                                  s.id,
+                                  'actualReps',
+                                  e.target.value,
+                                )
+                              }
+                              className="w-full rounded-md border border-gray-700 bg-[#0f0f0f] px-3 py-2 text-sm text-gray-100"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="text-xs text-gray-400 block mb-1">
+                              RIR
+                            </label>
+                            <input
+                              type="number"
+                              value={s.actualRir ?? ''}
+                              onChange={(e) =>
+                                handleSetChange(
+                                  ex.id,
+                                  s.id,
+                                  'actualRir',
+                                  e.target.value,
+                                )
+                              }
+                              className="w-full rounded-md border border-gray-700 bg-[#0f0f0f] px-3 py-2 text-sm text-gray-100"
+                            />
+                          </div>
+                        </div>
+
+                        <div className="mt-3">
+                          <label className="text-xs text-gray-400 block mb-1">
+                            Notes
+                          </label>
+                          <input
+                            type="text"
+                            value={s.notes ?? ''}
+                            onChange={(e) =>
+                              handleSetChange(ex.id, s.id, 'notes', e.target.value)
+                            }
+                            className="w-full rounded-md border border-gray-700 bg-[#0f0f0f] px-3 py-2 text-sm text-gray-100"
+                          />
+                        </div>
+                      </div>
+                    ))}
+
+                    <button
+                      onClick={() => handleAddSet(ex)}
+                      className="w-full mt-2 border border-gray-700 py-2 text-sm text-gray-300 rounded-md"
+                    >
+                      + Add Set
+                    </button>
+                  </div>
+                )}
+              </div>
+            )
+          })}
       </div>
 
+      {/* ADD EXERCISE */}
       <div className="flex justify-center">
         <button
           onClick={() => setPickerOpen(true)}
-          className="rounded-md border border-gray-700 px-4 py-2 text-sm text-gray-200 hover:border-primary hover:text-primary transition"
+          className="px-4 py-2 border border-gray-600 rounded-md text-sm text-gray-300"
         >
           + Add Exercise
         </button>
       </div>
 
-      <div className="sticky bottom-0 left-0 right-0 z-40 -mx-4 border-t border-gray-800 bg-[#0f0f0f]/95 px-4 py-3 backdrop-blur">
+      {/* FOOTER */}
+      <div className="sticky bottom-0 left-0 right-0 bg-[#0f0f0f]/95 border-t border-gray-800 px-4 py-3">
         <button
           onClick={() => setFinishOpen(true)}
-          className="w-full rounded-md bg-primary py-3 text-sm font-semibold text-black hover:brightness-110"
+          className="w-full bg-primary text-black py-3 rounded-md font-semibold"
         >
           Finish Workout
         </button>
@@ -314,8 +483,10 @@ export default function WorkoutSessionView() {
         onSelect={handleAddExercise}
         exercises={exercises}
         refreshExercises={async () => {
-          const { data } = await api.get<Exercise[]>('/exercises')
-          setExercises(data)
+          const { data } = await api.get<{ data: Exercise[]; meta: any }>('/exercises', { params: { page: 1, limit: 100 } })
+          // Extrair array de data.data se for estrutura paginada, senão usar data diretamente
+          const exercises = data.data && Array.isArray(data.data) ? data.data : (Array.isArray(data) ? data : [])
+          setExercises(exercises)
         }}
       />
     </div>
