@@ -76,11 +76,6 @@ export async function startWorkout(templateId: string): Promise<WorkoutSession> 
   return data
 }
 
-export async function startManualWorkout(): Promise<WorkoutSession> {
-  const { data } = await api.post(`/workouts/start/manual`)
-  return data
-}
-
 export async function getWorkoutSession(id: string): Promise<WorkoutSession> {
   const { data } = await api.get(`/workouts/${id}`)
   return data
@@ -122,4 +117,10 @@ export async function finishWorkoutSession(
 
 export async function deleteWorkoutSession(id: string): Promise<void> {
   await api.delete(`/workouts/${id}`)
+}
+
+export async function startManualWorkout(): Promise<WorkoutSession> {
+  const { data } = await api.post(`/workouts/free/start`)
+  console.log(data);
+  return data
 }

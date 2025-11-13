@@ -8,7 +8,7 @@ import {
 import { useAuth } from '@/auth/AuthContext'
 import { useToast } from '@/components/ToastProvider'
 import { ConfirmDialog } from '@/components/ConfirmDialog'
-import { startWorkout } from '@/api/workoutSession'
+import { startWorkout, startManualWorkout } from '@/api/workoutSession'
 
 export default function WorkoutTemplatesList() {
   const { user } = useAuth()
@@ -18,23 +18,26 @@ export default function WorkoutTemplatesList() {
   const [templates, setTemplates] = useState<WorkoutTemplate[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [confirmId, setConfirmId] = useState<string | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
 
-  // 🆕 states para confirmação de start
   const [startId, setStartId] = useState<string | null>(null)
   const [startingId, setStartingId] = useState<string | null>(null)
+
+  const [startFreeOpen, setStartFreeOpen] = useState(false)
+  const [startingFree, setStartingFree] = useState(false)
 
   useEffect(() => {
     if (!user) {
       navigate('/login')
       return
     }
-    loadTemplates()
+    load()
   }, [user, navigate])
 
-  async function loadTemplates() {
+  async function load() {
     try {
       setLoading(true)
       const data = await listWorkoutTemplates()
@@ -58,15 +61,9 @@ export default function WorkoutTemplatesList() {
       toast({
         variant: 'success',
         title: 'Template deleted',
-        description: `"${title}" was removed successfully.`,
+        description: `"${title}" was removed.`,
       })
-      await loadTemplates()
-    } catch (e: any) {
-      toast({
-        variant: 'error',
-        title: 'Delete failed',
-        description: e?.message ?? 'Something went wrong.',
-      })
+      await load()
     } finally {
       setDeletingId(null)
       setConfirmId(null)
@@ -80,18 +77,26 @@ export default function WorkoutTemplatesList() {
       toast({
         variant: 'success',
         title: 'Workout started',
-        description: 'Your workout session has begun!',
       })
       navigate(`/app/workouts/${session.id}`)
-    } catch (e: any) {
-      toast({
-        variant: 'error',
-        title: 'Error starting workout',
-        description: e?.message ?? 'Something went wrong.',
-      })
     } finally {
       setStartingId(null)
       setStartId(null)
+    }
+  }
+
+  async function handleStartFreeWorkout() {
+    setStartingFree(true)
+    try {
+      const session = await startManualWorkout()
+      toast({
+        variant: 'success',
+        title: 'Free workout started',
+      })
+      navigate(`/app/workouts/${session.id}`)
+    } finally {
+      setStartingFree(false)
+      setStartFreeOpen(false)
     }
   }
 
@@ -103,47 +108,54 @@ export default function WorkoutTemplatesList() {
 
   return (
     <div className="max-w-3xl mx-auto space-y-8">
-      {/* Header */}
+
+      {/* HEADER */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold text-gray-100">My Workout Templates</h1>
           <p className="text-sm text-gray-400 mt-1">
-            Manage your saved workout splits and customize your training days.
+            Manage your splits or start a free workout.
           </p>
         </div>
 
-        <Link
-          to="/app/templates/new"
-          className="w-full sm:w-auto px-4 py-2 bg-primary text-black rounded-lg font-semibold text-sm shadow-md hover:brightness-110 transition text-center"
-        >
-          + New Template
-        </Link>
+        <div className="flex gap-2">
+          <button
+            onClick={() => setStartFreeOpen(true)}
+            className="px-4 py-2 bg-blue-900/40 text-blue-300 rounded-lg font-semibold text-sm hover:bg-blue-900 hover:text-blue-100 transition"
+          >
+            Free Workout
+          </button>
+
+          <Link
+            to="/app/templates/new"
+            className="px-4 py-2 bg-primary text-black rounded-lg font-semibold text-sm hover:brightness-110 transition"
+          >
+            + New Template
+          </Link>
+        </div>
       </div>
 
-      {/* Empty state */}
+      {/* EMPTY STATE */}
       {templates.length === 0 && (
-        <p className="text-gray-400 text-center mt-12">
-          No templates created yet. Start by adding one above.
-        </p>
+        <p className="text-gray-400 text-center mt-12">No templates created yet.</p>
       )}
 
-      {/* Template cards */}
+      {/* TEMPLATE LIST */}
       <div className="space-y-5">
         {templates.map((tpl) => (
           <div
             key={tpl.id}
-            className="bg-[#181818] rounded-xl p-5 border border-gray-800 shadow-sm transition-all duration-200 ease-in-out hover:shadow-lg hover:-translate-y-0.5 hover:border-gray-700"
+            className="bg-[#181818] rounded-xl p-5 border border-gray-800 hover:border-gray-600 transition"
           >
-            {/* Header row */}
             <div className="flex justify-between items-start">
               <div>
                 <h2 className="font-semibold text-lg text-gray-100">{tpl.title}</h2>
                 {tpl.notes && (
                   <p className="text-xs text-gray-500 italic mt-0.5">{tpl.notes}</p>
                 )}
+
                 <p className="text-xs text-gray-500 mt-0.5">
-                  {tpl.items.length}{' '}
-                  {tpl.items.length === 1 ? 'exercise' : 'exercises'}
+                  {tpl.items.length} {tpl.items.length === 1 ? 'exercise' : 'exercises'}
                 </p>
               </div>
 
@@ -152,34 +164,26 @@ export default function WorkoutTemplatesList() {
                   onClick={() =>
                     setExpandedId(expandedId === tpl.id ? null : tpl.id)
                   }
-                  className={`
-                    text-xs px-3 py-1.5 rounded-md font-medium transition
-                    ${
-                      expandedId === tpl.id
-                        ? 'bg-gray-700 text-gray-100'
-                        : 'bg-[#101010] text-gray-400 hover:text-gray-200'
-                    }
-                  `}
+                  className="text-xs px-3 py-1.5 rounded-md bg-[#101010] text-gray-400 hover:text-gray-200"
                 >
                   {expandedId === tpl.id ? 'Hide' : 'View'}
                 </button>
 
                 <Link
                   to={`/app/templates/${tpl.id}/edit`}
-                  className="text-xs px-3 py-1.5 rounded-md font-medium transition bg-blue-900/40 text-blue-400 hover:bg-blue-900 hover:text-blue-200"
+                  className="text-xs px-3 py-1.5 rounded-md bg-blue-900/40 text-blue-400 hover:bg-blue-900 hover:text-blue-200"
                 >
                   Edit
                 </Link>
 
-                {/* ✅ Novo botão Start com confirmação */}
                 <button
                   onClick={() => setStartId(tpl.id)}
                   disabled={startingId === tpl.id}
                   className={`
-                    text-xs px-3 py-1.5 rounded-md font-medium transition
+                    text-xs px-3 py-1.5 rounded-md
                     ${
                       startingId === tpl.id
-                        ? 'opacity-50 cursor-not-allowed'
+                        ? 'opacity-50 bg-green-900/20 text-green-700'
                         : 'bg-green-900/40 text-green-400 hover:bg-green-900 hover:text-green-200'
                     }
                   `}
@@ -188,13 +192,13 @@ export default function WorkoutTemplatesList() {
                 </button>
 
                 <button
-                  disabled={deletingId === tpl.id}
                   onClick={() => setConfirmId(tpl.id)}
+                  disabled={deletingId === tpl.id}
                   className={`
-                    text-xs px-3 py-1.5 rounded-md font-medium transition
+                    text-xs px-3 py-1.5 rounded-md
                     ${
                       deletingId === tpl.id
-                        ? 'opacity-50 cursor-not-allowed'
+                        ? 'opacity-50 bg-red-900/20 text-red-700'
                         : 'bg-red-900/40 text-red-400 hover:bg-red-900 hover:text-red-200'
                     }
                   `}
@@ -204,87 +208,42 @@ export default function WorkoutTemplatesList() {
               </div>
             </div>
 
-            {/* Expanded section */}
+            {/* EXPANDED ITEMS */}
             {expandedId === tpl.id && (
               <div className="mt-4 border-t border-gray-800 pt-3 space-y-3">
                 {tpl.items.length === 0 ? (
                   <p className="text-sm text-gray-500 italic">No exercises.</p>
                 ) : (
                   tpl.items.map((it) => (
-                    <div
-                      key={it.id}
-                      className="bg-[#141414] rounded-lg p-3 border border-gray-800"
-                    >
-                      <div className="flex justify-between items-center">
-                        <div>
-                          <span className="font-medium text-gray-100">
-                            {it.exercise.name}
-                          </span>
-                          {it.notes && (
-                            <span className="text-gray-400 ml-1 italic text-xs">
-                              – {it.notes}
-                            </span>
-                          )}
-                        </div>
+                    <div key={it.id} className="bg-[#141414] rounded-lg p-3 border border-gray-800">
+                      <div className="flex justify-between">
+                        <span className="text-gray-100 font-medium">{it.exercise.name}</span>
                         {it.exercise.muscleGroup && (
                           <span className="text-xs text-gray-500 uppercase">
                             {it.exercise.muscleGroup}
                           </span>
                         )}
                       </div>
-
-                      {/* Sets */}
-                      {it.sets && it.sets.length > 0 && (
-                        <ul className="text-xs text-gray-400 mt-2 space-y-1">
-                          {it.sets.map((s) => (
-                            <li
-                              key={s.id}
-                              className="flex justify-between border-b border-gray-800 pb-1"
-                            >
-                              <div>
-                                <span className="text-gray-300">
-                                  Set {s.setIndex + 1}
-                                </span>
-                                {s.reps != null && (
-                                  <span className="ml-1">– {s.reps} reps</span>
-                                )}
-                                {s.rir != null && (
-                                  <span className="ml-1 text-gray-500">
-                                    · RIR {s.rir}
-                                  </span>
-                                )}
-                                {s.notes && (
-                                  <span className="ml-1 text-gray-500 italic">
-                                    · {s.notes}
-                                  </span>
-                                )}
-                              </div>
-                            </li>
-                          ))}
-                        </ul>
-                      )}
                     </div>
                   ))
                 )}
               </div>
             )}
 
-            {/* Delete confirmation */}
             <ConfirmDialog
               open={confirmId === tpl.id}
               title="Delete template"
-              message={`Are you sure you want to delete "${tpl.title}"? This action cannot be undone.`}
+              message={`Delete "${tpl.title}"?`}
               confirmText="Delete"
               cancelText="Cancel"
               onConfirm={() => handleDelete(tpl.id, tpl.title)}
               onCancel={() => setConfirmId(null)}
             />
 
-            {/* ✅ Start confirmation */}
             <ConfirmDialog
               open={startId === tpl.id}
               title="Start Workout"
-              message={`Start a new workout using "${tpl.title}"?`}
+              message={`Start a workout using "${tpl.title}"?`}
               confirmText="Start"
               cancelText="Cancel"
               onConfirm={() => handleStartWorkout(tpl.id)}
@@ -293,6 +252,17 @@ export default function WorkoutTemplatesList() {
           </div>
         ))}
       </div>
+
+      {/* FREE WORKOUT DIALOG */}
+      <ConfirmDialog
+        open={startFreeOpen}
+        title="Start Free Workout"
+        message="Start a workout without a template?"
+        confirmText="Start"
+        cancelText="Cancel"
+        onConfirm={handleStartFreeWorkout}
+        onCancel={() => setStartFreeOpen(false)}
+      />
     </div>
   )
 }

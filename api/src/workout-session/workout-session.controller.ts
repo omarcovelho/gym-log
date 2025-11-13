@@ -21,6 +21,11 @@ import { FinishWorkoutDto } from './dto/finish-workout.dto'
 export class WorkoutSessionController {
     constructor(private readonly service: WorkoutSessionService) { }
 
+    @Post('free/start')
+    async startFree(@CurrentUser() user) {
+        return this.service.startFreeWorkout(user.id)
+    }
+
     @Post('start/:templateId')
     async start(@CurrentUser() user, @Param('templateId') templateId: string) {
         return this.service.startFromTemplate(user.id, templateId)
