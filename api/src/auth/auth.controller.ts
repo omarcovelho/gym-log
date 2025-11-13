@@ -1,19 +1,60 @@
-import { Body, Controller, Post } from '@nestjs/common';
+import { Body, Controller, Get, Post, Req, UseGuards } from '@nestjs/common';
 import { SignupDto } from './dto/signup.dto';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
+import { AuthGuard } from '@nestjs/passport';
 
 @Controller('auth')
 export class AuthController {
-    constructor(private auth: AuthService) {}   
+    constructor(private auth: AuthService) { }
 
     @Post('signup')
     signup(@Body() dto: SignupDto) {
         return this.auth.signup(dto);
     }
 
+    @Get('google')
+    @UseGuards(AuthGuard('google'))
+    async googleAuth() {
+    }
+
     @Post('login')
     login(@Body() dto: LoginDto) {
         return this.auth.login(dto);
-    } 
+    }
+    
+    @Get('google/callback')
+    @UseGuards(AuthGuard('google'))
+    async googleCallback(@Req() req) {
+        const { access_token, user } = await this.auth.googleLogin(req.user);
+
+        const frontendUrl = process.env.FRONTEND_URL!;
+
+        // Responde uma pagininha que manda o token de volta pro opener e fecha o popup
+        return `
+      <!DOCTYPE html>
+      <html>
+        <body>
+          <script>
+            (function() {
+              var payload = ${JSON.stringify({
+            token: access_token,
+            email: user.email,
+            name: user.name,
+        })};
+
+              // Envia mensagem pra janela que abriu o popup
+              if (window.opener) {
+                window.opener.postMessage(
+                  payload,
+                  '${frontendUrl}'
+                );
+              }
+              window.close();
+            })();
+          </script>
+        </body>
+      </html>
+    `;
+    }
 }
