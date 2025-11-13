@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import {
   listWorkoutTemplates,
   deleteWorkoutTemplate,
@@ -9,15 +9,23 @@ import { useAuth } from '@/auth/AuthContext'
 import { useToast } from '@/components/ToastProvider'
 import { ConfirmDialog } from '@/components/ConfirmDialog'
 import { startWorkout, startManualWorkout } from '@/api/workoutSession'
+import { Pagination, type PaginationMeta } from '@/components/Pagination'
 
 export default function WorkoutTemplatesList() {
   const { user } = useAuth()
   const navigate = useNavigate()
   const { toast } = useToast()
+  const [searchParams, setSearchParams] = useSearchParams()
 
   const [templates, setTemplates] = useState<WorkoutTemplate[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [pagination, setPagination] = useState<PaginationMeta>({
+    page: 1,
+    limit: 10,
+    total: 0,
+    totalPages: 0,
+  })
 
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [confirmId, setConfirmId] = useState<string | null>(null)
@@ -29,19 +37,23 @@ export default function WorkoutTemplatesList() {
   const [startFreeOpen, setStartFreeOpen] = useState(false)
   const [startingFree, setStartingFree] = useState(false)
 
+  const currentPage = parseInt(searchParams.get('page') || '1', 10)
+  const currentLimit = parseInt(searchParams.get('limit') || '10', 10)
+
   useEffect(() => {
     if (!user) {
       navigate('/login')
       return
     }
-    load()
-  }, [user, navigate])
+    load(currentPage, currentLimit)
+  }, [user, navigate, currentPage, currentLimit])
 
-  async function load() {
+  async function load(page: number = 1, limit: number = 10) {
     try {
       setLoading(true)
-      const data = await listWorkoutTemplates()
-      setTemplates(data)
+      const result = await listWorkoutTemplates(page, limit)
+      setTemplates(result.data)
+      setPagination(result.meta)
     } catch (e: any) {
       setError(e?.message ?? 'Failed to load templates')
       toast({
@@ -54,6 +66,11 @@ export default function WorkoutTemplatesList() {
     }
   }
 
+  function handlePageChange(page: number) {
+    setSearchParams({ page: page.toString(), limit: currentLimit.toString() })
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
   async function handleDelete(id: string, title: string) {
     setDeletingId(id)
     try {
@@ -63,7 +80,7 @@ export default function WorkoutTemplatesList() {
         title: 'Template deleted',
         description: `"${title}" was removed.`,
       })
-      await load()
+      await load(currentPage, currentLimit)
     } finally {
       setDeletingId(null)
       setConfirmId(null)
@@ -252,6 +269,11 @@ export default function WorkoutTemplatesList() {
           </div>
         ))}
       </div>
+
+      {/* Pagination */}
+      {!loading && templates.length > 0 && (
+        <Pagination meta={pagination} onPageChange={handlePageChange} />
+      )}
 
       {/* FREE WORKOUT DIALOG */}
       <ConfirmDialog

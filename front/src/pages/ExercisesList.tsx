@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { api } from '@/lib/api'
 import { useAuth } from '@/auth/AuthContext'
 import { useToast } from '@/components/ToastProvider'
 import { ConfirmDialog } from '@/components/ConfirmDialog'
+import { Pagination, type PaginationMeta } from '@/components/Pagination'
 
 export type Exercise = {
   id: string
@@ -16,23 +17,36 @@ export default function ExercisesList() {
   const { user } = useAuth()
   const navigate = useNavigate()
   const { toast } = useToast()
+  const [searchParams, setSearchParams] = useSearchParams()
 
   const [exercises, setExercises] = useState<Exercise[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [confirmId, setConfirmId] = useState<string | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [pagination, setPagination] = useState<PaginationMeta>({
+    page: 1,
+    limit: 10,
+    total: 0,
+    totalPages: 0,
+  })
+
+  const currentPage = parseInt(searchParams.get('page') || '1', 10)
+  const currentLimit = parseInt(searchParams.get('limit') || '10', 10)
 
   useEffect(() => {
     if (!user) navigate('/login')
-    else loadExercises()
-  }, [user, navigate])
+    else loadExercises(currentPage, currentLimit)
+  }, [user, navigate, currentPage, currentLimit])
 
-  async function loadExercises() {
+  async function loadExercises(page: number = 1, limit: number = 10) {
     try {
       setLoading(true)
-      const { data } = await api.get<Exercise[]>('/exercises')
-      setExercises(data)
+      const { data } = await api.get<{ data: Exercise[]; meta: PaginationMeta }>('/exercises', {
+        params: { page, limit },
+      })
+      setExercises(data.data)
+      setPagination(data.meta)
     } catch (e: any) {
       setError(e?.message ?? 'Failed to load exercises')
       toast({
@@ -45,6 +59,11 @@ export default function ExercisesList() {
     }
   }
 
+  function handlePageChange(page: number) {
+    setSearchParams({ page: page.toString(), limit: currentLimit.toString() })
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
   async function handleDelete(id: string, name: string) {
     setDeletingId(id)
     try {
@@ -54,7 +73,7 @@ export default function ExercisesList() {
         title: 'Exercise deleted',
         description: `"${name}" was removed successfully.`,
       })
-      await loadExercises()
+      await loadExercises(currentPage, currentLimit)
     } catch (e: any) {
       toast({
         variant: 'error',
@@ -181,6 +200,11 @@ export default function ExercisesList() {
           </div>
         ))}
       </div>
+
+      {/* Pagination */}
+      {!loading && exercises.length > 0 && (
+        <Pagination meta={pagination} onPageChange={handlePageChange} />
+      )}
     </div>
   )
 }

@@ -7,6 +7,7 @@ import { AuthModule } from './auth/auth.module';
 import { ExerciseModule } from './exercise/exercise.module';
 import { WorkoutTemplateModule } from './workout-template/workout-template.module';
 import { WorkoutSessionModule } from './workout-session/workout-session.module';
+import { ThrottlerModule } from '@nestjs/throttler';
 
 @Module({
   imports: [
@@ -14,6 +15,10 @@ import { WorkoutSessionModule } from './workout-session/workout-session.module';
         isGlobal: true,
         envFilePath: ['.env.local', '.env'], // tenta .env.local primeiro, depois .env
     }),
+    ThrottlerModule.forRoot([{
+      ttl: 60000, // 1 minuto
+      limit: 10, // 10 requisições por minuto
+    }]),
     PrismaModule,
     AuthModule,
     ExerciseModule,

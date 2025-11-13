@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { api } from '@/lib/api'
 import { useAuth } from '@/auth/AuthContext'
 import { useToast } from '@/components/ToastProvider'
 import { ConfirmDialog } from '@/components/ConfirmDialog'
 import { startManualWorkout } from '@/api/workoutSession'
+import { Pagination, type PaginationMeta } from '@/components/Pagination'
 
 type WorkoutSession = {
   id: string
@@ -17,9 +18,16 @@ export default function WorkoutLogsList() {
   const { user } = useAuth()
   const navigate = useNavigate()
   const { toast } = useToast()
+  const [searchParams, setSearchParams] = useSearchParams()
 
   const [sessions, setSessions] = useState<WorkoutSession[]>([])
   const [loading, setLoading] = useState(true)
+  const [pagination, setPagination] = useState<PaginationMeta>({
+    page: 1,
+    limit: 10,
+    total: 0,
+    totalPages: 0,
+  })
 
   const [confirmId, setConfirmId] = useState<string | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
@@ -27,22 +35,33 @@ export default function WorkoutLogsList() {
   const [startFreeOpen, setStartFreeOpen] = useState(false)
   const [startingFree, setStartingFree] = useState(false)
 
+  const currentPage = parseInt(searchParams.get('page') || '1', 10)
+  const currentLimit = parseInt(searchParams.get('limit') || '10', 10)
+
   useEffect(() => {
     if (!user) {
       navigate('/login')
       return
     }
-    load()
-  }, [user, navigate])
+    load(currentPage, currentLimit)
+  }, [user, navigate, currentPage, currentLimit])
 
-  async function load() {
+  async function load(page: number = 1, limit: number = 10) {
     try {
       setLoading(true)
-      const { data } = await api.get<WorkoutSession[]>('/workouts')
-      setSessions(data)
+      const { data } = await api.get<{ data: WorkoutSession[]; meta: PaginationMeta }>('/workouts', {
+        params: { page, limit },
+      })
+      setSessions(data.data)
+      setPagination(data.meta)
     } finally {
       setLoading(false)
     }
+  }
+
+  function handlePageChange(page: number) {
+    setSearchParams({ page: page.toString(), limit: currentLimit.toString() })
+    window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   async function handleDelete(id: string) {
@@ -53,7 +72,7 @@ export default function WorkoutLogsList() {
         variant: 'success',
         title: 'Workout deleted',
       })
-      await load()
+      await load(currentPage, currentLimit)
     } finally {
       setDeletingId(null)
       setConfirmId(null)
@@ -166,6 +185,11 @@ export default function WorkoutLogsList() {
           </div>
         ))}
       </div>
+
+      {/* Pagination */}
+      {!loading && sessions.length > 0 && (
+        <Pagination meta={pagination} onPageChange={handlePageChange} />
+      )}
 
       <ConfirmDialog
         open={startFreeOpen}

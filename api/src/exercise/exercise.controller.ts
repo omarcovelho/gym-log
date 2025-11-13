@@ -9,6 +9,7 @@ import {
   UseGuards,
   Request,
   Put,
+  Query,
 } from '@nestjs/common'
 import { ApiBearerAuth, ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger'
 import { ExerciseService } from './exercise.service'
@@ -16,6 +17,7 @@ import { CreateExerciseDto } from './dto/create-exercise.dto'
 import { UpdateExerciseDto } from './dto/update-exercise.dto'
 import { JwtAuthGuard } from 'src/auth/jwt/jwt.guard'
 import { CurrentUser } from 'src/common/decorators/current-user'
+import { PaginationDto } from 'src/common/dto/pagination.dto'
 
 @ApiTags('Exercises')
 @ApiBearerAuth()
@@ -35,8 +37,8 @@ export class ExerciseController {
   @Get()
   @ApiOperation({ summary: 'Get all exercises' })
   @ApiResponse({ status: 200, description: 'List of all exercises.' })
-  findAll() {
-    return this.exerciseService.findAll()
+  findAll(@Query() pagination: PaginationDto) {
+    return this.exerciseService.findAll(pagination)
   }
 
   @Get(':id')
