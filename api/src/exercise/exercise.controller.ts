@@ -58,12 +58,12 @@ export class ExerciseController {
     return this.exerciseService.update(id, dto)
   }
 
-  @UseGuards(JwtAuthGuard)
-  @Delete(':id')
-  @ApiOperation({ summary: 'Delete an exercise' })
-  @ApiResponse({ status: 204, description: 'Exercise deleted successfully.' })
-  @ApiResponse({ status: 401, description: 'Unauthorized.' })
-  remove(@Param('id') id: string) {
-    return this.exerciseService.remove(id)
-  }
+//   @UseGuards(JwtAuthGuard)
+//   @Delete(':id')
+//   @ApiOperation({ summary: 'Delete an exercise' })
+//   @ApiResponse({ status: 204, description: 'Exercise deleted successfully.' })
+//   @ApiResponse({ status: 401, description: 'Unauthorized.' })
+//   remove(@Param('id') id: string) {
+//     return this.exerciseService.remove(id)
+//   }
 }
