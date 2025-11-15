@@ -16,8 +16,23 @@ export default function Login() {
     resolver: zodResolver(schema),
   })
 
-  const API_URL = import.meta.env.VITE_API_URL
-  const API_ORIGIN = new URL(API_URL).origin
+  // Get API URL with fallback
+  const API_URL = import.meta.env.VITE_API_URL || '/api'
+  
+  // Safely extract origin from API URL
+  let API_ORIGIN: string
+  try {
+    if (API_URL.startsWith('http://') || API_URL.startsWith('https://')) {
+      // Absolute URL - extract origin
+      API_ORIGIN = new URL(API_URL).origin
+    } else {
+      // Relative URL - use current origin
+      API_ORIGIN = window.location.origin
+    }
+  } catch {
+    // Fallback to current origin if URL parsing fails
+    API_ORIGIN = window.location.origin
+  }
 
   async function onSubmit(data: Form) {
     const res = await api.post('/auth/login', data)
@@ -33,8 +48,13 @@ export default function Login() {
     const left = window.screenX + (window.outerWidth - width) / 2
     const top = window.screenY + (window.outerHeight - height) / 2
 
+    // Construct full URL for Google OAuth
+    const googleAuthUrl = API_URL.startsWith('http')
+      ? `${API_URL}/auth/google`
+      : `${window.location.origin}${API_URL}/auth/google`
+
     const popup = window.open(
-      `${API_URL}/auth/google`,
+      googleAuthUrl,
       'google-login',
       `width=${width},height=${height},left=${left},top=${top}`
     )
