@@ -1,0 +1,163 @@
+import { useEffect, useState } from 'react'
+import { useNavigate, useParams, Link } from 'react-router-dom'
+import { getWorkoutSession, type WorkoutSession } from '@/api/workoutSession'
+import { useAuth } from '@/auth/AuthContext'
+
+export default function WorkoutSessionDetails() {
+  const { id } = useParams()
+  const navigate = useNavigate()
+  const { user } = useAuth()
+
+  const [session, setSession] = useState<WorkoutSession | null>(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    if (!user) navigate('/login')
+    ;(async () => {
+      try {
+        setLoading(true)
+        const data = await getWorkoutSession(id!)
+        setSession(data)
+      } finally {
+        setLoading(false)
+      }
+    })()
+  }, [user, navigate, id])
+
+  if (loading || !session)
+    return <p className="text-gray-400 text-center mt-10">Loading session...</p>
+
+  const humanDate = new Date(session.startAt ?? session.startAt).toLocaleString()
+  const totalSets = session.exercises.reduce((acc, e) => acc + e.sets.length, 0)
+  const completedSets = session.exercises.reduce(
+    (acc, e) => acc + e.sets.filter((s) => s.completed).length,
+    0,
+  )
+
+  const fmtActual = (load?: number | null, reps?: number | null, rir?: number | null) => {
+    const parts: string[] = []
+    parts.push(load != null ? `${load} kg` : '—')
+    parts.push(`${reps ?? '—'} reps`)
+    parts.push(`RIR ${rir ?? '—'}`)
+    return parts.join(' · ')
+  }
+
+  const duration =
+    session.startAt && session.endAt
+      ? Math.round(
+          (new Date(session.endAt).getTime() - new Date(session.startAt).getTime()) / 60000,
+        )
+      : null
+
+  return (
+    <div className="max-w-3xl mx-auto space-y-6">
+      <header className="space-y-1">
+        <h1 className="text-3xl font-bold">{session.template?.title ?? 'Custom Workout'}</h1>
+        <p className="text-sm text-gray-400">{humanDate}</p>
+        <p className="text-xs text-gray-500">
+          {completedSets}/{totalSets} sets completed
+        </p>
+      </header>
+
+      {/* -------- Summary of finished session -------- */}
+      {session.endAt && (
+        <div className="rounded-lg border border-gray-800 bg-[#101010] p-4 space-y-2">
+          <h2 className="text-sm font-semibold text-gray-200 uppercase tracking-wide">
+            Session Summary
+          </h2>
+          <div className="grid grid-cols-2 gap-2 text-sm text-gray-400">
+            <div>
+              <span className="text-gray-500">Feeling:</span>{' '}
+              <span className="font-medium text-gray-200">
+                {session.feeling ? session.feeling.toLowerCase() : '—'}
+              </span>
+            </div>
+            <div>
+              <span className="text-gray-500">Fatigue:</span>{' '}
+              <span className="font-medium text-gray-200">
+                {session.fatigue ?? '—'}/10
+              </span>
+            </div>
+            {duration != null && (
+              <div>
+                <span className="text-gray-500">Duration:</span>{' '}
+                <span className="font-medium text-gray-200">{duration} min</span>
+              </div>
+            )}
+            <div>
+              <span className="text-gray-500">Finished at:</span>{' '}
+              <span className="font-medium text-gray-200">
+                {new Date(session.endAt).toLocaleTimeString()}
+              </span>
+            </div>
+          </div>
+          {session.notes && (
+            <p className="text-sm text-gray-300 italic mt-2 border-t border-gray-800 pt-2">
+              “{session.notes}”
+            </p>
+          )}
+        </div>
+      )}
+
+      <div className="space-y-6">
+        {session.exercises.map((ex) => (
+          <div key={ex.id} className="rounded-xl border border-gray-800 bg-[#151515] overflow-hidden">
+            <div className="flex justify-between items-center px-4 py-3 border-b border-gray-800">
+              <div>
+                <h3 className="text-lg font-semibold text-gray-100">{ex.exercise.name}</h3>
+                <p className="text-xs uppercase text-gray-500">{ex.exercise.muscleGroup ?? ''}</p>
+              </div>
+            </div>
+
+            <div className="p-4">
+              <table className="w-full table-fixed text-sm text-gray-300">
+                <thead className="text-xs text-gray-500 border-b border-gray-800">
+                  <tr>
+                    <th className="text-left py-1 w-12">Set</th>
+                    <th className="text-left py-1 w-36">Planned</th>
+                    <th className="text-left py-1 w-48">Actual</th>
+                    <th className="text-left py-1 w-24">Status</th>
+                    <th className="text-left py-1">Notes</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {[...ex.sets].sort((a, b) => a.setIndex - b.setIndex).map((s) => (
+                    <tr
+                      key={s.id}
+                      className={`border-t border-gray-800 ${s.completed ? 'bg-green-900/10' : ''}`}
+                    >
+                      <td className="py-2 whitespace-nowrap">#{s.setIndex + 1}</td>
+
+                      <td className="py-2 whitespace-nowrap">
+                        {(s.plannedReps ?? '—')}{' '}
+                        <span className="text-gray-500">reps</span>{' '}
+                        <span className="text-gray-600">·</span>{' '}
+                        <span className="text-gray-500">RIR</span> {s.plannedRir ?? '—'}
+                      </td>
+
+                      <td className="py-2 whitespace-nowrap">
+                        {fmtActual(s.actualLoad, s.actualReps, s.actualRir)}
+                      </td>
+
+                      <td className="py-2 whitespace-nowrap">{s.completed ? '✅ Done' : '—'}</td>
+
+                      <td className="py-2 min-w-0">
+                        <span className="block truncate text-gray-400">{s.notes ?? '—'}</span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="pt-4 border-t border-gray-800 text-center">
+        <Link to="/app/workouts" className="text-sm text-gray-400 hover:text-primary transition">
+          ← Back to history
+        </Link>
+      </div>
+    </div>
+  )
+}

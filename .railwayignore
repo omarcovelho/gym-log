@@ -1,0 +1,13 @@
+# Arquivos e pastas a ignorar no deploy Railway
+node_modules/
+dist/
+coverage/
+.env.local
+.env
+*.log
+.DS_Store
+.vscode/
+.idea/
+*.md
+!README.md
+

@@ -1,0 +1,418 @@
+/* ===============================================================
+   WORKOUT TEMPLATE CREATE / EDIT — WITH VISIBLE REORDER BUTTONS
+   =============================================================== */
+
+import { useEffect, useMemo, useState } from 'react'
+import { useNavigate, useParams } from 'react-router-dom'
+import { z } from 'zod'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { useAuth } from '@/auth/AuthContext'
+import { api } from '@/lib/api'
+import {
+  createWorkoutTemplate,
+  updateWorkoutTemplate,
+} from '@/api/workoutTemplates'
+import { useToast } from '@/components/ToastProvider'
+import { ExercisePickerModal, type Exercise } from '@/components/ExercisePickerModal'
+import {
+  useFieldArray,
+  useForm,
+  FormProvider,
+  useFormContext,
+  type Control,
+  type UseFormRegister,
+  type FormState,
+} from 'react-hook-form'
+
+/* ===============================================================
+   SCHEMA
+   =============================================================== */
+
+const setSchema = z.object({
+  setIndex: z.number().int().min(0),
+  reps: z.coerce.number().int().min(1, 'Must be at least 1 rep'),
+  rir: z.number().int().optional(),
+  notes: z.string().optional(),
+})
+
+const itemSchema = z.object({
+  exerciseId: z.string().min(1, 'Select an exercise'),
+  order: z.number().int().optional(),
+  notes: z.string().optional(),
+  sets: z.array(setSchema).min(1, 'Add at least one set'),
+})
+
+const schema = z.object({
+  title: z.string().min(2, 'Title is required'),
+  items: z.array(itemSchema).min(1, 'Add at least one exercise'),
+})
+
+type Form = z.infer<typeof schema>
+
+/* ===============================================================
+   EXERCISE BLOCK
+   =============================================================== */
+
+type ExerciseBlockProps = {
+  f: any
+  idx: number
+  control: Control<Form>
+  register: UseFormRegister<Form>
+  remove: (index: number) => void
+  update: (index: number, value: any) => void
+  exercise: Exercise | undefined
+  exercises: Exercise[]
+  loadExercises: () => Promise<void>
+  formState: FormState<Form>
+  onMoveUp: () => void
+  onMoveDown: () => void
+  isFirst: boolean
+  isLast: boolean
+}
+
+function ExerciseBlock({
+  f,
+  idx,
+  control,
+  register,
+  remove,
+  update,
+  exercise,
+  exercises,
+  loadExercises,
+  formState,
+  onMoveUp,
+  onMoveDown,
+  isFirst,
+  isLast,
+}: ExerciseBlockProps) {
+  const [pickerOpen, setPickerOpen] = useState(false)
+  const form = useFormContext<Form>()
+  const setsFA = useFieldArray({
+    control,
+    name: `items.${idx}.sets`,
+  })
+
+  return (
+    <div className="bg-[#181818] rounded-lg p-4 border border-gray-800 space-y-4">
+
+      {/* HEADER DO EXERCÍCIO + REORDER BUTTONS */}
+      <div className="flex justify-between items-center">
+        <button
+          type="button"
+          onClick={() => setPickerOpen(true)}
+          className={`flex-1 flex justify-between items-center border rounded-lg px-3 py-2 bg-[#121212] text-sm font-medium transition ${
+            formState.errors?.items?.[idx]?.exerciseId
+              ? 'border-red-600 text-red-400'
+              : 'border-gray-700 text-gray-300 hover:border-primary hover:text-primary'
+          }`}
+        >
+          <div className="flex items-center gap-2">
+            <span>🏋️</span>
+            {exercise?.name || 'Select exercise'}
+          </div>
+          <span className="text-xs text-gray-500">▼</span>
+        </button>
+
+        {/* BOTÕES DE REORDER — AGORA VISÍVEIS */}
+        <div className="flex flex-col ml-3 gap-1">
+          <button
+            type="button"
+            disabled={isFirst}
+            onClick={onMoveUp}
+            className={`text-[10px] px-2 py-1 rounded border ${
+              isFirst
+                ? 'opacity-30 cursor-not-allowed border-gray-800 text-gray-600'
+                : 'border-gray-700 text-gray-300 hover:border-primary hover:text-primary'
+            }`}
+          >
+            ↑
+          </button>
+
+          <button
+            type="button"
+            disabled={isLast}
+            onClick={onMoveDown}
+            className={`text-[10px] px-2 py-1 rounded border ${
+              isLast
+                ? 'opacity-30 cursor-not-allowed border-gray-800 text-gray-600'
+                : 'border-gray-700 text-gray-300 hover:border-primary hover:text-primary'
+            }`}
+          >
+            ↓
+          </button>
+        </div>
+
+        <button
+          onClick={() => remove(idx)}
+          type="button"
+          className="ml-3 text-xs text-gray-500 hover:text-red-500"
+        >
+          ✕
+        </button>
+      </div>
+
+      {exercise?.muscleGroup && (
+        <p className="text-xs text-gray-500 uppercase tracking-wide">{exercise.muscleGroup}</p>
+      )}
+
+      {/* NOTES */}
+      <div>
+        <label className="text-xs text-gray-400">Notes</label>
+        <input
+          {...register(`items.${idx}.notes`)}
+          placeholder="Notes for this exercise..."
+          className="w-full bg-[#121212] border border-gray-700 rounded-md p-2 text-sm text-gray-200 placeholder-gray-500 focus:border-primary outline-none transition"
+        />
+      </div>
+
+      {/* SETS */}
+      <div className="space-y-3">
+        <h3 className="text-sm font-medium text-gray-300">Sets</h3>
+
+        {setsFA.fields.map((sf, sidx) => {
+          const setError = (formState.errors.items?.[idx] as any)?.sets?.[sidx]?.reps?.message
+
+          return (
+            <div key={sf.id} className="bg-[#141414] p-2 rounded-md border border-gray-800">
+              <div className="grid grid-cols-12 gap-2 items-end">
+                <input
+                  {...register(`items.${idx}.sets.${sidx}.reps`, {
+                    setValueAs: (v) =>
+                    v === '' || v == null || isNaN(Number(v)) ? "" : Number(v),
+                })}
+                  type="number"
+                  placeholder="Reps *"
+                  className={`col-span-3 bg-[#121212] border rounded-md p-2 text-sm ${
+                    setError
+                      ? 'border-red-600'
+                      : 'border-gray-700 focus:border-primary'
+                  }`}
+                />
+
+                <input
+                  {...register(`items.${idx}.sets.${sidx}.rir`, {
+                        setValueAs: (v) =>
+                        v === '' || v == null || isNaN(Number(v)) ? "" : Number(v),
+                    })}
+                  type="number"
+                  placeholder="RIR"
+                  className="col-span-3 bg-[#121212] border border-gray-700 rounded-md p-2 text-sm"
+                />
+
+                <input
+                  {...register(`items.${idx}.sets.${sidx}.notes`)}
+                  placeholder="Notes"
+                  className="col-span-5 bg-[#121212] border border-gray-700 rounded-md p-2 text-sm"
+                />
+
+                <button
+                  type="button"
+                  onClick={() => setsFA.remove(sidx)}
+                  className="col-span-1 text-xs text-gray-500 hover:text-red-500"
+                >
+                  ✕
+                </button>
+              </div>
+
+              {setError && <p className="text-xs text-red-500 mt-1">{setError}</p>}
+            </div>
+          )
+        })}
+
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={() =>
+              setsFA.append({
+                setIndex: setsFA.fields.length,
+                reps: undefined,
+                rir: undefined,
+                notes: '',
+              })
+            }
+            className="text-xs border border-gray-600 px-2 py-1 rounded hover:bg-gray-800"
+          >
+            + Add set
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              const last = setsFA.fields.at(-1)
+              if (!last) return
+              const values = (control._formValues as any)?.items?.[idx]?.sets?.[setsFA.fields.length - 1]
+              setsFA.append({
+                setIndex: setsFA.fields.length,
+                reps: values?.reps,
+                rir: values?.rir,
+                notes: values?.notes,
+              })
+            }}
+            className="text-xs border border-gray-600 px-2 py-1 rounded hover:bg-gray-800"
+          >
+            Clone last
+          </button>
+        </div>
+      </div>
+
+      <ExercisePickerModal
+        open={pickerOpen}
+        onClose={() => setPickerOpen(false)}
+        onSelect={(id) => {
+          update(idx, { ...f, exerciseId: id })
+          form.clearErrors?.(`items.${idx}.exerciseId`)
+          setPickerOpen(false)
+        }}
+        exercises={exercises}
+        refreshExercises={loadExercises}
+      />
+    </div>
+  )
+}
+
+/* ===============================================================
+   MAIN PAGE
+   =============================================================== */
+
+export default function WorkoutTemplateCreateEdit() {
+  const { id } = useParams()
+  const isEditing = Boolean(id)
+  const { user } = useAuth()
+  const navigate = useNavigate()
+  const { toast } = useToast()
+
+  const [exercises, setExercises] = useState<Exercise[]>([])
+  const methods = useForm<Form>({
+    resolver: zodResolver(schema),
+    defaultValues: { title: '', items: [] },
+  })
+
+  const { register, handleSubmit, control, formState, reset } = methods
+  const itemsFA = useFieldArray({ control, name: 'items' })
+
+  useEffect(() => {
+    if (!user) navigate('/login')
+
+    api.get('/exercises', { params: { page: 1, limit: 100 } }).then(({ data }) => {
+      // Extrair array de data.data se for estrutura paginada, senão usar data diretamente
+      const exercises = data.data && Array.isArray(data.data) ? data.data : (Array.isArray(data) ? data : [])
+      setExercises(exercises)
+    })
+
+    if (isEditing) {
+      api.get(`/workout-templates/${id}`).then(({ data }) => {
+        reset({
+          title: data.title,
+          items: data.items.map((it: any, idx: number) => ({
+            exerciseId: it.exerciseId,
+            notes: it.notes ?? '',
+            sets: it.sets.map((s: any, sidx: number) => ({
+              setIndex: sidx,
+              reps: s.reps,
+              rir: s.rir,
+              notes: s.notes,
+            })),
+          })),
+        })
+      })
+    }
+  }, [user])
+
+  const exerciseById = useMemo(
+    () => new Map(exercises.map((e) => [e.id, e] as const)),
+    [exercises],
+  )
+
+  const onSubmit = async (form: Form) => {
+    const payload = {
+      title: form.title,
+      items: form.items.map((i, idx) => ({
+        exerciseId: i.exerciseId,
+        order: idx,
+        notes: i.notes,
+        sets: i.sets.map((s, sidx) => ({
+          setIndex: sidx,
+          reps: s.reps,
+          rir: s.rir,
+          notes: s.notes,
+        })),
+      })),
+    }
+
+    try {
+      if (isEditing) {
+        await updateWorkoutTemplate(id!, payload)
+      } else {
+        await createWorkoutTemplate(payload)
+      }
+      navigate('/app/templates')
+    } catch (e: any) {
+      toast({ variant: 'error', title: 'Error', description: e.message })
+    }
+  }
+
+  return (
+    <FormProvider {...methods}>
+      <form onSubmit={handleSubmit(onSubmit)} className="max-w-2xl mx-auto space-y-8 pb-36">
+        <h1 className="text-3xl font-bold">Workout Template</h1>
+
+        <div>
+          <label className="text-sm font-medium text-gray-300">Title</label>
+          <input
+            {...register('title')}
+            placeholder='Push Day A, Pull Day B...'
+            className="w-full bg-[#121212] border border-gray-700 rounded-lg p-3 mt-1 text-gray-200"
+          />
+        </div>
+
+        <h2 className="text-xl font-semibold mt-6">Exercises</h2>
+
+        <div className="space-y-5">
+          {itemsFA.fields.map((f, idx) => (
+            <ExerciseBlock
+              key={f.id}
+              f={f}
+              idx={idx}
+              control={control}
+              register={register}
+              remove={itemsFA.remove}
+              update={itemsFA.update}
+              exercise={exerciseById.get((f as any).exerciseId)}
+              exercises={exercises}
+              loadExercises={async () => {}}
+              formState={formState}
+              onMoveUp={() => itemsFA.swap(idx, idx - 1)}
+              onMoveDown={() => itemsFA.swap(idx, idx + 1)}
+              isFirst={idx === 0}
+              isLast={idx === itemsFA.fields.length - 1}
+            />
+          ))}
+        </div>
+
+        <div className="flex justify-center mt-4">
+          <button
+            type="button"
+            onClick={() =>
+              itemsFA.append({
+                exerciseId: '',
+                notes: '',
+                sets: [{ setIndex: 0, reps: undefined, rir: undefined, notes: '' }],
+              })
+            }
+            className="border border-gray-700 px-4 py-2 rounded text-sm text-gray-300 hover:text-primary hover:border-primary"
+          >
+            + Add Exercise
+          </button>
+        </div>
+
+        <button
+          type="submit"
+          className="fixed bottom-5 left-1/2 -translate-x-1/2 w-[90%] bg-primary text-black py-3 rounded-md font-semibold"
+        >
+          Save Template
+        </button>
+      </form>
+    </FormProvider>
+  )
+}
