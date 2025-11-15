@@ -17,7 +17,6 @@ export default function Login() {
   })
 
   const API_URL = import.meta.env.VITE_API_URL
-  const FRONTEND_ORIGIN = window.location.origin
   const API_ORIGIN = new URL(API_URL).origin
 
   async function onSubmit(data: Form) {

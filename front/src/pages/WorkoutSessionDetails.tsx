@@ -52,7 +52,7 @@ export default function WorkoutSessionDetails() {
   return (
     <div className="max-w-3xl mx-auto space-y-6">
       <header className="space-y-1">
-        <h1 className="text-3xl font-bold">{session.template?.title ?? 'Custom Workout'}</h1>
+        <h1 className="text-3xl font-bold">{session.title ?? 'Custom Workout'}</h1>
         <p className="text-sm text-gray-400">{humanDate}</p>
         <p className="text-xs text-gray-500">
           {completedSets}/{totalSets} sets completed

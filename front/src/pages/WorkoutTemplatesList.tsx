@@ -35,7 +35,7 @@ export default function WorkoutTemplatesList() {
   const [startingId, setStartingId] = useState<string | null>(null)
 
   const [startFreeOpen, setStartFreeOpen] = useState(false)
-  const [startingFree, setStartingFree] = useState(false)
+  const [_startingFree, setStartingFree] = useState(false)
 
   const currentPage = parseInt(searchParams.get('page') || '1', 10)
   const currentLimit = parseInt(searchParams.get('limit') || '10', 10)

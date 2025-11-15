@@ -36,7 +36,7 @@ export default function WorkoutSessionView() {
   const [session, setSession] = useState<WorkoutSession | null>(null)
   const [loading, setLoading] = useState(true)
   const [expanded, setExpanded] = useState<string | null>(null)
-  const [savingId, setSavingId] = useState<string | null>(null)
+  const [_savingId, setSavingId] = useState<string | null>(null)
   const [pickerOpen, setPickerOpen] = useState(false)
   const [exercises, setExercises] = useState<Exercise[]>([])
   const [finishOpen, setFinishOpen] = useState(false)
@@ -94,7 +94,7 @@ export default function WorkoutSessionView() {
       if (!ex) return prev
       const s = ex.sets.find((ss) => ss.id === setId)
       if (!s) return prev
-      s[field] = value
+      ;(s as any)[field] = value
       return copy
     })
 
@@ -220,12 +220,12 @@ export default function WorkoutSessionView() {
 
   const handleTitleChange = (value: string) => {
     setSession((prev) => (prev ? { ...prev, title: value } : prev))
-    debouncedSaveMeta({ title: value || null })
+    debouncedSaveMeta({ title: value || undefined })
   }
 
   const handleNotesChange = (value: string) => {
-    setSession((prev) => (prev ? { ...prev, notes: value || null } : prev))
-    debouncedSaveMeta({ notes: value || null })
+    setSession((prev) => (prev ? { ...prev, notes: value || undefined } : prev))
+    debouncedSaveMeta({ notes: value || undefined })
   }
 
   const totalSets = useMemo(

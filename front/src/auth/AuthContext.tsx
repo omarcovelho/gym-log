@@ -1,6 +1,6 @@
 import { createContext, useContext, useMemo, useState } from 'react'
 
-type User = { sub: string; email: string } | null
+type User = { sub: string; email: string; name?: string } | null
 type AuthCtx = {
   user: User
   login: (token: string, payload: User) => void
