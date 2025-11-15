@@ -226,7 +226,7 @@ function ExerciseBlock({
             onClick={() =>
               setsFA.append({
                 setIndex: setsFA.fields.length,
-                reps: undefined,
+                reps: 0,
                 rir: undefined,
                 notes: '',
               })
@@ -304,7 +304,7 @@ export default function WorkoutTemplateCreateEdit() {
       api.get(`/workout-templates/${id}`).then(({ data }) => {
         reset({
           title: data.title,
-          items: data.items.map((it: any, idx: number) => ({
+          items: data.items.map((it: any) => ({
             exerciseId: it.exerciseId,
             notes: it.notes ?? '',
             sets: it.sets.map((s: any, sidx: number) => ({
@@ -354,7 +354,7 @@ export default function WorkoutTemplateCreateEdit() {
 
   return (
     <FormProvider {...methods}>
-      <form onSubmit={handleSubmit(onSubmit)} className="max-w-2xl mx-auto space-y-8 pb-36">
+      <form onSubmit={handleSubmit(onSubmit as any)} className="max-w-2xl mx-auto space-y-8 pb-36">
         <h1 className="text-3xl font-bold">Workout Template</h1>
 
         <div>
@@ -374,7 +374,7 @@ export default function WorkoutTemplateCreateEdit() {
               key={f.id}
               f={f}
               idx={idx}
-              control={control}
+              control={control as any}
               register={register}
               remove={itemsFA.remove}
               update={itemsFA.update}
@@ -397,7 +397,7 @@ export default function WorkoutTemplateCreateEdit() {
               itemsFA.append({
                 exerciseId: '',
                 notes: '',
-                sets: [{ setIndex: 0, reps: undefined, rir: undefined, notes: '' }],
+                sets: [{ setIndex: 0, reps: 0, rir: undefined, notes: '' }],
               })
             }
             className="border border-gray-700 px-4 py-2 rounded text-sm text-gray-300 hover:text-primary hover:border-primary"

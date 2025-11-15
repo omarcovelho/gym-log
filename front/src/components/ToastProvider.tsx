@@ -2,7 +2,6 @@ import {
   createContext,
   useCallback,
   useContext,
-  useEffect,
   useMemo,
   useRef,
   useState,
@@ -76,12 +75,11 @@ export function useToast() {
 }
 
 function ToastCard({
-  id,
   title,
   description,
   variant = 'info',
   onClose,
-}: Toast & { onClose: () => void }) {
+}: Omit<Toast, 'id'> & { onClose: () => void }) {
   const style =
     variant === 'success'
       ? 'border-green-700 bg-green-900/30 text-green-200'
