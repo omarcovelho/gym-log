@@ -30,7 +30,13 @@ import {
 
 const setSchema = z.object({
   setIndex: z.number().int().min(0),
-  reps: z.coerce.number().int().min(1, 'Must be at least 1 rep'),
+  reps: z.preprocess((val) => {
+    if (typeof val === 'string') {
+      const num = Number(val)
+      return isNaN(num) ? 0 : num
+    }
+    return typeof val === 'number' ? val : 0
+  }, z.number().int().min(1, 'Must be at least 1 rep')),
   rir: z.number().int().optional(),
   notes: z.string().optional(),
 })
@@ -244,9 +250,9 @@ function ExerciseBlock({
               const values = (control._formValues as any)?.items?.[idx]?.sets?.[setsFA.fields.length - 1]
               setsFA.append({
                 setIndex: setsFA.fields.length,
-                reps: values?.reps,
-                rir: values?.rir,
-                notes: values?.notes,
+                reps: typeof values?.reps === 'number' ? values.reps : 0,
+                rir: typeof values?.rir === 'number' ? values.rir : undefined,
+                notes: typeof values?.notes === 'string' ? values.notes : '',
               })
             }}
             className="text-xs border border-gray-600 px-2 py-1 rounded hover:bg-gray-800"
@@ -284,7 +290,7 @@ export default function WorkoutTemplateCreateEdit() {
 
   const [exercises, setExercises] = useState<Exercise[]>([])
   const methods = useForm<Form>({
-    resolver: zodResolver(schema),
+    resolver: zodResolver(schema) as any,
     defaultValues: { title: '', items: [] },
   })
 
