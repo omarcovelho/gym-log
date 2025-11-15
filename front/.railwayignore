@@ -1,0 +1,11 @@
+# Arquivos a ignorar no deploy do frontend
+node_modules/
+.env.local
+.env
+*.log
+.DS_Store
+.vscode/
+.idea/
+src/
+!dist/
+
