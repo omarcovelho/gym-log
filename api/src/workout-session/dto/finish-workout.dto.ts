@@ -1,6 +1,6 @@
 // src/workout-session/dto/finish-workout.dto.ts
 import { IsInt, IsOptional, IsString, IsEnum, Min, Max } from 'class-validator'
-import { Feeling } from '@prisma/client' // ou defina manualmente se não for importável
+import { Feeling } from '../../../generated/prisma'
 
 export class FinishWorkoutDto {
   @IsOptional()

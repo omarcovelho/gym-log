@@ -8,7 +8,7 @@ async function main() {
   const adminPassword = process.env.ADMIN_PASSWORD
 
   if (!adminEmail || !adminPassword) {
-    throw new Error('ADMIN_EMAIL and ADMIN_PASSWORD must be set in .env.local')
+    throw new Error('ADMIN_EMAIL and ADMIN_PASSWORD must be set as environment variables')
   }
 
   const admin = await prisma.user.upsert({
