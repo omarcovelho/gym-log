@@ -1,0 +1,13 @@
+# Arquivos a ignorar no deploy do backend
+node_modules/
+coverage/
+.env.local
+.env
+*.log
+.DS_Store
+.vscode/
+.idea/
+test/
+*.spec.ts
+*.e2e-spec.ts
+
