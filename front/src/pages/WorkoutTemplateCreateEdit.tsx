@@ -13,7 +13,8 @@ import {
   updateWorkoutTemplate,
 } from '@/api/workoutTemplates'
 import { useToast } from '@/components/ToastProvider'
-import { ExercisePickerModal, type Exercise } from '@/components/ExercisePickerModal'
+import { ExercisePickerModal } from '@/components/ExercisePickerModal'
+import { type Exercise } from '@/api/exercise'
 import {
   useFieldArray,
   useForm,
@@ -68,7 +69,6 @@ type ExerciseBlockProps = {
   update: (index: number, value: any) => void
   exercise: Exercise | undefined
   exercises: Exercise[]
-  loadExercises: () => Promise<void>
   formState: FormState<Form>
   onMoveUp: () => void
   onMoveDown: () => void
@@ -85,7 +85,6 @@ function ExerciseBlock({
   update,
   exercise,
   exercises,
-  loadExercises,
   formState,
   onMoveUp,
   onMoveDown,
@@ -271,7 +270,6 @@ function ExerciseBlock({
           setPickerOpen(false)
         }}
         exercises={exercises}
-        refreshExercises={loadExercises}
       />
     </div>
   )
@@ -386,7 +384,6 @@ export default function WorkoutTemplateCreateEdit() {
               update={itemsFA.update}
               exercise={exerciseById.get((f as any).exerciseId)}
               exercises={exercises}
-              loadExercises={async () => {}}
               formState={formState}
               onMoveUp={() => itemsFA.swap(idx, idx - 1)}
               onMoveDown={() => itemsFA.swap(idx, idx + 1)}

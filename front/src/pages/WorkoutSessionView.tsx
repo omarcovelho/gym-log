@@ -5,6 +5,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useAuth } from '@/auth/AuthContext'
 import { useToast } from '@/components/ToastProvider'
+import { Loader2 } from 'lucide-react'
 import {
   getWorkoutSession,
   updateWorkoutSession,
@@ -12,12 +13,15 @@ import {
   addSetToExercise,
   addExerciseToSession,
   finishWorkoutSession,
+  deleteExerciseFromSession,
+  deleteSetFromExercise,
   type WorkoutSession,
   type SessionExercise,
 } from '@/api/workoutSession'
-import { api } from '@/lib/api'
-import { ExercisePickerModal, type Exercise } from '@/components/ExercisePickerModal'
+import { ExercisePickerModal } from '@/components/ExercisePickerModal'
 import { FinishWorkoutDialog, type FinishWorkoutData } from '@/components/FinishWorkoutDialog'
+import { ConfirmDialog } from '@/components/ConfirmDialog'
+import { useExercises } from '@/api/exercise'
 
 function useDebouncedCallback<T extends (...args: any[]) => void>(cb: T, delay = 300) {
   const t = useRef<number | undefined>(undefined)
@@ -38,8 +42,17 @@ export default function WorkoutSessionView() {
   const [expanded, setExpanded] = useState<string | null>(null)
   const [_savingId, setSavingId] = useState<string | null>(null)
   const [pickerOpen, setPickerOpen] = useState(false)
-  const [exercises, setExercises] = useState<Exercise[]>([])
   const [finishOpen, setFinishOpen] = useState(false)
+  const [removingExerciseId, setRemovingExerciseId] = useState<string | null>(null)
+  const [removingSetId, setRemovingSetId] = useState<string | null>(null)
+  const [addingExercise, setAddingExercise] = useState(false)
+  const [addingSetId, setAddingSetId] = useState<string | null>(null)
+  const [finishingWorkout, setFinishingWorkout] = useState(false)
+  const [confirmRemoveExerciseId, setConfirmRemoveExerciseId] = useState<string | null>(null)
+  const [confirmRemoveSet, setConfirmRemoveSet] = useState<{ setId: string; exerciseId: string } | null>(null)
+
+  const { data: exercisesData } = useExercises({ page: 1, limit: 100 })
+  const exercises = exercisesData?.data ?? []
 
   useEffect(() => {
     if (!user) {
@@ -47,11 +60,6 @@ export default function WorkoutSessionView() {
       return
     }
     loadSession()
-    api.get<{ data: Exercise[]; meta: any }>('/exercises', { params: { page: 1, limit: 100 } }).then(({ data }) => {
-      // Extrair array de data.data se for estrutura paginada, senão usar data diretamente
-      const exercises = data.data && Array.isArray(data.data) ? data.data : (Array.isArray(data) ? data : [])
-      setExercises(exercises)
-    })
   }, [user, navigate, id])
 
   async function loadSession() {
@@ -154,12 +162,15 @@ export default function WorkoutSessionView() {
     persistExercise(exerciseId)
   }
 
-  const handleRemoveExercise = async (exerciseId: string) => {
-    const ok = window.confirm('Remove exercise?')
-    if (!ok) return
+  const handleRemoveExerciseClick = (exerciseId: string) => {
+    setConfirmRemoveExerciseId(exerciseId)
+  }
 
+  const handleRemoveExercise = async (exerciseId: string) => {
+    setConfirmRemoveExerciseId(null)
+    setRemovingExerciseId(exerciseId)
     try {
-      await api.delete(`/workouts/exercises/${exerciseId}`)
+      await deleteExerciseFromSession(exerciseId)
       setSession((prev) => {
         if (!prev) return prev
         return {
@@ -167,8 +178,37 @@ export default function WorkoutSessionView() {
           exercises: prev.exercises.filter((ex) => ex.id !== exerciseId),
         }
       })
+      toast({ variant: 'success', title: 'Exercise removed' })
     } catch {
       toast({ variant: 'error', title: 'Error removing exercise' })
+    } finally {
+      setRemovingExerciseId(null)
+    }
+  }
+
+  const handleRemoveSetClick = (setId: string, exerciseId: string) => {
+    setConfirmRemoveSet({ setId, exerciseId })
+  }
+
+  const handleRemoveSet = async (setId: string, exerciseId: string) => {
+    setConfirmRemoveSet(null)
+    setRemovingSetId(setId)
+    try {
+      await deleteSetFromExercise(setId)
+      setSession((prev) => {
+        if (!prev) return prev
+        const copy = structuredClone(prev)
+        const ex = copy.exercises.find((e) => e.id === exerciseId)
+        if (ex) {
+          ex.sets = ex.sets.filter((s) => s.id !== setId)
+        }
+        return copy
+      })
+      toast({ variant: 'success', title: 'Set removed' })
+    } catch {
+      toast({ variant: 'error', title: 'Error removing set' })
+    } finally {
+      setRemovingSetId(null)
     }
   }
 
@@ -176,17 +216,24 @@ export default function WorkoutSessionView() {
     const nextIndex =
       exercise.sets.length > 0 ? Math.max(...exercise.sets.map((s) => s.setIndex)) + 1 : 0
 
-    const created = await addSetToExercise(exercise.id, { setIndex: nextIndex })
+    setAddingSetId(exercise.id)
+    try {
+      const created = await addSetToExercise(exercise.id, { setIndex: nextIndex })
 
-    setSession((prev) => {
-      if (!prev) return prev
-      const copy = structuredClone(prev)
-      const ex = copy.exercises.find((e) => e.id === exercise.id)
-      if (ex) ex.sets.push(created)
-      return copy
-    })
+      setSession((prev) => {
+        if (!prev) return prev
+        const copy = structuredClone(prev)
+        const ex = copy.exercises.find((e) => e.id === exercise.id)
+        if (ex) ex.sets.push(created)
+        return copy
+      })
 
-    persistExercise(exercise.id)
+      persistExercise(exercise.id)
+    } catch {
+      toast({ variant: 'error', title: 'Error adding set' })
+    } finally {
+      setAddingSetId(null)
+    }
   }
 
   const handleAddExercise = async (exerciseId: string) => {
@@ -197,24 +244,34 @@ export default function WorkoutSessionView() {
         ? Math.max(...session.exercises.map((e) => e.order)) + 1
         : 0
 
-    const created = await addExerciseToSession(session.id, { exerciseId, order })
+    setAddingExercise(true)
+    try {
+      const created = await addExerciseToSession(session.id, { exerciseId, order })
 
-    setSession((prev) => {
-      if (!prev) return prev
-      const copy = structuredClone(prev)
-      copy.exercises.push(created)
-      return copy
-    })
+      setSession((prev) => {
+        if (!prev) return prev
+        const copy = structuredClone(prev)
+        copy.exercises.push(created)
+        return copy
+      })
 
-    setPickerOpen(false)
+      setPickerOpen(false)
+    } catch {
+      toast({ variant: 'error', title: 'Error adding exercise' })
+    } finally {
+      setAddingExercise(false)
+    }
   }
 
   const handleFinishWorkout = async (data: FinishWorkoutData) => {
+    setFinishingWorkout(true)
     try {
       await finishWorkoutSession(session!.id, data)
       navigate('/app')
     } catch {
       toast({ variant: 'error', title: 'Could not finish workout' })
+    } finally {
+      setFinishingWorkout(false)
     }
   }
 
@@ -324,10 +381,18 @@ export default function WorkoutSessionView() {
                     </button>
 
                     <button
-                      onClick={() => handleRemoveExercise(ex.id)}
-                      className="text-[10px] px-2 py-1 rounded border border-red-900/60 text-red-400 hover:bg-red-900/40"
+                      onClick={() => handleRemoveExerciseClick(ex.id)}
+                      disabled={removingExerciseId === ex.id}
+                      className="text-[10px] px-2 py-1 rounded border border-red-900/60 text-red-400 hover:bg-red-900/40 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
                     >
-                      Remove
+                      {removingExerciseId === ex.id ? (
+                        <>
+                          <Loader2 className="w-3 h-3 animate-spin" />
+                          Removing...
+                        </>
+                      ) : (
+                        'Remove'
+                      )}
                     </button>
                   </div>
                 </div>
@@ -348,19 +413,32 @@ export default function WorkoutSessionView() {
                             Set {s.setIndex + 1}
                           </span>
 
-                          <button
-                            onClick={() =>
-                              handleSetChange(
-                                ex.id,
-                                s.id,
-                                'completed',
-                                !s.completed,
-                              )
-                            }
-                            className="text-xs border px-2 py-1 rounded text-gray-300"
-                          >
-                            {s.completed ? '✓ Done' : 'Mark Done'}
-                          </button>
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() =>
+                                handleSetChange(
+                                  ex.id,
+                                  s.id,
+                                  'completed',
+                                  !s.completed,
+                                )
+                              }
+                              className="text-xs border px-2 py-1 rounded text-gray-300"
+                            >
+                              {s.completed ? '✓ Done' : 'Mark Done'}
+                            </button>
+                            <button
+                              onClick={() => handleRemoveSetClick(s.id, ex.id)}
+                              disabled={removingSetId === s.id}
+                              className="text-xs border border-red-900/60 px-2 py-1 rounded text-red-400 hover:bg-red-900/40 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
+                            >
+                              {removingSetId === s.id ? (
+                                <Loader2 className="w-3 h-3 animate-spin" />
+                              ) : (
+                                'Remove'
+                              )}
+                            </button>
+                          </div>
                         </div>
 
                         <div className="grid grid-cols-3 gap-3">
@@ -440,9 +518,17 @@ export default function WorkoutSessionView() {
 
                     <button
                       onClick={() => handleAddSet(ex)}
-                      className="w-full mt-2 border border-gray-700 py-2 text-sm text-gray-300 rounded-md"
+                      disabled={addingSetId === ex.id}
+                      className="w-full mt-2 border border-gray-700 py-2 text-sm text-gray-300 rounded-md disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                     >
-                      + Add Set
+                      {addingSetId === ex.id ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          Adding...
+                        </>
+                      ) : (
+                        '+ Add Set'
+                      )}
                     </button>
                   </div>
                 )}
@@ -455,9 +541,17 @@ export default function WorkoutSessionView() {
       <div className="flex justify-center">
         <button
           onClick={() => setPickerOpen(true)}
-          className="px-4 py-2 border border-gray-600 rounded-md text-sm text-gray-300"
+          disabled={addingExercise}
+          className="px-4 py-2 border border-gray-600 rounded-md text-sm text-gray-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
         >
-          + Add Exercise
+          {addingExercise ? (
+            <>
+              <Loader2 className="w-4 h-4 animate-spin" />
+              Adding...
+            </>
+          ) : (
+            '+ Add Exercise'
+          )}
         </button>
       </div>
 
@@ -465,9 +559,17 @@ export default function WorkoutSessionView() {
       <div className="sticky bottom-0 left-0 right-0 bg-[#0f0f0f]/95 border-t border-gray-800 px-4 py-3">
         <button
           onClick={() => setFinishOpen(true)}
-          className="w-full bg-primary text-black py-3 rounded-md font-semibold"
+          disabled={finishingWorkout}
+          className="w-full bg-primary text-black py-3 rounded-md font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
         >
-          Finish Workout
+          {finishingWorkout ? (
+            <>
+              <Loader2 className="w-4 h-4 animate-spin" />
+              Finishing...
+            </>
+          ) : (
+            'Finish Workout'
+          )}
         </button>
       </div>
 
@@ -482,12 +584,26 @@ export default function WorkoutSessionView() {
         onClose={() => setPickerOpen(false)}
         onSelect={handleAddExercise}
         exercises={exercises}
-        refreshExercises={async () => {
-          const { data } = await api.get<{ data: Exercise[]; meta: any }>('/exercises', { params: { page: 1, limit: 100 } })
-          // Extrair array de data.data se for estrutura paginada, senão usar data diretamente
-          const exercises = data.data && Array.isArray(data.data) ? data.data : (Array.isArray(data) ? data : [])
-          setExercises(exercises)
-        }}
+      />
+
+      <ConfirmDialog
+        open={confirmRemoveExerciseId !== null}
+        title="Remove Exercise"
+        message="Are you sure you want to remove this exercise from the workout?"
+        confirmText="Remove"
+        cancelText="Cancel"
+        onConfirm={() => confirmRemoveExerciseId && handleRemoveExercise(confirmRemoveExerciseId)}
+        onCancel={() => setConfirmRemoveExerciseId(null)}
+      />
+
+      <ConfirmDialog
+        open={confirmRemoveSet !== null}
+        title="Remove Set"
+        message="Are you sure you want to remove this set?"
+        confirmText="Remove"
+        cancelText="Cancel"
+        onConfirm={() => confirmRemoveSet && handleRemoveSet(confirmRemoveSet.setId, confirmRemoveSet.exerciseId)}
+        onCancel={() => setConfirmRemoveSet(null)}
       />
     </div>
   )
