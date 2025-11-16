@@ -62,6 +62,23 @@ export async function sendNotification(
   }
 
   try {
+    // Try to use Service Worker notification if available (works when app is closed)
+    if ('serviceWorker' in navigator) {
+      const registration = await navigator.serviceWorker.ready
+      if (registration && 'showNotification' in registration) {
+        await registration.showNotification(title, {
+          body,
+          icon: '/icon-192x192.png',
+          badge: '/icon-192x192.png',
+          tag: 'rest-timer',
+          requireInteraction: false,
+          silent: false,
+        })
+        return
+      }
+    }
+
+    // Fallback to regular Notification API
     const notification = new Notification(title, {
       body,
       icon: '/icon-192x192.png',
@@ -81,6 +98,82 @@ export async function sendNotification(
     }
   } catch (err) {
     console.error('Failed to send notification:', err)
+  }
+}
+
+// Schedule notification for a specific time (uses setTimeout)
+export function scheduleNotification(
+  endTime: number,
+  title: string,
+  body: string,
+): number | null {
+  if (!('Notification' in window)) {
+    return null
+  }
+
+  const now = Date.now()
+  const delay = endTime - now
+
+  if (delay <= 0) {
+    // Timer already ended, send immediately
+    sendNotification(title, body)
+    return null
+  }
+
+  const timeoutId = window.setTimeout(() => {
+    sendNotification(title, body)
+    // Clear scheduled time from localStorage when notification fires
+    localStorage.removeItem('restTimerNotificationScheduled')
+  }, delay)
+
+  // Save scheduled time for verification on app open
+  localStorage.setItem(
+    'restTimerNotificationScheduled',
+    JSON.stringify({ endTime, timeoutId }),
+  )
+
+  return timeoutId
+}
+
+// Check if there's a scheduled notification that should have fired and fire it
+export async function checkScheduledNotification(): Promise<void> {
+  if (!('Notification' in window)) {
+    return
+  }
+
+  const saved = localStorage.getItem('restTimerNotificationScheduled')
+  if (!saved) {
+    return
+  }
+
+  try {
+    const { endTime } = JSON.parse(saved)
+    const now = Date.now()
+
+    // If the scheduled time has passed, fire the notification
+    if (now >= endTime) {
+      await sendNotification('Rest Complete!', 'Time to get back to work!')
+      localStorage.removeItem('restTimerNotificationScheduled')
+    }
+  } catch (err) {
+    console.error('Failed to check scheduled notification:', err)
+    localStorage.removeItem('restTimerNotificationScheduled')
+  }
+}
+
+// Clear scheduled notification
+export function clearScheduledNotification(): void {
+  const saved = localStorage.getItem('restTimerNotificationScheduled')
+  if (saved) {
+    try {
+      const { timeoutId } = JSON.parse(saved)
+      if (timeoutId) {
+        clearTimeout(timeoutId)
+      }
+    } catch (err) {
+      console.error('Failed to clear scheduled notification:', err)
+    }
+    localStorage.removeItem('restTimerNotificationScheduled')
   }
 }
 
