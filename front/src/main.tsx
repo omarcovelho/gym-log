@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { createBrowserRouter, RouterProvider } from 'react-router-dom'
 import { AuthProvider } from '@/auth/AuthContext'
 import ProtectedRoute from '@/auth/ProtectedRoute'
+import PublicRoute from '@/auth/PublicRoute'
 import AppLayout from '@/layouts/AppLayout'
 import Welcome from '@/pages/Welcome'
 import Home from '@/pages/Home'
@@ -31,10 +32,31 @@ const qc = new QueryClient({
 })
 
 const router = createBrowserRouter([
-    // Public routes
-    { path: '/', element: <Welcome /> },
-    { path: '/login', element: <Login /> },
-    { path: '/signup', element: <Signup /> },
+    // Public routes (redirect to /app if already authenticated)
+    { 
+        path: '/', 
+        element: (
+            <PublicRoute>
+                <Welcome />
+            </PublicRoute>
+        )
+    },
+    { 
+        path: '/login', 
+        element: (
+            <PublicRoute>
+                <Login />
+            </PublicRoute>
+        )
+    },
+    { 
+        path: '/signup', 
+        element: (
+            <PublicRoute>
+                <Signup />
+            </PublicRoute>
+        )
+    },
 
     // Protected routes (under /app)
     {

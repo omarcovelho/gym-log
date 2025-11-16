@@ -37,8 +37,13 @@ export default function Login() {
   async function onSubmit(data: Form) {
     const res = await api.post('/auth/login', data)
     const token = res.data.access_token
+    const userData = res.data.user
 
-    login(token, { sub: 'me', email: data.email })
+    login(token, { 
+      sub: userData.id, 
+      email: userData.email,
+      name: userData.name 
+    })
     location.href = '/app'
   }
 
@@ -68,8 +73,17 @@ export default function Login() {
       const { token, email, name } = event.data || {}
       if (!token) return
 
-      // salva no auth context
-      login(token, { sub: 'google', email, name })
+      // Get user ID from token payload
+      try {
+        const payload = JSON.parse(atob(token.split('.')[1]))
+        const userId = payload.sub
+        
+        // salva no auth context
+        login(token, { sub: userId, email, name })
+      } catch {
+        // Fallback if token parsing fails
+        login(token, { sub: 'google', email, name })
+      }
 
       window.removeEventListener('message', listener)
       popup.close()
