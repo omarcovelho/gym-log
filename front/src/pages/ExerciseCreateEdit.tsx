@@ -6,6 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { api } from '@/lib/api'
 import { useToast } from '@/components/ToastProvider'
 import { useAuth } from '@/auth/AuthContext'
+import { useInvalidateExercises } from '@/api/exercise'
 
 /* ---------------------------- Schema ---------------------------- */
 
@@ -25,6 +26,7 @@ export default function ExerciseCreateEdit() {
   const navigate = useNavigate()
   const { toast } = useToast()
   const { user } = useAuth()
+  const invalidateExercises = useInvalidateExercises()
 
   const {
     register,
@@ -69,6 +71,7 @@ export default function ExerciseCreateEdit() {
           description: 'Your new exercise was added successfully.',
         })
       }
+      invalidateExercises()
       navigate('/app/exercises')
     } catch (err: any) {
       toast({

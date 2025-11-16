@@ -246,5 +246,43 @@ export class WorkoutSessionService {
         })
     }
 
+    async deleteExercise(id: string, userId: string) {
+        // Verificar se o exercício pertence a uma sessão do usuário
+        const exercise = await this.prisma.sessionExercise.findUnique({
+            where: { id },
+            include: { session: true },
+        });
+
+        if (!exercise) throw new NotFoundException('Exercise not found');
+        if (exercise.session.userId !== userId) {
+            throw new ForbiddenException('Access denied');
+        }
+
+        // Prisma vai deletar sets por cascade se configurado no schema
+        return this.prisma.sessionExercise.delete({
+            where: { id },
+        });
+    }
+
+    async deleteSet(setId: string, userId: string) {
+        // Verificar se o set pertence a uma sessão do usuário
+        const set = await this.prisma.sessionSet.findUnique({
+            where: { id: setId },
+            include: {
+                sessionEx: {
+                    include: { session: true },
+                },
+            },
+        });
+
+        if (!set) throw new NotFoundException('Set not found');
+        if (set.sessionEx.session.userId !== userId) {
+            throw new ForbiddenException('Access denied');
+        }
+
+        return this.prisma.sessionSet.delete({
+            where: { id: setId },
+        });
+    }
 
 }

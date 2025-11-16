@@ -18,6 +18,8 @@ import { UpdateExerciseDto } from './dto/update-exercise.dto'
 import { JwtAuthGuard } from 'src/auth/jwt/jwt.guard'
 import { CurrentUser } from 'src/common/decorators/current-user'
 import { PaginationDto } from 'src/common/dto/pagination.dto'
+import { Roles } from 'src/common/decorators/roles.decorator'
+import { RolesGuard } from 'src/common/guards/roles.guard'
 
 @ApiTags('Exercises')
 @ApiBearerAuth()
@@ -58,12 +60,13 @@ export class ExerciseController {
     return this.exerciseService.update(id, dto)
   }
 
-//   @UseGuards(JwtAuthGuard)
-//   @Delete(':id')
-//   @ApiOperation({ summary: 'Delete an exercise' })
-//   @ApiResponse({ status: 204, description: 'Exercise deleted successfully.' })
-//   @ApiResponse({ status: 401, description: 'Unauthorized.' })
-//   remove(@Param('id') id: string) {
-//     return this.exerciseService.remove(id)
-//   }
+  @Delete(':id')
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Delete an exercise' })
+  @ApiResponse({ status: 200, description: 'Exercise deleted successfully.' })
+  @ApiResponse({ status: 401, description: 'Unauthorized.' })
+  @ApiResponse({ status: 403, description: 'Forbidden - Admin role required for global exercises or must be creator.' })
+  remove(@Param('id') id: string, @CurrentUser() user) {
+    return this.exerciseService.remove(id, user.id, user.role)
+  }
 }

@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { CreateExerciseDto } from './dto/create-exercise.dto';
 import { UpdateExerciseDto } from './dto/update-exercise.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
@@ -63,7 +63,26 @@ export class ExerciseService {
     return this.prisma.exercise.update({ where: { id }, data: updateExerciseDto })
   }
 
-  remove(id: string) {
+  async remove(id: string, userId: string, userRole: string) {
+    const exercise = await this.prisma.exercise.findUnique({
+      where: { id },
+      select: { id: true, isGlobal: true, createdById: true },
+    })
+
+    if (!exercise) {
+      throw new NotFoundException('Exercise not found')
+    }
+
+    // Se o exercício é global, apenas admin pode deletar
+    if (exercise.isGlobal && userRole !== 'ADMIN') {
+      throw new ForbiddenException('Only admins can delete global exercises')
+    }
+
+    // Se não é global, apenas o criador pode deletar (ou admin)
+    if (!exercise.isGlobal && exercise.createdById !== userId && userRole !== 'ADMIN') {
+      throw new ForbiddenException('You can only delete your own exercises')
+    }
+
     return this.prisma.exercise.delete({ where: { id } })
   }
 }

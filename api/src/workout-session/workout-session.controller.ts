@@ -136,4 +136,30 @@ export class WorkoutSessionController {
     ) {
         return this.service.updateExercise(id, user.id, dto)
     }
+
+    @Delete('exercises/:id')
+    @ApiOperation({ summary: 'Delete an exercise from a workout session' })
+    @ApiResponse({ status: 200, description: 'Exercise deleted successfully.' })
+    @ApiResponse({ status: 403, description: 'Access denied.' })
+    @ApiResponse({ status: 404, description: 'Exercise not found.' })
+    @ApiResponse({ status: 401, description: 'Unauthorized.' })
+    async deleteExercise(
+        @CurrentUser() user,
+        @Param('id') id: string,
+    ) {
+        return this.service.deleteExercise(id, user.id)
+    }
+
+    @Delete('sets/:id')
+    @ApiOperation({ summary: 'Delete a set from a workout session' })
+    @ApiResponse({ status: 200, description: 'Set deleted successfully.' })
+    @ApiResponse({ status: 403, description: 'Access denied.' })
+    @ApiResponse({ status: 404, description: 'Set not found.' })
+    @ApiResponse({ status: 401, description: 'Unauthorized.' })
+    async deleteSet(
+        @CurrentUser() user,
+        @Param('id') id: string,
+    ) {
+        return this.service.deleteSet(id, user.id)
+    }
 }

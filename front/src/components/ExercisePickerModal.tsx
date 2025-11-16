@@ -1,16 +1,14 @@
 import { createPortal } from 'react-dom'
-import { useMemo, useState, useEffect, useRef } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import { api } from '@/lib/api'
-import { useToast } from './ToastProvider';
-
-export type Exercise = { id: string; name: string; muscleGroup?: string | null }
+import { useToast } from './ToastProvider'
+import { useExercises, useInvalidateExercises, type Exercise } from '@/api/exercise'
 
 type Props = {
   open: boolean
   onClose: () => void
   onSelect: (id: string) => void
   exercises: Exercise[]
-  refreshExercises?: () => Promise<void> // opcional para recarregar lista após criar
 }
 
 export function ExercisePickerModal({
@@ -18,74 +16,34 @@ export function ExercisePickerModal({
   onClose,
   onSelect,
   exercises,
-  refreshExercises,
 }: Props) {
   const { toast } = useToast()
+  const invalidateExercises = useInvalidateExercises()
   const [query, setQuery] = useState('')
   const [group, setGroup] = useState('ALL')
   const [creating, setCreating] = useState(false)
   const [newName, setNewName] = useState('')
   const [newGroup, setNewGroup] = useState('')
   const [loading, setLoading] = useState(false)
-  const [searchResults, setSearchResults] = useState<Exercise[]>([])
-  const [searching, setSearching] = useState(false)
-  const searchTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
-
-  // Busca no backend quando o usuário digita ou muda o grupo muscular (com debounce)
-  useEffect(() => {
-    if (searchTimeoutRef.current) {
-      clearTimeout(searchTimeoutRef.current)
-    }
-
-    const trimmedQuery = query.trim()
-    const shouldSearchBackend = trimmedQuery.length >= 2 || (group !== 'ALL' && trimmedQuery.length === 0)
-    
-    if (shouldSearchBackend) {
-      // Buscar no backend após 300ms de inatividade
-      searchTimeoutRef.current = setTimeout(async () => {
-        try {
-          setSearching(true)
-          const params: any = { page: 1, limit: 100 }
-          
-          // Adicionar busca por texto se houver
-          if (trimmedQuery.length >= 2) {
-            params.search = trimmedQuery
-          }
-          
-          // Adicionar filtro de muscleGroup se não for 'ALL'
-          if (group !== 'ALL') {
-            params.muscleGroup = group
-          }
-          
-          const { data } = await api.get<{ data: Exercise[]; meta: any }>('/exercises', {
-            params,
-          })
-          const results = data.data && Array.isArray(data.data) ? data.data : []
-          setSearchResults(results)
-        } catch (err: any) {
-          console.error('Search error:', err)
-          setSearchResults([])
-        } finally {
-          setSearching(false)
+  
+  // Use React Query for search when query length >= 2 or group is selected
+  const shouldSearchBackend = query.trim().length >= 2 || (group !== 'ALL' && query.trim().length === 0)
+  const { data: searchData, isLoading: searching } = useExercises(
+    shouldSearchBackend
+      ? {
+          page: 1,
+          limit: 100,
+          ...(query.trim().length >= 2 && { search: query.trim() }),
+          ...(group !== 'ALL' && { muscleGroup: group }),
         }
-      }, 300)
-    } else {
-      // Limpar resultados se não deve buscar no backend
-      setSearchResults([])
-    }
+      : undefined
+  )
+  const searchResults = searchData?.data ?? []
 
-    return () => {
-      if (searchTimeoutRef.current) {
-        clearTimeout(searchTimeoutRef.current)
-      }
-    }
-  }, [query, group])
-
-  // Limpar resultados quando o modal fecha
+  // Limpar query quando o modal fecha
   useEffect(() => {
     if (!open) {
       setQuery('')
-      setSearchResults([])
     }
   }, [open])
 
@@ -181,7 +139,7 @@ export function ExercisePickerModal({
                       title: 'Exercise created',
                       description: `${data.name} was added successfully.`,
                     })
-                    if (refreshExercises) await refreshExercises()
+                    invalidateExercises()
                     onSelect(data.id)
                     onClose()
                   } catch (err: any) {

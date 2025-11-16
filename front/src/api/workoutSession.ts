@@ -185,3 +185,13 @@ export async function updateWorkoutExercise(
   const { data } = await api.patch(`/workouts/exercises/${exerciseId}`, payload)
   return data
 }
+
+/* ---------- Delete exercise from session ---------- */
+export async function deleteExerciseFromSession(exerciseId: string): Promise<void> {
+  await api.delete(`/workouts/exercises/${exerciseId}`)
+}
+
+/* ---------- Delete set from exercise ---------- */
+export async function deleteSetFromExercise(setId: string): Promise<void> {
+  await api.delete(`/workouts/sets/${setId}`)
+}
