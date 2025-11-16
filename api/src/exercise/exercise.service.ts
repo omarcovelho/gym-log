@@ -36,6 +36,15 @@ export class ExerciseService {
     return Promise.all([
       this.prisma.exercise.findMany({
         where,
+        select: {
+          id: true,
+          name: true,
+          muscleGroup: true,
+          notes: true,
+          isGlobal: true,
+          createdById: true,
+          createdAt: true,
+        },
         orderBy: { name: 'asc' },
         skip,
         take: limit,
@@ -54,12 +63,42 @@ export class ExerciseService {
 
   async findOne(id: string) {
     console.log(id);
-    const exercise = await this.prisma.exercise.findUnique({ where: { id } })
+    const exercise = await this.prisma.exercise.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        name: true,
+        muscleGroup: true,
+        notes: true,
+        isGlobal: true,
+        createdById: true,
+        createdAt: true,
+      },
+    })
     if (!exercise) throw new NotFoundException('Exercise not found')
     return exercise
   }
 
-  update(id: string, updateExerciseDto: UpdateExerciseDto) {
+  async update(id: string, updateExerciseDto: UpdateExerciseDto, userId: string, userRole: string) {
+    const exercise = await this.prisma.exercise.findUnique({
+      where: { id },
+      select: { id: true, isGlobal: true, createdById: true },
+    })
+
+    if (!exercise) {
+      throw new NotFoundException('Exercise not found')
+    }
+
+    // Se o exercício é global, apenas admin pode editar
+    if (exercise.isGlobal && userRole !== 'ADMIN') {
+      throw new ForbiddenException('Only admins can edit global exercises')
+    }
+
+    // Se não é global, apenas o criador pode editar (ou admin)
+    if (!exercise.isGlobal && exercise.createdById !== userId && userRole !== 'ADMIN') {
+      throw new ForbiddenException('You can only edit your own exercises')
+    }
+
     return this.prisma.exercise.update({ where: { id }, data: updateExerciseDto })
   }
 

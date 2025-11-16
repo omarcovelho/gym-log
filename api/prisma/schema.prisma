@@ -55,6 +55,7 @@ model User {
   sessions  WorkoutSession[]
   templates WorkoutTemplate[]
   exercises Exercise[]
+  timers    RestTimer[]
 }
 
 model Exercise {
@@ -147,5 +148,18 @@ model SessionSet {
   unit          EffortUnit?     @default(KG)
   completed     Boolean         @default(false)
   notes         String?         
+}
+
+model RestTimer {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name        String   // Ex: "1:30", "My Custom Timer"
+  seconds     Int      // Duração em segundos
+  isDefault   Boolean  @default(false) // Para identificar timers padrão do sistema
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@index([userId])
 }
 

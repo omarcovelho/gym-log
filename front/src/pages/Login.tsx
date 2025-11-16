@@ -42,7 +42,8 @@ export default function Login() {
     login(token, { 
       sub: userData.id, 
       email: userData.email,
-      name: userData.name 
+      name: userData.name,
+      role: userData.role,
     })
     location.href = '/app'
   }
@@ -78,11 +79,14 @@ export default function Login() {
         const payload = JSON.parse(atob(token.split('.')[1]))
         const userId = payload.sub
         
+        // Get role from token payload
+        const role = payload.role || 'USER'
+        
         // salva no auth context
-        login(token, { sub: userId, email, name })
+        login(token, { sub: userId, email, name, role })
       } catch {
         // Fallback if token parsing fails
-        login(token, { sub: 'google', email, name })
+        login(token, { sub: 'google', email, name, role: 'USER' })
       }
 
       window.removeEventListener('message', listener)

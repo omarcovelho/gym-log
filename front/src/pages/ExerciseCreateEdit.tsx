@@ -41,8 +41,27 @@ export default function ExerciseCreateEdit() {
   /* ---------------------------- Load for Edit ---------------------------- */
 
   useEffect(() => {
-    if (isEditing) {
+    if (isEditing && id && user) {
       api.get(`/exercises/${id}`).then(({ data }) => {
+        // Check permissions
+        const canEdit =
+          data.isGlobal === true
+            ? user.role === 'ADMIN'
+            : data.createdById === user.sub || user.role === 'ADMIN'
+
+        if (!canEdit) {
+          toast({
+            variant: 'error',
+            title: 'Access denied',
+            description:
+              data.isGlobal === true
+                ? 'Only admins can edit global exercises.'
+                : 'You can only edit your own exercises.',
+          })
+          navigate('/app/exercises')
+          return
+        }
+
         reset({
           name: data.name ?? '',
           muscleGroup: data.muscleGroup ?? '', // ✅ handles enum correctly
@@ -50,7 +69,7 @@ export default function ExerciseCreateEdit() {
         })
       })
     }
-  }, [id, isEditing, reset])
+  }, [id, isEditing, reset, user, navigate, toast])
 
   /* ---------------------------- Submit ---------------------------- */
 
