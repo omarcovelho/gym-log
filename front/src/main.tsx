@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import ReactDOM from 'react-dom/client'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { createBrowserRouter, RouterProvider } from 'react-router-dom'
@@ -15,6 +15,7 @@ import ExerciseCreateEdit from '@/pages/ExerciseCreateEdit'
 import WorkoutTemplateCreateEdit from '@/pages/WorkoutTemplateCreateEdit'
 import WorkoutTemplatesList from '@/pages/WorkoutTemplatesList'
 import { ToastProvider } from '@/components/ToastProvider'
+import { checkScheduledNotification } from '@/utils/pwa'
 import './index.css'
 import WorkoutLogsList from './pages/WorkoutLogsList'
 import WorkoutSessionView from './pages/WorkoutSessionView'
@@ -166,14 +167,25 @@ const router = createBrowserRouter([
 
 ])
 
+function App() {
+  // Check for scheduled notifications when app opens
+  useEffect(() => {
+    checkScheduledNotification()
+  }, [])
+
+  return (
+    <QueryClientProvider client={qc}>
+      <AuthProvider>
+        <ToastProvider>
+          <RouterProvider router={router} />
+        </ToastProvider>
+      </AuthProvider>
+    </QueryClientProvider>
+  )
+}
+
 ReactDOM.createRoot(document.getElementById('root')!).render(
     <React.StrictMode>
-        <QueryClientProvider client={qc}>
-            <AuthProvider>
-                <ToastProvider>
-                    <RouterProvider router={router} />
-                </ToastProvider>
-            </AuthProvider>
-        </QueryClientProvider>
+        <App />
     </React.StrictMode>,
 )

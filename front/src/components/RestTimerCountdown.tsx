@@ -4,6 +4,8 @@ import {
   requestWakeLock,
   releaseWakeLock,
   sendNotification,
+  scheduleNotification,
+  clearScheduledNotification,
   vibrate,
   updateBadge,
   clearBadge,
@@ -41,6 +43,7 @@ export function RestTimerCountdown({
   const [isPaused, setIsPaused] = useState(false)
   const [isActive, setIsActive] = useState(true)
   const intervalRef = useRef<number | null>(null)
+  const notificationTimeoutRef = useRef<number | null>(null)
   const stateRef = useRef<TimerState>({
     startTime: Date.now(),
     initialSeconds,
@@ -83,9 +86,20 @@ export function RestTimerCountdown({
       }
     } else {
       // Initialize timer state for new timer
+      const startTime = Date.now()
       stateRef.current = {
-        startTime: Date.now(),
+        startTime,
         initialSeconds,
+      }
+
+      // Schedule notification for when timer ends
+      if (settings.notificationsEnabled) {
+        const endTime = startTime + initialSeconds * 1000
+        notificationTimeoutRef.current = scheduleNotification(
+          endTime,
+          'Rest Complete!',
+          'Time to get back to work!',
+        )
       }
     }
 
@@ -99,6 +113,25 @@ export function RestTimerCountdown({
       }
     }
   }, [])
+
+  // Schedule notification when timer resumes from pause
+  useEffect(() => {
+    if (!isPaused && isActive && remaining > 0 && settings.notificationsEnabled) {
+      // Clear existing scheduled notification
+      clearScheduledNotification()
+      if (notificationTimeoutRef.current) {
+        clearTimeout(notificationTimeoutRef.current)
+      }
+
+      // Calculate end time based on remaining seconds
+      const endTime = Date.now() + remaining * 1000
+      notificationTimeoutRef.current = scheduleNotification(
+        endTime,
+        'Rest Complete!',
+        'Time to get back to work!',
+      )
+    }
+  }, [isPaused, isActive, remaining, settings.notificationsEnabled])
 
   // Countdown logic
   useEffect(() => {
@@ -185,6 +218,13 @@ export function RestTimerCountdown({
     releaseWakeLock()
     localStorage.removeItem(TIMER_STORAGE_KEY)
 
+    // Clear scheduled notification (it should have already fired, but just in case)
+    clearScheduledNotification()
+    if (notificationTimeoutRef.current) {
+      clearTimeout(notificationTimeoutRef.current)
+      notificationTimeoutRef.current = null
+    }
+
     // Trigger feedback
     if (settings.vibrationEnabled) {
       vibrate([200, 100, 200, 100, 200])
@@ -194,6 +234,7 @@ export function RestTimerCountdown({
       playTimerSound()
     }
 
+    // Notification was already scheduled, but send immediate one as backup
     if (settings.notificationsEnabled) {
       sendNotification('Rest Complete!', 'Time to get back to work!')
     }
@@ -231,6 +272,14 @@ export function RestTimerCountdown({
     clearBadge()
     releaseWakeLock()
     localStorage.removeItem(TIMER_STORAGE_KEY)
+    
+    // Clear scheduled notification
+    clearScheduledNotification()
+    if (notificationTimeoutRef.current) {
+      clearTimeout(notificationTimeoutRef.current)
+      notificationTimeoutRef.current = null
+    }
+    
     onStop()
   }
 
