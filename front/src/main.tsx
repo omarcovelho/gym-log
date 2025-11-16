@@ -19,7 +19,16 @@ import WorkoutLogsList from './pages/WorkoutLogsList'
 import WorkoutSessionView from './pages/WorkoutSessionView'
 import WorkoutSessionDetails from './pages/WorkoutSessionDetails'
 
-const qc = new QueryClient()
+const qc = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      gcTime: 10 * 60 * 1000, // 10 minutes (formerly cacheTime)
+      retry: 1,
+      refetchOnWindowFocus: false,
+    },
+  },
+})
 
 const router = createBrowserRouter([
     // Public routes
