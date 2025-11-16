@@ -56,8 +56,10 @@ export class ExerciseController {
   @ApiOperation({ summary: 'Update an existing exercise' })
   @ApiResponse({ status: 200, description: 'Exercise updated successfully.' })
   @ApiResponse({ status: 401, description: 'Unauthorized.' })
-  update(@Param('id') id: string, @Body() dto: UpdateExerciseDto) {
-    return this.exerciseService.update(id, dto)
+  @ApiResponse({ status: 403, description: 'Forbidden - Admin role required for global exercises or must be creator.' })
+  @ApiResponse({ status: 404, description: 'Exercise not found.' })
+  update(@Param('id') id: string, @Body() dto: UpdateExerciseDto, @CurrentUser() user) {
+    return this.exerciseService.update(id, dto, user.id, user.role)
   }
 
   @Delete(':id')

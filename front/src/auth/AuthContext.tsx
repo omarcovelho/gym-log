@@ -1,7 +1,7 @@
 import { createContext, useContext, useMemo, useState, useEffect } from 'react'
 import { validateToken, refreshToken, isTokenExpiringSoon, isTokenExpired } from '@/api/auth'
 
-type User = { sub: string; email: string; name?: string } | null
+export type User = { sub: string; email: string; name?: string; role?: string } | null
 type AuthCtx = {
   user: User
   loading: boolean
@@ -44,6 +44,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           sub: response.user.id,
           email: response.user.email,
           name: response.user.name || parsedPayload.name,
+          role: response.user.role || parsedPayload.role,
         })
 
         // Refresh token if expiring soon
@@ -55,6 +56,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               sub: refreshed.user.id,
               email: refreshed.user.email,
               name: refreshed.user.name,
+              role: refreshed.user.role,
             }))
           } catch (err) {
             // If refresh fails, continue with current token

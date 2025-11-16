@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { api } from '@/lib/api'
-import { useAuth } from '@/auth/AuthContext'
+import { useAuth, type User } from '@/auth/AuthContext'
 import { useToast } from '@/components/ToastProvider'
 import { ConfirmDialog } from '@/components/ConfirmDialog'
 import { Pagination, type PaginationMeta } from '@/components/Pagination'
@@ -11,6 +11,8 @@ export type Exercise = {
   name: string
   muscleGroup: string | null
   notes?: string | null
+  isGlobal?: boolean
+  createdById?: string
 }
 
 export default function ExercisesList() {
@@ -18,6 +20,22 @@ export default function ExercisesList() {
   const navigate = useNavigate()
   const { toast } = useToast()
   const [searchParams, setSearchParams] = useSearchParams()
+
+  function canEdit(exercise: Exercise, user: User): boolean {
+    if (!user) return false
+    if (exercise.isGlobal === true) {
+      return user.role === 'ADMIN'
+    }
+    return exercise.createdById === user.sub || user.role === 'ADMIN'
+  }
+
+  function canDelete(exercise: Exercise, user: User): boolean {
+    if (!user) return false
+    if (exercise.isGlobal === true) {
+      return user.role === 'ADMIN'
+    }
+    return exercise.createdById === user.sub || user.role === 'ADMIN'
+  }
 
   const [exercises, setExercises] = useState<Exercise[]>([])
   const [loading, setLoading] = useState(true)
@@ -150,8 +168,18 @@ export default function ExercisesList() {
             "
           >
             <div className="flex justify-between items-start">
-              <div>
-                <h2 className="font-semibold text-lg text-gray-100">{ex.name}</h2>
+              <div className="flex-1">
+                <div className="flex items-center gap-2">
+                  <h2 className="font-semibold text-lg text-gray-100">{ex.name}</h2>
+                  {ex.isGlobal && (
+                    <span
+                      className="text-xs px-2 py-0.5 rounded bg-blue-900/30 text-blue-400 border border-blue-800/50"
+                      title="Global exercise - Only admins can edit or delete"
+                    >
+                      Global
+                    </span>
+                  )}
+                </div>
                 {ex.muscleGroup && (
                   <p className="text-xs text-gray-500 uppercase mt-0.5">
                     {ex.muscleGroup}
@@ -162,29 +190,35 @@ export default function ExercisesList() {
                 )}
               </div>
 
-              <div className="flex gap-2">
-                <button
-                  onClick={() => navigate(`/app/exercises/${ex.id}/edit`)}
-                  className="text-xs px-3 py-1.5 rounded-md font-medium bg-[#101010] text-gray-400 hover:text-gray-200 transition"
-                >
-                  Edit
-                </button>
+              {user && (canEdit(ex, user) || canDelete(ex, user)) && (
+                <div className="flex gap-2">
+                  {canEdit(ex, user) && (
+                    <button
+                      onClick={() => navigate(`/app/exercises/${ex.id}/edit`)}
+                      className="text-xs px-3 py-1.5 rounded-md font-medium bg-[#101010] text-gray-400 hover:text-gray-200 transition"
+                    >
+                      Edit
+                    </button>
+                  )}
 
-                <button
-                  disabled={deletingId === ex.id}
-                  onClick={() => setConfirmId(ex.id)}
-                  className={`
-                    text-xs px-3 py-1.5 rounded-md font-medium transition
-                    ${
-                      deletingId === ex.id
-                        ? 'opacity-50 cursor-not-allowed'
-                        : 'bg-red-900/40 text-red-400 hover:bg-red-900 hover:text-red-200'
-                    }
-                  `}
-                >
-                  {deletingId === ex.id ? 'Deleting...' : 'Delete'}
-                </button>
-              </div>
+                  {canDelete(ex, user) && (
+                    <button
+                      disabled={deletingId === ex.id}
+                      onClick={() => setConfirmId(ex.id)}
+                      className={`
+                        text-xs px-3 py-1.5 rounded-md font-medium transition
+                        ${
+                          deletingId === ex.id
+                            ? 'opacity-50 cursor-not-allowed'
+                            : 'bg-red-900/40 text-red-400 hover:bg-red-900 hover:text-red-200'
+                        }
+                      `}
+                    >
+                      {deletingId === ex.id ? 'Deleting...' : 'Delete'}
+                    </button>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* Confirm deletion */}

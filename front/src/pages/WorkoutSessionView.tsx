@@ -21,6 +21,9 @@ import {
 import { ExercisePickerModal } from '@/components/ExercisePickerModal'
 import { FinishWorkoutDialog, type FinishWorkoutData } from '@/components/FinishWorkoutDialog'
 import { ConfirmDialog } from '@/components/ConfirmDialog'
+import { RestTimer } from '@/components/RestTimer'
+import { RestTimerManager } from '@/components/RestTimerManager'
+import { RestTimerCountdown } from '@/components/RestTimerCountdown'
 import { useExercises } from '@/api/exercise'
 
 function useDebouncedCallback<T extends (...args: any[]) => void>(cb: T, delay = 300) {
@@ -50,6 +53,9 @@ export default function WorkoutSessionView() {
   const [finishingWorkout, setFinishingWorkout] = useState(false)
   const [confirmRemoveExerciseId, setConfirmRemoveExerciseId] = useState<string | null>(null)
   const [confirmRemoveSet, setConfirmRemoveSet] = useState<{ setId: string; exerciseId: string } | null>(null)
+  const [timerOpen, setTimerOpen] = useState(false)
+  const [timerManagerOpen, setTimerManagerOpen] = useState(false)
+  const [countdownActive, setCountdownActive] = useState<{ seconds: number; startTime?: number } | null>(null)
 
   const { data: exercisesData } = useExercises({ page: 1, limit: 100 })
   const exercises = exercisesData?.data ?? []
@@ -60,6 +66,31 @@ export default function WorkoutSessionView() {
       return
     }
     loadSession()
+
+    // Restore timer if active
+    const saved = localStorage.getItem('restTimerActive')
+    if (saved) {
+      try {
+        const savedState = JSON.parse(saved)
+        const now = Date.now()
+        const elapsed = savedState.pausedAt
+          ? (savedState.elapsedBeforePause || 0)
+          : (now - savedState.startTime) / 1000
+        const remaining = Math.max(0, savedState.initialSeconds - elapsed)
+
+        if (remaining > 0) {
+          setCountdownActive({
+            seconds: remaining,
+            startTime: savedState.startTime,
+          })
+        } else {
+          localStorage.removeItem('restTimerActive')
+        }
+      } catch (err) {
+        console.error('Failed to restore timer:', err)
+        localStorage.removeItem('restTimerActive')
+      }
+    }
   }, [user, navigate, id])
 
   async function loadSession() {
@@ -427,6 +458,14 @@ export default function WorkoutSessionView() {
                             >
                               {s.completed ? '✓ Done' : 'Mark Done'}
                             </button>
+                            {s.completed && (
+                              <button
+                                onClick={() => setTimerOpen(true)}
+                                className="text-xs border px-2 py-1 rounded text-primary border-primary/50 hover:bg-primary/10 transition"
+                              >
+                                Start Rest
+                              </button>
+                            )}
                             <button
                               onClick={() => handleRemoveSetClick(s.id, ex.id)}
                               disabled={removingSetId === s.id}
@@ -604,6 +643,30 @@ export default function WorkoutSessionView() {
         cancelText="Cancel"
         onConfirm={() => confirmRemoveSet && handleRemoveSet(confirmRemoveSet.setId, confirmRemoveSet.exerciseId)}
         onCancel={() => setConfirmRemoveSet(null)}
+      />
+
+      {/* REST TIMER */}
+      {countdownActive && (
+        <RestTimerCountdown
+          initialSeconds={countdownActive.seconds}
+          onComplete={() => setCountdownActive(null)}
+          onStop={() => setCountdownActive(null)}
+        />
+      )}
+
+      <RestTimer
+        open={timerOpen}
+        onClose={() => setTimerOpen(false)}
+        onStart={(seconds) => {
+          setCountdownActive({ seconds })
+          setTimerOpen(false)
+        }}
+        onManageClick={() => setTimerManagerOpen(true)}
+      />
+
+      <RestTimerManager
+        open={timerManagerOpen}
+        onClose={() => setTimerManagerOpen(false)}
       />
     </div>
   )
