@@ -100,7 +100,7 @@ export function ExercisePickerModal({
                 value={newName}
                 onChange={e => setNewName(e.target.value)}
                 placeholder="Exercise name"
-                className="w-full p-2 rounded bg-dark border border-gray-700 text-gray-200 text-sm"
+                className="w-full p-2 rounded bg-dark border border-gray-700 text-gray-200 text-base"
               />
               <select
                 value={newGroup}
@@ -195,7 +195,7 @@ export function ExercisePickerModal({
                 value={query}
                 onChange={e => setQuery(e.target.value)}
                 placeholder="Search exercise..."
-                className="w-full p-2 rounded bg-dark border border-gray-700 text-gray-200 text-sm"
+                className="w-full p-2 rounded bg-dark border border-gray-700 text-gray-200 text-base"
               />
             </div>
 

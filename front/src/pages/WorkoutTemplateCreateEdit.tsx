@@ -167,7 +167,7 @@ function ExerciseBlock({
         <input
           {...register(`items.${idx}.notes`)}
           placeholder="Notes for this exercise..."
-          className="w-full bg-[#121212] border border-gray-700 rounded-md p-2 text-sm text-gray-200 placeholder-gray-500 focus:border-primary outline-none transition"
+          className="w-full bg-[#121212] border border-gray-700 rounded-md p-2 text-base text-gray-200 placeholder-gray-500 focus:border-primary outline-none transition"
         />
       </div>
 
@@ -188,7 +188,7 @@ function ExerciseBlock({
                 })}
                   type="number"
                   placeholder="Reps *"
-                  className={`col-span-3 bg-[#121212] border rounded-md p-2 text-sm ${
+                  className={`col-span-3 bg-[#121212] border rounded-md p-2 text-base ${
                     setError
                       ? 'border-red-600'
                       : 'border-gray-700 focus:border-primary'
@@ -202,13 +202,13 @@ function ExerciseBlock({
                     })}
                   type="number"
                   placeholder="RIR"
-                  className="col-span-3 bg-[#121212] border border-gray-700 rounded-md p-2 text-sm"
+                  className="col-span-3 bg-[#121212] border border-gray-700 rounded-md p-2 text-base"
                 />
 
                 <input
                   {...register(`items.${idx}.sets.${sidx}.notes`)}
                   placeholder="Notes"
-                  className="col-span-5 bg-[#121212] border border-gray-700 rounded-md p-2 text-sm"
+                  className="col-span-5 bg-[#121212] border border-gray-700 rounded-md p-2 text-base"
                 />
 
                 <button
@@ -366,7 +366,7 @@ export default function WorkoutTemplateCreateEdit() {
           <input
             {...register('title')}
             placeholder='Push Day A, Pull Day B...'
-            className="w-full bg-[#121212] border border-gray-700 rounded-lg p-3 mt-1 text-gray-200"
+            className="w-full bg-[#121212] border border-gray-700 rounded-lg p-3 mt-1 text-base text-gray-200"
           />
         </div>
 

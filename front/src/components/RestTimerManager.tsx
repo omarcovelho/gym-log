@@ -195,7 +195,7 @@ export function RestTimerManager({ open, onClose }: Props) {
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="e.g., 1:30, My Custom Timer"
-                  className="w-full px-3 py-2 rounded border border-gray-600 bg-dark text-gray-100 focus:outline-none focus:border-primary"
+                  className="w-full px-3 py-2 rounded border border-gray-600 bg-dark text-base text-gray-100 focus:outline-none focus:border-primary"
                 />
               </div>
               <div className="grid grid-cols-2 gap-3">
@@ -210,7 +210,7 @@ export function RestTimerManager({ open, onClose }: Props) {
                     placeholder="0"
                     min="0"
                     max="30"
-                    className="w-full px-3 py-2 rounded border border-gray-600 bg-dark text-gray-100 focus:outline-none focus:border-primary"
+                    className="w-full px-3 py-2 rounded border border-gray-600 bg-dark text-base text-gray-100 focus:outline-none focus:border-primary"
                   />
                 </div>
                 <div>
@@ -224,7 +224,7 @@ export function RestTimerManager({ open, onClose }: Props) {
                     placeholder="0"
                     min="0"
                     max="59"
-                    className="w-full px-3 py-2 rounded border border-gray-600 bg-dark text-gray-100 focus:outline-none focus:border-primary"
+                    className="w-full px-3 py-2 rounded border border-gray-600 bg-dark text-base text-gray-100 focus:outline-none focus:border-primary"
                   />
                 </div>
               </div>

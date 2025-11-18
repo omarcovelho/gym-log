@@ -104,7 +104,7 @@ export default function Login() {
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-3">
           <input
-            className="w-full border p-2 rounded bg-dark border-gray-700"
+            className="w-full border p-2 rounded bg-dark border-gray-700 text-base"
             placeholder="Email"
             {...register('email')}
           />
@@ -113,7 +113,7 @@ export default function Login() {
           )}
 
           <input
-            className="w-full border p-2 rounded bg-dark border-gray-700"
+            className="w-full border p-2 rounded bg-dark border-gray-700 text-base"
             type="password"
             placeholder="Password"
             {...register('password')}

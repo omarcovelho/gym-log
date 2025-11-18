@@ -359,7 +359,7 @@ export default function WorkoutSessionView() {
           value={session.notes ?? ''}
           onChange={(e) => handleNotesChange(e.target.value)}
           placeholder="Session notes..."
-          className="w-full resize-none rounded-md border border-gray-700 bg-[#111] px-3 py-2 text-sm text-gray-100 placeholder:text-gray-500 focus:border-primary focus:outline-none"
+          className="w-full resize-none rounded-md border border-gray-700 bg-[#111] px-3 py-2 text-base text-gray-100 placeholder:text-gray-500 focus:border-primary focus:outline-none"
           rows={2}
         />
       </header>
@@ -496,7 +496,7 @@ export default function WorkoutSessionView() {
                                   e.target.value,
                                 )
                               }
-                              className="w-full rounded-md border border-gray-700 bg-[#0f0f0f] px-3 py-2 text-sm text-gray-100"
+                              className="w-full rounded-md border border-gray-700 bg-[#0f0f0f] px-3 py-2 text-base text-gray-100"
                             />
                           </div>
 
@@ -515,7 +515,7 @@ export default function WorkoutSessionView() {
                                   e.target.value,
                                 )
                               }
-                              className="w-full rounded-md border border-gray-700 bg-[#0f0f0f] px-3 py-2 text-sm text-gray-100"
+                              className="w-full rounded-md border border-gray-700 bg-[#0f0f0f] px-3 py-2 text-base text-gray-100"
                             />
                           </div>
 
@@ -534,7 +534,7 @@ export default function WorkoutSessionView() {
                                   e.target.value,
                                 )
                               }
-                              className="w-full rounded-md border border-gray-700 bg-[#0f0f0f] px-3 py-2 text-sm text-gray-100"
+                              className="w-full rounded-md border border-gray-700 bg-[#0f0f0f] px-3 py-2 text-base text-gray-100"
                             />
                           </div>
                         </div>
@@ -549,7 +549,7 @@ export default function WorkoutSessionView() {
                             onChange={(e) =>
                               handleSetChange(ex.id, s.id, 'notes', e.target.value)
                             }
-                            className="w-full rounded-md border border-gray-700 bg-[#0f0f0f] px-3 py-2 text-sm text-gray-100"
+                            className="w-full rounded-md border border-gray-700 bg-[#0f0f0f] px-3 py-2 text-base text-gray-100"
                           />
                         </div>
                       </div>
