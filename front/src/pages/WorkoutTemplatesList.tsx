@@ -8,7 +8,6 @@ import {
 import { useAuth } from '@/auth/AuthContext'
 import { useToast } from '@/components/ToastProvider'
 import { ConfirmDialog } from '@/components/ConfirmDialog'
-import { startWorkout, startManualWorkout } from '@/api/workoutSession'
 import { Pagination, type PaginationMeta } from '@/components/Pagination'
 
 export default function WorkoutTemplatesList() {
@@ -30,12 +29,6 @@ export default function WorkoutTemplatesList() {
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [confirmId, setConfirmId] = useState<string | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
-
-  const [startId, setStartId] = useState<string | null>(null)
-  const [startingId, setStartingId] = useState<string | null>(null)
-
-  const [startFreeOpen, setStartFreeOpen] = useState(false)
-  const [_startingFree, setStartingFree] = useState(false)
 
   const currentPage = parseInt(searchParams.get('page') || '1', 10)
   const currentLimit = parseInt(searchParams.get('limit') || '10', 10)
@@ -87,36 +80,6 @@ export default function WorkoutTemplatesList() {
     }
   }
 
-  async function handleStartWorkout(templateId: string) {
-    setStartingId(templateId)
-    try {
-      const session = await startWorkout(templateId)
-      toast({
-        variant: 'success',
-        title: 'Workout started',
-      })
-      navigate(`/app/workouts/${session.id}`)
-    } finally {
-      setStartingId(null)
-      setStartId(null)
-    }
-  }
-
-  async function handleStartFreeWorkout() {
-    setStartingFree(true)
-    try {
-      const session = await startManualWorkout()
-      toast({
-        variant: 'success',
-        title: 'Free workout started',
-      })
-      navigate(`/app/workouts/${session.id}`)
-    } finally {
-      setStartingFree(false)
-      setStartFreeOpen(false)
-    }
-  }
-
   if (loading)
     return <p className="text-center mt-12 text-gray-400">Loading templates...</p>
 
@@ -131,25 +94,16 @@ export default function WorkoutTemplatesList() {
         <div>
           <h1 className="text-3xl font-bold text-gray-100">My Workout Templates</h1>
           <p className="text-sm text-gray-400 mt-1">
-            Manage your splits or start a free workout.
+            Manage your workout templates and splits.
           </p>
         </div>
 
-        <div className="flex gap-2">
-          <button
-            onClick={() => setStartFreeOpen(true)}
-            className="px-4 py-2 bg-blue-900/40 text-blue-300 rounded-lg font-semibold text-sm hover:bg-blue-900 hover:text-blue-100 transition"
-          >
-            Free Workout
-          </button>
-
-          <Link
-            to="/app/templates/new"
-            className="px-4 py-2 bg-primary text-black rounded-lg font-semibold text-sm hover:brightness-110 transition"
-          >
-            + New Template
-          </Link>
-        </div>
+        <Link
+          to="/app/templates/new"
+          className="px-4 py-2 bg-primary text-black rounded-lg font-semibold text-sm hover:brightness-110 transition"
+        >
+          + New Template
+        </Link>
       </div>
 
       {/* EMPTY STATE */}
@@ -192,21 +146,6 @@ export default function WorkoutTemplatesList() {
                 >
                   Edit
                 </Link>
-
-                <button
-                  onClick={() => setStartId(tpl.id)}
-                  disabled={startingId === tpl.id}
-                  className={`
-                    text-xs px-3 py-1.5 rounded-md
-                    ${
-                      startingId === tpl.id
-                        ? 'opacity-50 bg-green-900/20 text-green-700'
-                        : 'bg-green-900/40 text-green-400 hover:bg-green-900 hover:text-green-200'
-                    }
-                  `}
-                >
-                  {startingId === tpl.id ? 'Starting...' : 'Start'}
-                </button>
 
                 <button
                   onClick={() => setConfirmId(tpl.id)}
@@ -256,16 +195,6 @@ export default function WorkoutTemplatesList() {
               onConfirm={() => handleDelete(tpl.id, tpl.title)}
               onCancel={() => setConfirmId(null)}
             />
-
-            <ConfirmDialog
-              open={startId === tpl.id}
-              title="Start Workout"
-              message={`Start a workout using "${tpl.title}"?`}
-              confirmText="Start"
-              cancelText="Cancel"
-              onConfirm={() => handleStartWorkout(tpl.id)}
-              onCancel={() => setStartId(null)}
-            />
           </div>
         ))}
       </div>
@@ -274,17 +203,6 @@ export default function WorkoutTemplatesList() {
       {!loading && templates.length > 0 && (
         <Pagination meta={pagination} onPageChange={handlePageChange} />
       )}
-
-      {/* FREE WORKOUT DIALOG */}
-      <ConfirmDialog
-        open={startFreeOpen}
-        title="Start Free Workout"
-        message="Start a workout without a template?"
-        confirmText="Start"
-        cancelText="Cancel"
-        onConfirm={handleStartFreeWorkout}
-        onCancel={() => setStartFreeOpen(false)}
-      />
     </div>
   )
 }

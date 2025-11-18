@@ -4,7 +4,6 @@ import { api } from '@/lib/api'
 import { useAuth } from '@/auth/AuthContext'
 import { useToast } from '@/components/ToastProvider'
 import { ConfirmDialog } from '@/components/ConfirmDialog'
-import { startManualWorkout } from '@/api/workoutSession'
 import { Pagination, type PaginationMeta } from '@/components/Pagination'
 
 type WorkoutSession = {
@@ -31,9 +30,6 @@ export default function WorkoutLogsList() {
 
   const [confirmId, setConfirmId] = useState<string | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
-
-  const [startFreeOpen, setStartFreeOpen] = useState(false)
-  const [_startingFree, setStartingFree] = useState(false)
 
   const currentPage = parseInt(searchParams.get('page') || '1', 10)
   const currentLimit = parseInt(searchParams.get('limit') || '10', 10)
@@ -79,40 +75,16 @@ export default function WorkoutLogsList() {
     }
   }
 
-  async function handleStartFreeWorkout() {
-    setStartingFree(true)
-    try {
-      const session = await startManualWorkout()
-      toast({
-        variant: 'success',
-        title: 'Free workout started',
-      })
-      navigate(`/app/workouts/${session.id}`)
-    } finally {
-      setStartingFree(false)
-      setStartFreeOpen(false)
-    }
-  }
-
   if (loading)
     return <p className="text-gray-400 text-center mt-8">Loading sessions...</p>
 
   return (
     <div className="max-w-3xl mx-auto space-y-8">
-      <header className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-100">Workout History</h1>
-          <p className="text-sm text-gray-400">
-            Track your completed and ongoing workouts.
-          </p>
-        </div>
-
-        <button
-          onClick={() => setStartFreeOpen(true)}
-          className="px-4 py-2 bg-blue-900/40 text-blue-300 rounded-lg font-semibold text-sm hover:bg-blue-900 hover:text-blue-100 transition"
-        >
-          Start Free Workout
-        </button>
+      <header>
+        <h1 className="text-3xl font-bold text-gray-100">Workout History</h1>
+        <p className="text-sm text-gray-400 mt-1">
+          Track your completed and ongoing workouts.
+        </p>
       </header>
 
       <div className="space-y-5">
@@ -190,16 +162,6 @@ export default function WorkoutLogsList() {
       {!loading && sessions.length > 0 && (
         <Pagination meta={pagination} onPageChange={handlePageChange} />
       )}
-
-      <ConfirmDialog
-        open={startFreeOpen}
-        title="Start Free Workout"
-        message="Start a workout without a template?"
-        confirmText="Start"
-        cancelText="Cancel"
-        onConfirm={handleStartFreeWorkout}
-        onCancel={() => setStartFreeOpen(false)}
-      />
     </div>
   )
 }
