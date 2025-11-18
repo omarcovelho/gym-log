@@ -36,9 +36,7 @@ export function RestTimer({ open, onClose, onStart, onManageClick }: Props) {
   function formatTime(seconds: number): string {
     const mins = Math.floor(seconds / 60)
     const secs = seconds % 60
-    if (mins === 0) return `${secs}s`
-    if (secs === 0) return `${mins}min`
-    return `${mins}:${secs.toString().padStart(2, '0')}`
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
   }
 
   function handleSelect(timer: RestTimer) {
@@ -75,13 +73,8 @@ export function RestTimer({ open, onClose, onStart, onManageClick }: Props) {
                   className="w-full text-left p-3 rounded-lg border border-gray-700 hover:border-primary hover:bg-gray-800/50 transition"
                 >
                   <div className="flex items-center justify-between">
-                    <div>
-                      <div className="font-medium text-gray-100">
-                        {timer.name}
-                      </div>
-                      <div className="text-sm text-gray-400">
-                        {formatTime(timer.seconds)}
-                      </div>
+                    <div className="font-medium text-gray-100 text-lg">
+                      {formatTime(timer.seconds)}
                     </div>
                     {timer.isDefault && (
                       <span className="text-xs px-2 py-1 rounded bg-gray-800 text-gray-400">

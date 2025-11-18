@@ -48,7 +48,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
       {createPortal(
         <div
           className="
-            fixed z-[9999] flex flex-col gap-2 px-3
+            fixed z-[999999] flex flex-col gap-2 px-3
             sm:top-4 sm:right-4
             bottom-4 right-1/2 translate-x-1/2 sm:translate-x-0
             sm:left-auto sm:bottom-auto w-full sm:w-auto max-w-sm

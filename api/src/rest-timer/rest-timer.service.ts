@@ -1,18 +1,18 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException, ConflictException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateRestTimerDto } from './dto/create-rest-timer.dto';
 import { UpdateRestTimerDto } from './dto/update-rest-timer.dto';
 
 @Injectable()
 export class RestTimerService {
-  // Timers padrão hardcoded
+  // Timers padrão hardcoded (apenas seconds, sem name)
   private readonly DEFAULT_TIMERS = [
-    { name: '30s', seconds: 30, isDefault: true },
-    { name: '1min', seconds: 60, isDefault: true },
-    { name: '1:30', seconds: 90, isDefault: true },
-    { name: '2min', seconds: 120, isDefault: true },
-    { name: '3min', seconds: 180, isDefault: true },
-    { name: '5min', seconds: 300, isDefault: true },
+    { seconds: 30, isDefault: true },
+    { seconds: 60, isDefault: true },
+    { seconds: 90, isDefault: true },
+    { seconds: 120, isDefault: true },
+    { seconds: 180, isDefault: true },
+    { seconds: 300, isDefault: true },
   ];
 
   constructor(private readonly prisma: PrismaService) {}
@@ -28,7 +28,6 @@ export class RestTimerService {
     const defaultTimersWithIds = this.DEFAULT_TIMERS.map((timer, index) => ({
       id: `default-${index}`,
       userId,
-      name: timer.name,
       seconds: timer.seconds,
       isDefault: timer.isDefault,
       createdAt: new Date(),
@@ -39,9 +38,30 @@ export class RestTimerService {
   }
 
   async create(userId: string, createDto: CreateRestTimerDto) {
+    // Verificar se já existe timer padrão com mesmo seconds
+    const defaultTimerExists = this.DEFAULT_TIMERS.some(
+      (timer) => timer.seconds === createDto.seconds,
+    );
+
+    if (defaultTimerExists) {
+      throw new ConflictException('A timer with this value already exists');
+    }
+
+    // Verificar se já existe timer customizado com mesmo seconds
+    const existingTimer = await this.prisma.restTimer.findFirst({
+      where: {
+        userId,
+        seconds: createDto.seconds,
+      },
+    });
+
+    if (existingTimer) {
+      throw new ConflictException('A timer with this value already exists');
+    }
+
     return this.prisma.restTimer.create({
       data: {
-        ...createDto,
+        seconds: createDto.seconds,
         userId,
         isDefault: false,
       },
@@ -65,6 +85,31 @@ export class RestTimerService {
     // Verificar ownership
     if (timer.userId !== userId) {
       throw new ForbiddenException('You can only edit your own timers');
+    }
+
+    // Se estiver atualizando seconds, verificar duplicatas
+    if (updateDto.seconds !== undefined) {
+      // Verificar se já existe timer padrão com mesmo seconds
+      const defaultTimerExists = this.DEFAULT_TIMERS.some(
+        (t) => t.seconds === updateDto.seconds,
+      );
+
+      if (defaultTimerExists) {
+        throw new ConflictException('A timer with this value already exists');
+      }
+
+      // Verificar se já existe outro timer customizado com mesmo seconds
+      const existingTimer = await this.prisma.restTimer.findFirst({
+        where: {
+          userId,
+          seconds: updateDto.seconds,
+          id: { not: id }, // Excluir o timer atual
+        },
+      });
+
+      if (existingTimer) {
+        throw new ConflictException('A timer with this value already exists');
+      }
     }
 
     return this.prisma.restTimer.update({

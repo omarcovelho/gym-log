@@ -18,7 +18,7 @@ import { ThrottlerModule } from '@nestjs/throttler';
     }),
     ThrottlerModule.forRoot([{
       ttl: 60000, // 1 minuto
-      limit: 10, // 10 requisições por minuto
+      limit: 100, // 10 requisições por minuto
     }]),
     PrismaModule,
     AuthModule,
