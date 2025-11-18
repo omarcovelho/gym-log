@@ -1,4 +1,5 @@
 import Navbar from '../components/Navbar'
+import { FloatingActionButton } from '../components/FloatingActionButton'
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -19,6 +20,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       >
         {children}
       </main>
+
+      {/* FAB - Botão de ação rápida fixo */}
+      <FloatingActionButton />
     </div>
   )
 }

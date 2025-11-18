@@ -195,3 +195,36 @@ export async function deleteExerciseFromSession(exerciseId: string): Promise<voi
 export async function deleteSetFromExercise(setId: string): Promise<void> {
   await api.delete(`/workouts/sets/${setId}`)
 }
+
+/* ---------- Get workout statistics ---------- */
+export type WorkoutStats = {
+  totalWorkouts: number
+  monthlyVolume: number
+  recentPRs: Array<{
+    exerciseName: string
+    type: 'load' | 'reps' | 'volume'
+    value: number
+    unit?: string
+  }>
+  volumeHistory: Array<{
+    date: string
+    volume: number
+  }>
+  lastWorkout: {
+    id: string
+    title: string
+    date: string
+    volume: number
+  } | null
+}
+
+export async function getWorkoutStats(): Promise<WorkoutStats> {
+  const { data } = await api.get(`/workouts/stats`)
+  return data
+}
+
+/* ---------- Get active workout session (in progress) ---------- */
+export async function getActiveWorkout(): Promise<WorkoutSession | null> {
+  const { data } = await api.get(`/workouts/active`)
+  return data
+}
