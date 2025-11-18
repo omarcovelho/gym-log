@@ -154,9 +154,8 @@ model RestTimer {
   id          String   @id @default(uuid())
   userId      String
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  name        String   // Ex: "1:30", "My Custom Timer"
-  seconds     Int      // Duração em segundos
-  isDefault   Boolean  @default(false) // Para identificar timers padrão do sistema
+  seconds     Int      // Duration in seconds
+  isDefault   Boolean  @default(false) // To identify default system timers
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   

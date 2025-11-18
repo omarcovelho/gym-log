@@ -138,6 +138,11 @@ export default function WorkoutSessionView() {
     })
 
     persistExercise(exerciseId)
+
+    // Abrir modal automaticamente quando marcar set como concluído
+    if (field === 'completed' && value === true) {
+      setTimerOpen(true)
+    }
   }
 
   function persistExercise(exerciseId: string) {

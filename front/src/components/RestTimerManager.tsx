@@ -23,7 +23,6 @@ export function RestTimerManager({ open, onClose }: Props) {
   const [loading, setLoading] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [deleteId, setDeleteId] = useState<string | null>(null)
-  const [name, setName] = useState('')
   const [minutes, setMinutes] = useState('')
   const [seconds, setSeconds] = useState('')
   const [saving, setSaving] = useState(false)
@@ -34,7 +33,6 @@ export function RestTimerManager({ open, onClose }: Props) {
     } else {
       // Reset form when closing
       setEditingId(null)
-      setName('')
       setMinutes('')
       setSeconds('')
     }
@@ -59,7 +57,6 @@ export function RestTimerManager({ open, onClose }: Props) {
 
   function startEdit(timer: RestTimer) {
     setEditingId(timer.id)
-    setName(timer.name)
     const mins = Math.floor(timer.seconds / 60)
     const secs = timer.seconds % 60
     setMinutes(mins.toString())
@@ -68,7 +65,6 @@ export function RestTimerManager({ open, onClose }: Props) {
 
   function cancelEdit() {
     setEditingId(null)
-    setName('')
     setMinutes('')
     setSeconds('')
   }
@@ -96,26 +92,17 @@ export function RestTimerManager({ open, onClose }: Props) {
       return
     }
 
-    if (!name.trim()) {
-      toast({
-        variant: 'error',
-        title: 'Name required',
-        description: 'Please enter a timer name.',
-      })
-      return
-    }
-
     setSaving(true)
     try {
       if (editingId) {
-        await updateRestTimer(editingId, name.trim(), totalSeconds)
+        await updateRestTimer(editingId, totalSeconds)
         toast({
           variant: 'success',
           title: 'Timer updated',
           description: 'Your timer has been updated successfully.',
         })
       } else {
-        await createRestTimer(name.trim(), totalSeconds)
+        await createRestTimer(totalSeconds)
         toast({
           variant: 'success',
           title: 'Timer created',
@@ -125,11 +112,21 @@ export function RestTimerManager({ open, onClose }: Props) {
       cancelEdit()
       loadTimers()
     } catch (err: any) {
-      toast({
-        variant: 'error',
-        title: 'Failed to save timer',
-        description: err?.message || 'Please try again.',
-      })
+      // Handle duplicate error
+      const errorMessage = err?.response?.data?.message || err?.message || 'Please try again.'
+      if (errorMessage.includes('already exists')) {
+        toast({
+          variant: 'error',
+          title: 'Timer already exists',
+          description: 'A timer with this value already exists. Please choose a different value.',
+        })
+      } else {
+        toast({
+          variant: 'error',
+          title: 'Failed to save timer',
+          description: errorMessage,
+        })
+      }
     } finally {
       setSaving(false)
     }
@@ -162,9 +159,7 @@ export function RestTimerManager({ open, onClose }: Props) {
   function formatTime(seconds: number): string {
     const mins = Math.floor(seconds / 60)
     const secs = seconds % 60
-    if (mins === 0) return `${secs}s`
-    if (secs === 0) return `${mins}min`
-    return `${mins}:${secs.toString().padStart(2, '0')}`
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
   }
 
   if (!open) return null
@@ -186,18 +181,6 @@ export function RestTimerManager({ open, onClose }: Props) {
           {/* Form */}
           <div className="mb-4 p-4 rounded-lg border border-gray-700 bg-gray-900/50">
             <div className="space-y-3">
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1">
-                  Name
-                </label>
-                <input
-                  type="text"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="e.g., 1:30, My Custom Timer"
-                  className="w-full px-3 py-2 rounded border border-gray-600 bg-dark text-base text-gray-100 focus:outline-none focus:border-primary"
-                />
-              </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-1">
@@ -278,13 +261,8 @@ export function RestTimerManager({ open, onClose }: Props) {
                     className="p-3 rounded-lg border border-gray-700 bg-gray-900/30"
                   >
                     <div className="flex items-center justify-between">
-                      <div>
-                        <div className="font-medium text-gray-100">
-                          {timer.name}
-                        </div>
-                        <div className="text-sm text-gray-400">
-                          {formatTime(timer.seconds)}
-                        </div>
+                      <div className="font-medium text-gray-100 text-lg">
+                        {formatTime(timer.seconds)}
                       </div>
                       <div className="flex gap-2">
                         <button

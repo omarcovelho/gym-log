@@ -2,7 +2,6 @@ import { api } from '@/lib/api'
 
 export type RestTimer = {
   id: string
-  name: string
   seconds: number
   isDefault: boolean
   userId?: string
@@ -16,20 +15,17 @@ export async function getRestTimers(): Promise<RestTimer[]> {
 }
 
 export async function createRestTimer(
-  name: string,
   seconds: number,
 ): Promise<RestTimer> {
-  const { data } = await api.post<RestTimer>('/rest-timers', { name, seconds })
+  const { data } = await api.post<RestTimer>('/rest-timers', { seconds })
   return data
 }
 
 export async function updateRestTimer(
   id: string,
-  name: string,
   seconds: number,
 ): Promise<RestTimer> {
   const { data } = await api.patch<RestTimer>(`/rest-timers/${id}`, {
-    name,
     seconds,
   })
   return data
