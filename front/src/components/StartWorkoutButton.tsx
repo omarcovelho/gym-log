@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { X, Plus, FileText, Zap } from 'lucide-react'
 import { startManualWorkout, startWorkout } from '@/api/workoutSession'
-import { listWorkoutTemplates, type WorkoutTemplate } from '@/api/workoutTemplates'
+import { listWorkoutTemplates } from '@/api/workoutTemplates'
 import { useToast } from './ToastProvider'
 
 type Props = {
