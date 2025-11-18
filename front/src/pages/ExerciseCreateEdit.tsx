@@ -127,7 +127,7 @@ export default function ExerciseCreateEdit() {
           <input
             {...register('name')}
             placeholder="Exercise name"
-            className={`w-full border rounded-lg p-3 bg-dark text-gray-100 focus:outline-none transition
+            className={`w-full border rounded-lg p-3 bg-dark text-base text-gray-100 focus:outline-none transition
               ${errors.name ? 'border-red-600' : 'border-gray-700 focus:border-primary'}
             `}
           />
@@ -171,7 +171,7 @@ export default function ExerciseCreateEdit() {
           <textarea
             {...register('notes')}
             placeholder="Optional notes about this exercise..."
-            className="w-full border border-gray-700 bg-dark rounded-lg p-3 text-gray-100 focus:border-primary outline-none transition"
+            className="w-full border border-gray-700 bg-dark rounded-lg p-3 text-base text-gray-100 focus:border-primary outline-none transition"
             rows={4}
           />
         </div>

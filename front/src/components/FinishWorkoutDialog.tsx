@@ -79,7 +79,7 @@ export function FinishWorkoutDialog({ open, onClose, onConfirm }: Props) {
               onChange={(e) => setNotes(e.target.value)}
               placeholder="Optional notes about this workout..."
               rows={3}
-              className="w-full rounded-md border border-gray-700 bg-[#0f0f0f] px-3 py-2 text-sm text-gray-100 focus:border-primary outline-none resize-none"
+              className="w-full rounded-md border border-gray-700 bg-[#0f0f0f] px-3 py-2 text-base text-gray-100 focus:border-primary outline-none resize-none"
             />
           </div>
         </div>
