@@ -67,7 +67,7 @@ export default function Home() {
     <div className="space-y-6">
       {/* Header */}
       <div className="space-y-2">
-        <h1 className="text-2xl md:text-3xl font-bold">{t('home.welcome', { name: user?.email?.split('@')[0] })}</h1>
+        <h1 className="text-2xl md:text-3xl font-bold">{t('home.welcome', { name: user?.name || user?.email?.split('@')[0] || 'User' })}</h1>
         <p className="text-gray-400 text-sm md:text-base">
           {t('home.subtitle')}
         </p>
