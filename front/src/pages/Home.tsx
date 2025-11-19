@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/auth/AuthContext'
 import { getWorkoutStats, type WorkoutStats } from '@/api/workoutSession'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
@@ -7,6 +8,7 @@ import { Activity, TrendingUp, Trophy, Calendar } from 'lucide-react'
 
 export default function Home() {
   const { user } = useAuth()
+  const { t, i18n } = useTranslation()
 
   const { data: stats, isLoading, error, refetch } = useQuery<WorkoutStats>({
     queryKey: ['workout-stats'],
@@ -14,17 +16,17 @@ export default function Home() {
   })
 
   const formatVolume = (volume: number): string => {
-    return `${Math.round(volume).toLocaleString('pt-BR')} kg`
+    return `${Math.round(volume).toLocaleString(i18n.language === 'pt' ? 'pt-BR' : 'en-US')} ${t('workout.kg')}`
   }
 
   const formatDate = (dateString: string): string => {
     const date = new Date(dateString)
-    return date.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })
+    return date.toLocaleDateString(i18n.language === 'pt' ? 'pt-BR' : 'en-US', { day: '2-digit', month: 'short' })
   }
 
   // Preparar dados do gráfico
   const chartData = stats?.volumeHistory.map((item) => ({
-    date: new Date(item.date).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }),
+    date: new Date(item.date).toLocaleDateString(i18n.language === 'pt' ? 'pt-BR' : 'en-US', { day: '2-digit', month: '2-digit' }),
     volume: item.volume,
   })) || []
 
@@ -48,12 +50,12 @@ export default function Home() {
   if (error) {
     return (
       <div className="space-y-4 text-center py-12">
-        <p className="text-gray-400">Erro ao carregar estatísticas</p>
+        <p className="text-gray-400">{t('home.errorLoading')}</p>
         <button
           onClick={() => refetch()}
           className="px-4 py-2 bg-primary text-dark font-semibold rounded-lg hover:brightness-110 transition"
         >
-          Tentar novamente
+          {t('common.tryAgain')}
         </button>
       </div>
     )
@@ -65,9 +67,9 @@ export default function Home() {
     <div className="space-y-6">
       {/* Header */}
       <div className="space-y-2">
-        <h1 className="text-2xl md:text-3xl font-bold">Bem-vindo, {user?.email?.split('@')[0]}</h1>
+        <h1 className="text-2xl md:text-3xl font-bold">{t('home.welcome', { name: user?.email?.split('@')[0] })}</h1>
         <p className="text-gray-400 text-sm md:text-base">
-          Acompanhe seu progresso e continue evoluindo.
+          {t('home.subtitle')}
         </p>
       </div>
 
@@ -76,9 +78,9 @@ export default function Home() {
         <div className="rounded-xl border border-gray-800 bg-[#101010] p-8 text-center space-y-4">
           <Activity className="w-12 h-12 text-gray-600 mx-auto" />
           <div className="space-y-2">
-            <h2 className="text-xl font-semibold text-gray-200">Nenhum treino ainda</h2>
+            <h2 className="text-xl font-semibold text-gray-200">{t('home.noWorkouts')}</h2>
             <p className="text-gray-400 text-sm">
-              Comece seu primeiro treino para ver suas estatísticas aqui.
+              {t('home.noWorkoutsDescription')}
             </p>
           </div>
         </div>
@@ -92,12 +94,12 @@ export default function Home() {
                 <div className="p-2 bg-primary/10 rounded-lg">
                   <Activity className="w-5 h-5 text-primary" />
                 </div>
-                <div className="text-sm text-gray-400">Total de Treinos</div>
+                <div className="text-sm text-gray-400">{t('home.totalWorkouts')}</div>
               </div>
               <div className="text-3xl md:text-4xl font-bold text-gray-100">
                 {stats?.totalWorkouts || 0}
               </div>
-              <div className="text-xs text-gray-500 mt-1">Últimos 30 dias</div>
+              <div className="text-xs text-gray-500 mt-1">{t('home.last30Days')}</div>
             </div>
 
             {/* Card: Volume do Mês */}
@@ -106,12 +108,12 @@ export default function Home() {
                 <div className="p-2 bg-primary/10 rounded-lg">
                   <TrendingUp className="w-5 h-5 text-primary" />
                 </div>
-                <div className="text-sm text-gray-400">Volume do Mês</div>
+                <div className="text-sm text-gray-400">{t('home.monthlyVolume')}</div>
               </div>
               <div className="text-2xl md:text-3xl font-bold text-primary">
-                {stats?.monthlyVolume ? formatVolume(stats.monthlyVolume) : '0 kg'}
+                {stats?.monthlyVolume ? formatVolume(stats.monthlyVolume) : `0 ${t('workout.kg')}`}
               </div>
-              <div className="text-xs text-gray-500 mt-1">Mês atual</div>
+              <div className="text-xs text-gray-500 mt-1">{t('home.currentMonth')}</div>
             </div>
 
             {/* Card: PRs Recentes */}
@@ -120,7 +122,7 @@ export default function Home() {
                 <div className="p-2 bg-primary/10 rounded-lg">
                   <Trophy className="w-5 h-5 text-primary" />
                 </div>
-                <div className="text-sm text-gray-400">PRs Recentes</div>
+                <div className="text-sm text-gray-400">{t('home.recentPRs')}</div>
               </div>
               {stats?.recentPRs && stats.recentPRs.length > 0 ? (
                 <div className="space-y-2 max-h-32 overflow-y-auto">
@@ -128,16 +130,16 @@ export default function Home() {
                     <div key={idx} className="text-sm">
                       <div className="text-gray-200 font-medium">{pr.exerciseName}</div>
                       <div className="text-gray-400 text-xs">
-                        {pr.type === 'load' ? 'Carga' : pr.type === 'reps' ? 'Reps' : 'Volume'}:{' '}
+                        {pr.type === 'load' ? t('home.load') : pr.type === 'reps' ? t('home.reps') : t('home.volume')}:{' '}
                         <span className="text-primary font-semibold">
-                          {pr.value.toLocaleString('pt-BR')} {pr.unit || ''}
+                          {pr.value.toLocaleString(i18n.language === 'pt' ? 'pt-BR' : 'en-US')} {pr.unit || ''}
                         </span>
                       </div>
                     </div>
                   ))}
                 </div>
               ) : (
-                <div className="text-sm text-gray-500">Nenhum PR recente</div>
+                <div className="text-sm text-gray-500">{t('home.noRecentPRs')}</div>
               )}
             </div>
 
@@ -151,7 +153,7 @@ export default function Home() {
                   <div className="p-2 bg-primary/10 rounded-lg">
                     <Calendar className="w-5 h-5 text-primary" />
                   </div>
-                  <div className="text-sm text-gray-400">Último Treino</div>
+                  <div className="text-sm text-gray-400">{t('home.lastWorkout')}</div>
                 </div>
                 <div className="text-lg font-semibold text-gray-100 mb-1">
                   {stats.lastWorkout.title}
@@ -169,7 +171,7 @@ export default function Home() {
           {/* Gráfico de Volume */}
           {chartData.length > 0 && (
             <div className="rounded-xl border border-gray-800 bg-[#101010] p-4 md:p-6">
-              <h2 className="text-lg font-semibold text-gray-200 mb-4">Volume (30 dias)</h2>
+              <h2 className="text-lg font-semibold text-gray-200 mb-4">{t('home.volumeChart')}</h2>
               <div className="w-full h-48 md:h-64">
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={chartData}>
@@ -216,13 +218,13 @@ export default function Home() {
               to="/app/templates"
               className="px-4 py-3 border border-gray-700 text-gray-200 font-semibold rounded-lg hover:border-primary hover:text-primary transition flex items-center justify-center gap-2 min-h-[44px] text-sm md:text-base"
             >
-              Ver Templates
+              {t('home.viewTemplates')}
             </Link>
             <Link
               to="/app/workouts"
               className="px-4 py-3 border border-gray-700 text-gray-200 font-semibold rounded-lg hover:border-primary hover:text-primary transition flex items-center justify-center gap-2 min-h-[44px] text-sm md:text-base"
             >
-              Ver Histórico
+              {t('home.viewHistory')}
             </Link>
           </div>
         </>

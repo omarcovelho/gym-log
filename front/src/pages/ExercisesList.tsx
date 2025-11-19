@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { Pencil, Trash2 } from 'lucide-react'
 import { api } from '@/lib/api'
 import { useAuth, type User } from '@/auth/AuthContext'
@@ -17,6 +18,7 @@ export type Exercise = {
 }
 
 export default function ExercisesList() {
+  const { t } = useTranslation()
   const { user } = useAuth()
   const navigate = useNavigate()
   const { toast } = useToast()
@@ -67,11 +69,11 @@ export default function ExercisesList() {
       setExercises(data.data)
       setPagination(data.meta)
     } catch (e: any) {
-      setError(e?.message ?? 'Failed to load exercises')
+      setError(e?.message ?? t('exercise.errorLoading'))
       toast({
         variant: 'error',
-        title: 'Error loading exercises',
-        description: e?.message ?? 'Try again later.',
+        title: t('exercise.errorLoading'),
+        description: e?.message ?? t('exercise.errorLoadingDescription'),
       })
     } finally {
       setLoading(false)
@@ -89,15 +91,15 @@ export default function ExercisesList() {
       await api.delete(`/exercises/${id}`)
       toast({
         variant: 'success',
-        title: 'Exercise deleted',
-        description: `"${name}" was removed successfully.`,
+        title: t('exercise.exerciseDeleted'),
+        description: t('exercise.exerciseDeletedDescription', { name }),
       })
       await loadExercises(currentPage, currentLimit)
     } catch (e: any) {
       toast({
         variant: 'error',
-        title: 'Delete failed',
-        description: e?.message ?? 'Something went wrong.',
+        title: t('exercise.deleteFailed'),
+        description: e?.message ?? t('exercise.deleteFailedDescription'),
       })
     } finally {
       setDeletingId(null)
@@ -106,7 +108,7 @@ export default function ExercisesList() {
   }
 
   if (loading)
-    return <p className="text-center mt-12 text-gray-400">Loading exercises...</p>
+    return <p className="text-center mt-12 text-gray-400">{t('common.loadingExercises')}</p>
 
   if (error)
     return <p className="text-center text-red-500 mt-12">{error}</p>
@@ -116,9 +118,9 @@ export default function ExercisesList() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-100">My Exercises</h1>
+          <h1 className="text-3xl font-bold text-gray-100">{t('exercise.myExercises')}</h1>
           <p className="text-sm text-gray-400 mt-1">
-            Manage your custom exercises to use in workout templates.
+            {t('exercise.myExercisesDescription')}
           </p>
         </div>
 
@@ -138,14 +140,14 @@ export default function ExercisesList() {
             text-center
           "
         >
-          + New Exercise
+          {t('exercise.newExerciseButton')}
         </Link>
       </div>
 
       {/* Empty state */}
       {exercises.length === 0 && (
         <p className="text-gray-400 text-center mt-12">
-          No exercises created yet. Start by adding one above.
+          {t('exercise.noExercises')}
         </p>
       )}
 
@@ -221,10 +223,10 @@ export default function ExercisesList() {
             {/* Confirm deletion */}
             <ConfirmDialog
               open={confirmId === ex.id}
-              title="Delete exercise"
-              message={`Are you sure you want to delete "${ex.name}"? This action cannot be undone.`}
-              confirmText="Delete"
-              cancelText="Cancel"
+              title={t('dialog.deleteExercise')}
+              message={t('dialog.deleteExerciseMessage', { name: ex.name })}
+              confirmText={t('common.delete')}
+              cancelText={t('common.cancel')}
               onConfirm={() => handleDelete(ex.id, ex.name)}
               onCancel={() => setConfirmId(null)}
             />

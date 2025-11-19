@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams, Link } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { getWorkoutSession, type WorkoutSession } from '@/api/workoutSession'
 import { useAuth } from '@/auth/AuthContext'
 
 export default function WorkoutSessionDetails() {
+  const { t, i18n } = useTranslation()
   const { id } = useParams()
   const navigate = useNavigate()
   const { user } = useAuth()
@@ -25,9 +27,9 @@ export default function WorkoutSessionDetails() {
   }, [user, navigate, id])
 
   if (loading || !session)
-    return <p className="text-gray-400 text-center mt-10">Loading session...</p>
+    return <p className="text-gray-400 text-center mt-10">{t('common.loadingSession')}</p>
 
-  const humanDate = new Date(session.startAt ?? session.startAt).toLocaleString()
+  const humanDate = new Date(session.startAt ?? session.startAt).toLocaleString(i18n.language === 'pt' ? 'pt-BR' : 'en-US')
   const totalSets = session.exercises.reduce((acc, e) => acc + e.sets.length, 0)
   const completedSets = session.exercises.reduce(
     (acc, e) => acc + e.sets.filter((s) => s.completed).length,
@@ -36,9 +38,9 @@ export default function WorkoutSessionDetails() {
 
   const fmtActual = (load?: number | null, reps?: number | null, rir?: number | null) => {
     const parts: string[] = []
-    parts.push(load != null ? `${load} kg` : '—')
-    parts.push(`${reps ?? '—'} reps`)
-    parts.push(`RIR ${rir ?? '—'}`)
+    parts.push(load != null ? `${load} ${t('workout.kg')}` : '—')
+    parts.push(`${reps ?? '—'} ${t('workout.repsLabel')}`)
+    parts.push(`${t('workout.rir')} ${rir ?? '—'}`)
     return parts.join(' · ')
   }
 
@@ -52,10 +54,10 @@ export default function WorkoutSessionDetails() {
   return (
     <div className="max-w-3xl mx-auto space-y-6">
       <header className="space-y-1">
-        <h1 className="text-3xl font-bold">{session.title ?? 'Custom Workout'}</h1>
+        <h1 className="text-3xl font-bold">{session.title ?? t('workout.customWorkout')}</h1>
         <p className="text-sm text-gray-400">{humanDate}</p>
         <p className="text-xs text-gray-500">
-          {completedSets}/{totalSets} sets completed
+          {t('workout.setsCompleted', { completed: completedSets, total: totalSets })}
         </p>
       </header>
 
@@ -63,37 +65,37 @@ export default function WorkoutSessionDetails() {
       {session.endAt && (
         <div className="rounded-lg border border-gray-800 bg-[#101010] p-4 space-y-2">
           <h2 className="text-sm font-semibold text-gray-200 uppercase tracking-wide">
-            Session Summary
+            {t('workout.sessionSummary')}
           </h2>
           <div className="grid grid-cols-2 gap-2 text-sm text-gray-400">
             <div>
-              <span className="text-gray-500">Feeling:</span>{' '}
+              <span className="text-gray-500">{t('workout.feeling')}</span>{' '}
               <span className="font-medium text-gray-200">
-                {session.feeling ? session.feeling.toLowerCase() : '—'}
+                {session.feeling ? t(`feelings.${session.feeling}`) : '—'}
               </span>
             </div>
             <div>
-              <span className="text-gray-500">Fatigue:</span>{' '}
+              <span className="text-gray-500">{t('workout.fatigue')}</span>{' '}
               <span className="font-medium text-gray-200">
                 {session.fatigue ?? '—'}/10
               </span>
             </div>
             {duration != null && (
               <div>
-                <span className="text-gray-500">Duration:</span>{' '}
-                <span className="font-medium text-gray-200">{duration} min</span>
+                <span className="text-gray-500">{t('workout.duration')}</span>{' '}
+                <span className="font-medium text-gray-200">{duration} {t('workout.minutes')}</span>
               </div>
             )}
             <div>
-              <span className="text-gray-500">Finished at:</span>{' '}
+              <span className="text-gray-500">{t('workout.finishedAt')}</span>{' '}
               <span className="font-medium text-gray-200">
-                {new Date(session.endAt).toLocaleTimeString()}
+                {new Date(session.endAt).toLocaleTimeString(i18n.language === 'pt' ? 'pt-BR' : 'en-US')}
               </span>
             </div>
           </div>
           {session.notes && (
             <p className="text-sm text-gray-300 italic mt-2 border-t border-gray-800 pt-2">
-              “{session.notes}”
+              "{session.notes}"
             </p>
           )}
         </div>
@@ -113,11 +115,11 @@ export default function WorkoutSessionDetails() {
               <table className="w-full table-fixed text-sm text-gray-300">
                 <thead className="text-xs text-gray-500 border-b border-gray-800">
                   <tr>
-                    <th className="text-left py-1 w-12">Set</th>
-                    <th className="text-left py-1 w-36">Planned</th>
-                    <th className="text-left py-1 w-48">Actual</th>
-                    <th className="text-left py-1 w-24">Status</th>
-                    <th className="text-left py-1">Notes</th>
+                    <th className="text-left py-1 w-12">{t('workout.set')}</th>
+                    <th className="text-left py-1 w-36">{t('workout.planned')}</th>
+                    <th className="text-left py-1 w-48">{t('workout.actual')}</th>
+                    <th className="text-left py-1 w-24">{t('workout.status')}</th>
+                    <th className="text-left py-1">{t('workout.notes')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -130,16 +132,16 @@ export default function WorkoutSessionDetails() {
 
                       <td className="py-2 whitespace-nowrap">
                         {(s.plannedReps ?? '—')}{' '}
-                        <span className="text-gray-500">reps</span>{' '}
+                        <span className="text-gray-500">{t('workout.repsLabel')}</span>{' '}
                         <span className="text-gray-600">·</span>{' '}
-                        <span className="text-gray-500">RIR</span> {s.plannedRir ?? '—'}
+                        <span className="text-gray-500">{t('workout.rir')}</span> {s.plannedRir ?? '—'}
                       </td>
 
                       <td className="py-2 whitespace-nowrap">
                         {fmtActual(s.actualLoad, s.actualReps, s.actualRir)}
                       </td>
 
-                      <td className="py-2 whitespace-nowrap">{s.completed ? '✅ Done' : '—'}</td>
+                      <td className="py-2 whitespace-nowrap">{s.completed ? t('workout.completed') : t('workout.notCompleted')}</td>
 
                       <td className="py-2 min-w-0">
                         <span className="block truncate text-gray-400">{s.notes ?? '—'}</span>
@@ -155,7 +157,7 @@ export default function WorkoutSessionDetails() {
 
       <div className="pt-4 border-t border-gray-800 text-center">
         <Link to="/app/workouts" className="text-sm text-gray-400 hover:text-primary transition">
-          ← Back to history
+          {t('workout.backToHistory')}
         </Link>
       </div>
     </div>

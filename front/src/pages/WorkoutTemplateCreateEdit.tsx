@@ -4,6 +4,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useAuth } from '@/auth/AuthContext'
@@ -29,7 +30,7 @@ import {
    SCHEMA
    =============================================================== */
 
-const setSchema = z.object({
+const getSetSchema = (t: any) => z.object({
   setIndex: z.number().int().min(0),
   reps: z.preprocess((val) => {
     if (typeof val === 'string') {
@@ -37,24 +38,24 @@ const setSchema = z.object({
       return isNaN(num) ? 0 : num
     }
     return typeof val === 'number' ? val : 0
-  }, z.number().int().min(1, 'Must be at least 1 rep')),
+  }, z.number().int().min(1, t('validation.repsMin'))),
   rir: z.number().int().optional(),
   notes: z.string().optional(),
 })
 
-const itemSchema = z.object({
-  exerciseId: z.string().min(1, 'Select an exercise'),
+const getItemSchema = (t: any) => z.object({
+  exerciseId: z.string().min(1, t('validation.selectExercise')),
   order: z.number().int().optional(),
   notes: z.string().optional(),
-  sets: z.array(setSchema).min(1, 'Add at least one set'),
+  sets: z.array(getSetSchema(t)).min(1, t('validation.atLeastOneSet')),
 })
 
-const schema = z.object({
-  title: z.string().min(2, 'Title is required'),
-  items: z.array(itemSchema).min(1, 'Add at least one exercise'),
+const getSchema = (t: any) => z.object({
+  title: z.string().min(2, t('validation.templateTitleMin')),
+  items: z.array(getItemSchema(t)).min(1, t('validation.atLeastOneExercise')),
 })
 
-type Form = z.infer<typeof schema>
+type Form = z.infer<ReturnType<typeof getSchema>>
 
 /* ===============================================================
    EXERCISE BLOCK
@@ -91,6 +92,7 @@ function ExerciseBlock({
   isFirst,
   isLast,
 }: ExerciseBlockProps) {
+  const { t } = useTranslation()
   const [pickerOpen, setPickerOpen] = useState(false)
   const form = useFormContext<Form>()
   const setsFA = useFieldArray({
@@ -114,7 +116,7 @@ function ExerciseBlock({
         >
           <div className="flex items-center gap-2">
             <span>🏋️</span>
-            {exercise?.name || 'Select exercise'}
+            {exercise?.name || t('templates.selectExercise')}
           </div>
           <span className="text-xs text-gray-500">▼</span>
         </button>
@@ -163,17 +165,17 @@ function ExerciseBlock({
 
       {/* NOTES */}
       <div>
-        <label className="text-xs text-gray-400">Notes</label>
+        <label className="text-xs text-gray-400">{t('templates.notes')}</label>
         <input
           {...register(`items.${idx}.notes`)}
-          placeholder="Notes for this exercise..."
+          placeholder={t('templates.notesPlaceholder')}
           className="w-full bg-[#121212] border border-gray-700 rounded-md p-2 text-base text-gray-200 placeholder-gray-500 focus:border-primary outline-none transition"
         />
       </div>
 
       {/* SETS */}
       <div className="space-y-3">
-        <h3 className="text-sm font-medium text-gray-300">Sets</h3>
+        <h3 className="text-sm font-medium text-gray-300">{t('templates.sets')}</h3>
 
         {setsFA.fields.map((sf, sidx) => {
           const setError = (formState.errors.items?.[idx] as any)?.sets?.[sidx]?.reps?.message
@@ -187,7 +189,7 @@ function ExerciseBlock({
                     v === '' || v == null || isNaN(Number(v)) ? "" : Number(v),
                 })}
                   type="number"
-                  placeholder="Reps *"
+                  placeholder={t('templates.reps')}
                   className={`col-span-3 bg-[#121212] border rounded-md p-2 text-base ${
                     setError
                       ? 'border-red-600'
@@ -201,13 +203,13 @@ function ExerciseBlock({
                         v === '' || v == null || isNaN(Number(v)) ? "" : Number(v),
                     })}
                   type="number"
-                  placeholder="RIR"
+                  placeholder={t('workout.rir')}
                   className="col-span-3 bg-[#121212] border border-gray-700 rounded-md p-2 text-base"
                 />
 
                 <input
                   {...register(`items.${idx}.sets.${sidx}.notes`)}
-                  placeholder="Notes"
+                  placeholder={t('templates.setNotes')}
                   className="col-span-5 bg-[#121212] border border-gray-700 rounded-md p-2 text-base"
                 />
 
@@ -238,7 +240,7 @@ function ExerciseBlock({
             }
             className="text-xs border border-gray-600 px-2 py-1 rounded hover:bg-gray-800"
           >
-            + Add set
+            {t('templates.addSet')}
           </button>
 
           <button
@@ -256,7 +258,7 @@ function ExerciseBlock({
             }}
             className="text-xs border border-gray-600 px-2 py-1 rounded hover:bg-gray-800"
           >
-            Clone last
+            {t('templates.cloneLast')}
           </button>
         </div>
       </div>
@@ -280,6 +282,7 @@ function ExerciseBlock({
    =============================================================== */
 
 export default function WorkoutTemplateCreateEdit() {
+  const { t } = useTranslation()
   const { id } = useParams()
   const isEditing = Boolean(id)
   const { user } = useAuth()
@@ -288,7 +291,7 @@ export default function WorkoutTemplateCreateEdit() {
 
   const [exercises, setExercises] = useState<Exercise[]>([])
   const methods = useForm<Form>({
-    resolver: zodResolver(schema) as any,
+    resolver: zodResolver(getSchema(t)) as any,
     defaultValues: { title: '', items: [] },
   })
 
@@ -352,25 +355,25 @@ export default function WorkoutTemplateCreateEdit() {
       }
       navigate('/app/templates')
     } catch (e: any) {
-      toast({ variant: 'error', title: 'Error', description: e.message })
+      toast({ variant: 'error', title: t('common.error'), description: e.message })
     }
   }
 
   return (
     <FormProvider {...methods}>
       <form onSubmit={handleSubmit(onSubmit as any)} className="max-w-2xl mx-auto space-y-8 pb-36">
-        <h1 className="text-3xl font-bold">Workout Template</h1>
+        <h1 className="text-3xl font-bold">{t('templates.workoutTemplate')}</h1>
 
         <div>
-          <label className="text-sm font-medium text-gray-300">Title</label>
+          <label className="text-sm font-medium text-gray-300">{t('templates.title')}</label>
           <input
             {...register('title')}
-            placeholder='Push Day A, Pull Day B...'
+            placeholder={t('templates.titlePlaceholder')}
             className="w-full bg-[#121212] border border-gray-700 rounded-lg p-3 mt-1 text-base text-gray-200"
           />
         </div>
 
-        <h2 className="text-xl font-semibold mt-6">Exercises</h2>
+        <h2 className="text-xl font-semibold mt-6">{t('templates.exercises')}</h2>
 
         <div className="space-y-5">
           {itemsFA.fields.map((f, idx) => (
@@ -405,7 +408,7 @@ export default function WorkoutTemplateCreateEdit() {
             }
             className="border border-gray-700 px-4 py-2 rounded text-sm text-gray-300 hover:text-primary hover:border-primary"
           >
-            + Add Exercise
+            {t('templates.addExercise')}
           </button>
         </div>
 
@@ -413,7 +416,7 @@ export default function WorkoutTemplateCreateEdit() {
           type="submit"
           className="fixed bottom-5 left-1/2 -translate-x-1/2 w-[90%] bg-primary text-black py-3 rounded-md font-semibold"
         >
-          Save Template
+          {t('templates.saveTemplate')}
         </button>
       </form>
     </FormProvider>

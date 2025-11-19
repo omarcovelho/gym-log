@@ -1,8 +1,10 @@
 import { Link, useLocation } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/auth/AuthContext'
 import { LogOut, User } from 'lucide-react'
 
 export default function Navbar() {
+  const { t } = useTranslation()
   const { logout } = useAuth()
   const location = useLocation()
 
@@ -27,8 +29,8 @@ export default function Navbar() {
                 ? 'text-primary bg-primary/10'
                 : 'text-gray-400 hover:text-gray-200 hover:bg-gray-800'
             }`}
-            aria-label="Meus Dados"
-            title="Meus Dados"
+            aria-label={t('navigation.myData')}
+            title={t('navigation.myData')}
           >
             <User className="w-5 h-5" />
           </Link>
@@ -37,8 +39,8 @@ export default function Navbar() {
           <button
             onClick={logout}
             className="text-gray-400 hover:text-gray-200 transition p-2 rounded-lg hover:bg-gray-800"
-            aria-label="Logout"
-            title="Logout"
+            aria-label={t('navigation.logout')}
+            title={t('navigation.logout')}
           >
             <LogOut className="w-5 h-5" />
           </button>
