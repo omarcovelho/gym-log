@@ -1,9 +1,10 @@
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import { useAuth } from '@/auth/AuthContext'
-import { LogOut } from 'lucide-react'
+import { LogOut, User } from 'lucide-react'
 
 export default function Navbar() {
   const { logout } = useAuth()
+  const location = useLocation()
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-[#0f0f0f]/95 backdrop-blur-md border-b border-gray-800">
@@ -16,15 +17,32 @@ export default function Navbar() {
           GymLog
         </Link>
 
-        {/* Logout button */}
-        <button
-          onClick={logout}
-          className="text-gray-400 hover:text-gray-200 transition p-2 rounded-lg hover:bg-gray-800"
-          aria-label="Logout"
-          title="Logout"
-        >
-          <LogOut className="w-5 h-5" />
-        </button>
+        {/* Actions */}
+        <div className="flex items-center gap-2">
+          {/* User Stats button */}
+          <Link
+            to="/app/stats"
+            className={`p-2 rounded-lg transition ${
+              location.pathname === '/app/stats'
+                ? 'text-primary bg-primary/10'
+                : 'text-gray-400 hover:text-gray-200 hover:bg-gray-800'
+            }`}
+            aria-label="Meus Dados"
+            title="Meus Dados"
+          >
+            <User className="w-5 h-5" />
+          </Link>
+
+          {/* Logout button */}
+          <button
+            onClick={logout}
+            className="text-gray-400 hover:text-gray-200 transition p-2 rounded-lg hover:bg-gray-800"
+            aria-label="Logout"
+            title="Logout"
+          >
+            <LogOut className="w-5 h-5" />
+          </button>
+        </div>
       </div>
     </nav>
   )
