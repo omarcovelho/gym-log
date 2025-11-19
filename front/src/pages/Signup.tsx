@@ -2,6 +2,7 @@ import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { api } from '@/lib/api'
+import { useAuth } from '@/auth/AuthContext'
 
 const schema = z.object({
   email: z.string().email(),
@@ -11,13 +12,33 @@ const schema = z.object({
 type Form = z.infer<typeof schema>
 
 export default function Signup() {
+  const { login } = useAuth()
   const { register, handleSubmit, formState } = useForm<Form>({
     resolver: zodResolver(schema),
   })
 
   const onSubmit = async (data: Form) => {
+    // Signup
     await api.post('/auth/signup', data)
-    location.href = '/login'
+    
+    // Auto login after signup
+    const loginRes = await api.post('/auth/login', {
+      email: data.email,
+      password: data.password,
+    })
+    
+    const token = loginRes.data.access_token
+    const userData = loginRes.data.user
+
+    login(token, {
+      sub: userData.id,
+      email: userData.email,
+      name: userData.name,
+      role: userData.role,
+    })
+    
+    // Redirect to stats page
+    location.href = '/app/stats'
   }
 
   return (
