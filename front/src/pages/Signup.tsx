@@ -1,6 +1,7 @@
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { useTranslation } from 'react-i18next'
 import { api } from '@/lib/api'
 import { useAuth } from '@/auth/AuthContext'
 
@@ -12,6 +13,7 @@ const schema = z.object({
 type Form = z.infer<typeof schema>
 
 export default function Signup() {
+  const { t } = useTranslation()
   const { login } = useAuth()
   const { register, handleSubmit, formState } = useForm<Form>({
     resolver: zodResolver(schema),
@@ -111,12 +113,12 @@ export default function Signup() {
   return (
     <div className="min-h-screen flex flex-col justify-center items-center bg-dark text-gray-100 p-6">
       <div className="w-full max-w-sm border border-gray-700 p-6 rounded-lg space-y-4">
-        <h1 className="text-2xl font-bold text-primary text-center">Sign Up</h1>
+        <h1 className="text-2xl font-bold text-primary text-center">{t('auth.signup')}</h1>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-3">
           <input
             className="w-full border p-2 rounded bg-dark border-gray-700 text-base"
-            placeholder="Email"
+            placeholder={t('auth.email')}
             {...register('email')}
           />
           {formState.errors.email && (
@@ -125,14 +127,14 @@ export default function Signup() {
 
           <input
             className="w-full border p-2 rounded bg-dark border-gray-700 text-base"
-            placeholder="Name (optional)"
+            placeholder={t('auth.nameOptional')}
             {...register('name')}
           />
 
           <input
             className="w-full border p-2 rounded bg-dark border-gray-700 text-base"
             type="password"
-            placeholder="Password"
+            placeholder={t('auth.password')}
             {...register('password')}
           />
           {formState.errors.password && (
@@ -145,14 +147,14 @@ export default function Signup() {
             disabled={formState.isSubmitting}
             className="w-full bg-primary text-black p-2 rounded font-semibold hover:bg-green-400 transition"
           >
-            {formState.isSubmitting ? '...' : 'Create Account'}
+            {formState.isSubmitting ? '...' : t('auth.createAccount')}
           </button>
         </form>
 
         {/* Divider */}
         <div className="flex items-center gap-3 pt-2">
           <div className="flex-1 h-px bg-gray-700" />
-          <span className="text-gray-500 text-xs">OR</span>
+          <span className="text-gray-500 text-xs">{t('common.or')}</span>
           <div className="flex-1 h-px bg-gray-700" />
         </div>
 
@@ -161,20 +163,20 @@ export default function Signup() {
           onClick={handleGoogleSignup}
           className="w-full bg-red-500 text-white p-2 rounded font-semibold hover:bg-red-600 transition"
         >
-          Sign up with Google
+          {t('auth.signupWithGoogle')}
         </button>
 
         <p className="text-sm text-gray-400 text-center">
-          Already have an account?{' '}
+          {t('auth.alreadyHaveAccount')}{' '}
           <a href="/login" className="text-primary hover:underline">
-            Login here
+            {t('auth.loginHere')}
           </a>
         </p>
 
         <p className="text-xs text-gray-600 text-center">
-          Back to{' '}
+          {t('auth.backToHome')}{' '}
           <a href="/" className="hover:text-primary">
-            home
+            {t('common.home')}
           </a>
         </p>
       </div>

@@ -1,4 +1,5 @@
 import { createPortal } from 'react-dom'
+import { useTranslation } from 'react-i18next'
 
 type Props = {
   open: boolean
@@ -12,13 +13,14 @@ type Props = {
 
 export function ConfirmDialog({
   open,
-  title = 'Confirm action',
+  title,
   message,
-  confirmText = 'Confirm',
-  cancelText = 'Cancel',
+  confirmText,
+  cancelText,
   onConfirm,
   onCancel,
 }: Props) {
+  const { t } = useTranslation()
   if (!open) return null
 
   return createPortal(
@@ -31,13 +33,13 @@ export function ConfirmDialog({
             onClick={onCancel}
             className="px-4 py-2 rounded border border-gray-600 text-gray-300 hover:bg-gray-800"
           >
-            {cancelText}
+            {cancelText || t('common.cancel')}
           </button>
           <button
             onClick={onConfirm}
             className="px-4 py-2 rounded bg-red-600 hover:bg-red-700 text-white font-semibold"
           >
-            {confirmText}
+            {confirmText || t('common.confirm')}
           </button>
         </div>
       </div>

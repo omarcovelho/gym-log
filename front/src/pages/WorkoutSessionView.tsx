@@ -3,6 +3,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/auth/AuthContext'
 import { useToast } from '@/components/ToastProvider'
 import { Loader2 } from 'lucide-react'
@@ -35,6 +36,7 @@ function useDebouncedCallback<T extends (...args: any[]) => void>(cb: T, delay =
 }
 
 export default function WorkoutSessionView() {
+  const { t, i18n } = useTranslation()
   const { id } = useParams()
   const navigate = useNavigate()
   const { user } = useAuth()
@@ -99,7 +101,7 @@ export default function WorkoutSessionView() {
       const s = await getWorkoutSession(id!)
       setSession({
         ...s,
-        title: s.title || 'Free Workout',
+        title: s.title || t('workout.freeWorkoutLabel'),
       })
     } finally {
       setLoading(false)
@@ -114,7 +116,7 @@ export default function WorkoutSessionView() {
       } catch {
         toast({
           variant: 'error',
-          title: 'Saving failed',
+          title: t('workout.errorSaving'),
         })
       }
     },
@@ -168,7 +170,7 @@ export default function WorkoutSessionView() {
       })),
     })
       .catch(() => {
-        toast({ variant: 'error', title: 'Error saving exercise' })
+        toast({ variant: 'error', title: t('workout.errorSavingExercise') })
       })
       .finally(() => setSavingId(null))
   }
@@ -214,9 +216,9 @@ export default function WorkoutSessionView() {
           exercises: prev.exercises.filter((ex) => ex.id !== exerciseId),
         }
       })
-      toast({ variant: 'success', title: 'Exercise removed' })
+      toast({ variant: 'success', title: t('workout.exerciseRemoved') })
     } catch {
-      toast({ variant: 'error', title: 'Error removing exercise' })
+      toast({ variant: 'error', title: t('workout.errorRemovingExercise') })
     } finally {
       setRemovingExerciseId(null)
     }
@@ -240,9 +242,9 @@ export default function WorkoutSessionView() {
         }
         return copy
       })
-      toast({ variant: 'success', title: 'Set removed' })
+      toast({ variant: 'success', title: t('workout.setRemoved') })
     } catch {
-      toast({ variant: 'error', title: 'Error removing set' })
+      toast({ variant: 'error', title: t('workout.errorRemovingSet') })
     } finally {
       setRemovingSetId(null)
     }
@@ -266,7 +268,7 @@ export default function WorkoutSessionView() {
 
       persistExercise(exercise.id)
     } catch {
-      toast({ variant: 'error', title: 'Error adding set' })
+      toast({ variant: 'error', title: t('workout.errorAddingSet') })
     } finally {
       setAddingSetId(null)
     }
@@ -293,7 +295,7 @@ export default function WorkoutSessionView() {
 
       setPickerOpen(false)
     } catch {
-      toast({ variant: 'error', title: 'Error adding exercise' })
+      toast({ variant: 'error', title: t('workout.errorAddingExercise') })
     } finally {
       setAddingExercise(false)
     }
@@ -305,7 +307,7 @@ export default function WorkoutSessionView() {
       await finishWorkoutSession(session!.id, data)
       navigate('/app')
     } catch {
-      toast({ variant: 'error', title: 'Could not finish workout' })
+      toast({ variant: 'error', title: t('workout.errorFinishing') })
     } finally {
       setFinishingWorkout(false)
     }
@@ -336,7 +338,7 @@ export default function WorkoutSessionView() {
   )
 
   if (loading || !session)
-    return <p className="text-center text-gray-400 mt-10">Loading...</p>
+    return <p className="text-center text-gray-400 mt-10">{t('common.loading')}</p>
 
   return (
     <div className="max-w-3xl mx-auto space-y-6">
@@ -347,23 +349,23 @@ export default function WorkoutSessionView() {
             <input
               value={session.title ?? ''}
               onChange={(e) => handleTitleChange(e.target.value)}
-              placeholder="Workout title"
+              placeholder={t('workout.workoutTitle')}
               className="w-full bg-transparent text-3xl font-bold text-gray-100 border-b border-transparent focus:border-primary focus:outline-none"
             />
             <p className="text-sm text-gray-400">
-              Started on {new Date(session.startAt).toLocaleString()}
+              {t('workout.startedOn')} {new Date(session.startAt).toLocaleString(i18n.language === 'pt' ? 'pt-BR' : 'en-US')}
             </p>
           </div>
 
           <div className="text-xs px-3 py-1 rounded-full bg-gray-900 border border-gray-700 text-gray-300">
-            {completedSets}/{totalSets} sets
+            {completedSets}/{totalSets} {t('workout.sets')}
           </div>
         </div>
 
         <textarea
           value={session.notes ?? ''}
           onChange={(e) => handleNotesChange(e.target.value)}
-          placeholder="Session notes..."
+          placeholder={t('workout.sessionNotes')}
           className="w-full resize-none rounded-md border border-gray-700 bg-[#111] px-3 py-2 text-base text-gray-100 placeholder:text-gray-500 focus:border-primary focus:outline-none"
           rows={2}
         />
@@ -424,10 +426,10 @@ export default function WorkoutSessionView() {
                       {removingExerciseId === ex.id ? (
                         <>
                           <Loader2 className="w-3 h-3 animate-spin" />
-                          Removing...
+                          {t('common.removing')}
                         </>
                       ) : (
-                        'Remove'
+                        t('workout.remove')
                       )}
                     </button>
                   </div>
@@ -446,7 +448,7 @@ export default function WorkoutSessionView() {
                       >
                         <div className="flex justify-between items-center mb-2">
                           <span className="text-xs text-gray-400">
-                            Set {s.setIndex + 1}
+                            {t('workout.setNumber', { number: s.setIndex + 1 })}
                           </span>
 
                           <div className="flex gap-2">
@@ -461,14 +463,14 @@ export default function WorkoutSessionView() {
                               }
                               className="text-xs border px-2 py-1 rounded text-gray-300"
                             >
-                              {s.completed ? '✓ Done' : 'Mark Done'}
+                              {s.completed ? t('workout.done') : t('workout.markDone')}
                             </button>
                             {s.completed && (
                               <button
                                 onClick={() => setTimerOpen(true)}
                                 className="text-xs border px-2 py-1 rounded text-primary border-primary/50 hover:bg-primary/10 transition"
                               >
-                                Start Rest
+                                {t('workout.startRest')}
                               </button>
                             )}
                             <button
@@ -479,7 +481,7 @@ export default function WorkoutSessionView() {
                               {removingSetId === s.id ? (
                                 <Loader2 className="w-3 h-3 animate-spin" />
                               ) : (
-                                'Remove'
+                                t('workout.remove')
                               )}
                             </button>
                           </div>
@@ -488,7 +490,7 @@ export default function WorkoutSessionView() {
                         <div className="grid grid-cols-3 gap-3">
                           <div>
                             <label className="text-xs text-gray-400 block mb-1">
-                              Load
+                              {t('workout.load')}
                             </label>
                             <input
                               type="number"
@@ -507,7 +509,7 @@ export default function WorkoutSessionView() {
 
                           <div>
                             <label className="text-xs text-gray-400 block mb-1">
-                              Reps
+                              {t('workout.reps')}
                             </label>
                             <input
                               type="number"
@@ -526,7 +528,7 @@ export default function WorkoutSessionView() {
 
                           <div>
                             <label className="text-xs text-gray-400 block mb-1">
-                              RIR
+                              {t('workout.rir')}
                             </label>
                             <input
                               type="number"
@@ -546,7 +548,7 @@ export default function WorkoutSessionView() {
 
                         <div className="mt-3">
                           <label className="text-xs text-gray-400 block mb-1">
-                            Notes
+                            {t('workout.notes')}
                           </label>
                           <input
                             type="text"
@@ -568,10 +570,10 @@ export default function WorkoutSessionView() {
                       {addingSetId === ex.id ? (
                         <>
                           <Loader2 className="w-4 h-4 animate-spin" />
-                          Adding...
+                          {t('common.adding')}
                         </>
                       ) : (
-                        '+ Add Set'
+                        t('workout.addSet')
                       )}
                     </button>
                   </div>
@@ -591,10 +593,10 @@ export default function WorkoutSessionView() {
           {addingExercise ? (
             <>
               <Loader2 className="w-4 h-4 animate-spin" />
-              Adding...
+              {t('common.adding')}
             </>
           ) : (
-            '+ Add Exercise'
+            t('workout.addExercise')
           )}
         </button>
       </div>
@@ -609,10 +611,10 @@ export default function WorkoutSessionView() {
           {finishingWorkout ? (
             <>
               <Loader2 className="w-4 h-4 animate-spin" />
-              Finishing...
+              {t('common.finishing')}
             </>
           ) : (
-            'Finish Workout'
+            t('workout.finish')
           )}
         </button>
       </div>
@@ -632,20 +634,20 @@ export default function WorkoutSessionView() {
 
       <ConfirmDialog
         open={confirmRemoveExerciseId !== null}
-        title="Remove Exercise"
-        message="Are you sure you want to remove this exercise from the workout?"
-        confirmText="Remove"
-        cancelText="Cancel"
+        title={t('dialog.removeExercise')}
+        message={t('dialog.removeExerciseMessage')}
+        confirmText={t('workout.remove')}
+        cancelText={t('common.cancel')}
         onConfirm={() => confirmRemoveExerciseId && handleRemoveExercise(confirmRemoveExerciseId)}
         onCancel={() => setConfirmRemoveExerciseId(null)}
       />
 
       <ConfirmDialog
         open={confirmRemoveSet !== null}
-        title="Remove Set"
-        message="Are you sure you want to remove this set?"
-        confirmText="Remove"
-        cancelText="Cancel"
+        title={t('dialog.removeSet')}
+        message={t('dialog.removeSetMessage')}
+        confirmText={t('workout.remove')}
+        cancelText={t('common.cancel')}
         onConfirm={() => confirmRemoveSet && handleRemoveSet(confirmRemoveSet.setId, confirmRemoveSet.exerciseId)}
         onCancel={() => setConfirmRemoveSet(null)}
       />

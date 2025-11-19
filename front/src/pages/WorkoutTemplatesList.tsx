@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { Eye, EyeOff, Pencil, Trash2 } from 'lucide-react'
 import {
   listWorkoutTemplates,
@@ -12,6 +13,7 @@ import { ConfirmDialog } from '@/components/ConfirmDialog'
 import { Pagination, type PaginationMeta } from '@/components/Pagination'
 
 export default function WorkoutTemplatesList() {
+  const { t } = useTranslation()
   const { user } = useAuth()
   const navigate = useNavigate()
   const { toast } = useToast()
@@ -49,11 +51,11 @@ export default function WorkoutTemplatesList() {
       setTemplates(result.data)
       setPagination(result.meta)
     } catch (e: any) {
-      setError(e?.message ?? 'Failed to load templates')
+      setError(e?.message ?? t('templates.errorLoading'))
       toast({
         variant: 'error',
-        title: 'Error loading templates',
-        description: e?.message ?? 'Try again later.',
+        title: t('templates.errorLoading'),
+        description: e?.message ?? t('templates.errorLoadingDescription'),
       })
     } finally {
       setLoading(false)
@@ -71,8 +73,8 @@ export default function WorkoutTemplatesList() {
       await deleteWorkoutTemplate(id)
       toast({
         variant: 'success',
-        title: 'Template deleted',
-        description: `"${title}" was removed.`,
+        title: t('templates.templateDeleted'),
+        description: t('templates.templateDeletedDescription', { title }),
       })
       await load(currentPage, currentLimit)
     } finally {
@@ -82,7 +84,7 @@ export default function WorkoutTemplatesList() {
   }
 
   if (loading)
-    return <p className="text-center mt-12 text-gray-400">Loading templates...</p>
+    return <p className="text-center mt-12 text-gray-400">{t('common.loadingTemplates')}</p>
 
   if (error)
     return <p className="text-center text-red-500 mt-12">{error}</p>
@@ -93,9 +95,9 @@ export default function WorkoutTemplatesList() {
       {/* HEADER */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-100">My Workout Templates</h1>
+          <h1 className="text-3xl font-bold text-gray-100">{t('templates.myTemplates')}</h1>
           <p className="text-sm text-gray-400 mt-1">
-            Manage your workout templates and splits.
+            {t('templates.myTemplatesDescription')}
           </p>
         </div>
 
@@ -103,13 +105,13 @@ export default function WorkoutTemplatesList() {
           to="/app/templates/new"
           className="px-4 py-2 bg-primary text-black rounded-lg font-semibold text-sm hover:brightness-110 transition"
         >
-          + New Template
+          {t('templates.newTemplate')}
         </Link>
       </div>
 
       {/* EMPTY STATE */}
       {templates.length === 0 && (
-        <p className="text-gray-400 text-center mt-12">No templates created yet.</p>
+        <p className="text-gray-400 text-center mt-12">{t('templates.noTemplates')}</p>
       )}
 
       {/* TEMPLATE LIST */}
@@ -127,7 +129,7 @@ export default function WorkoutTemplatesList() {
                 )}
 
                 <p className="text-xs text-gray-500 mt-0.5">
-                  {tpl.items.length} {tpl.items.length === 1 ? 'exercise' : 'exercises'}
+                  {tpl.items.length} {tpl.items.length === 1 ? t('workout.exercisesCount') : t('workout.exercisesCountPlural')}
                 </p>
               </div>
 
@@ -137,8 +139,8 @@ export default function WorkoutTemplatesList() {
                     setExpandedId(expandedId === tpl.id ? null : tpl.id)
                   }
                   className="p-2 rounded-md bg-[#101010] text-gray-400 hover:text-gray-200 border border-gray-800 transition"
-                  aria-label={expandedId === tpl.id ? 'Hide exercises' : 'View exercises'}
-                  title={expandedId === tpl.id ? 'Hide' : 'View'}
+                  aria-label={expandedId === tpl.id ? t('templates.hideExercises') : t('templates.viewExercises')}
+                  title={expandedId === tpl.id ? t('templates.hide') : t('templates.view')}
                 >
                   {expandedId === tpl.id ? (
                     <EyeOff className="w-4 h-4" />
@@ -179,7 +181,7 @@ export default function WorkoutTemplatesList() {
             {expandedId === tpl.id && (
               <div className="mt-4 border-t border-gray-800 pt-3 space-y-3">
                 {tpl.items.length === 0 ? (
-                  <p className="text-sm text-gray-500 italic">No exercises.</p>
+                  <p className="text-sm text-gray-500 italic">{t('templates.noExercises')}</p>
                 ) : (
                   tpl.items.map((it) => (
                     <div key={it.id} className="bg-[#141414] rounded-lg p-3 border border-gray-800">
@@ -199,10 +201,10 @@ export default function WorkoutTemplatesList() {
 
             <ConfirmDialog
               open={confirmId === tpl.id}
-              title="Delete template"
-              message={`Delete "${tpl.title}"?`}
-              confirmText="Delete"
-              cancelText="Cancel"
+              title={t('dialog.deleteTemplate')}
+              message={t('dialog.deleteTemplateMessage', { title: tpl.title })}
+              confirmText={t('common.delete')}
+              cancelText={t('common.cancel')}
               onConfirm={() => handleDelete(tpl.id, tpl.title)}
               onCancel={() => setConfirmId(null)}
             />

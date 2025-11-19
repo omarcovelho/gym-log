@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { Eye, Trash2 } from 'lucide-react'
 import { api } from '@/lib/api'
 import { useAuth } from '@/auth/AuthContext'
@@ -15,6 +16,7 @@ type WorkoutSession = {
 }
 
 export default function WorkoutLogsList() {
+  const { t, i18n } = useTranslation()
   const { user } = useAuth()
   const navigate = useNavigate()
   const { toast } = useToast()
@@ -67,7 +69,7 @@ export default function WorkoutLogsList() {
       await api.delete(`/workouts/${id}`)
       toast({
         variant: 'success',
-        title: 'Workout deleted',
+        title: t('workouts.workoutDeleted'),
       })
       await load(currentPage, currentLimit)
     } finally {
@@ -77,14 +79,14 @@ export default function WorkoutLogsList() {
   }
 
   if (loading)
-    return <p className="text-gray-400 text-center mt-8">Loading sessions...</p>
+    return <p className="text-gray-400 text-center mt-8">{t('common.loadingSessions')}</p>
 
   return (
     <div className="max-w-3xl mx-auto space-y-8">
       <header>
-        <h1 className="text-3xl font-bold text-gray-100">Workout History</h1>
+        <h1 className="text-3xl font-bold text-gray-100">{t('workouts.history')}</h1>
         <p className="text-sm text-gray-400 mt-1">
-          Track your completed and ongoing workouts.
+          {t('workouts.historyDescription')}
         </p>
       </header>
 
@@ -97,20 +99,20 @@ export default function WorkoutLogsList() {
             <div className="flex justify-between items-start gap-4">
               <div>
                 <h2 className="font-semibold text-lg text-gray-100">
-                  {s.title ?? 'Free Workout'}
+                  {s.title ?? t('workouts.freeWorkout')}
                 </h2>
 
                 <p className="text-xs text-gray-500 mt-0.5">
-                  {new Date(s.startAt).toLocaleString()}
+                  {new Date(s.startAt).toLocaleString(i18n.language === 'pt' ? 'pt-BR' : 'en-US')}
                 </p>
 
                 {s.endAt ? (
                   <span className="inline-flex items-center gap-1 text-xs mt-2 px-2 py-1 rounded-md bg-green-900/20 text-green-400 border border-green-800/30 font-medium">
-                    Finished
+                    {t('status.finished')}
                   </span>
                 ) : (
                   <span className="inline-flex items-center gap-1 text-xs mt-2 px-2 py-1 rounded-md bg-yellow-900/20 text-yellow-400 border border-yellow-800/30 font-medium">
-                    In progress
+                    {t('status.inProgress')}
                   </span>
                 )}
               </div>
@@ -152,10 +154,10 @@ export default function WorkoutLogsList() {
 
             <ConfirmDialog
               open={confirmId === s.id}
-              title="Delete workout"
-              message="Delete this workout session?"
-              confirmText="Delete"
-              cancelText="Cancel"
+              title={t('dialog.deleteWorkout')}
+              message={t('dialog.deleteWorkoutMessage')}
+              confirmText={t('common.delete')}
+              cancelText={t('common.cancel')}
               onConfirm={() => handleDelete(s.id)}
               onCancel={() => setConfirmId(null)}
             />

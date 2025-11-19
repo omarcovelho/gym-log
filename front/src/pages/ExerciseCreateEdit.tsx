@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
+import { useTranslation } from 'react-i18next'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { api } from '@/lib/api'
@@ -10,17 +11,10 @@ import { useInvalidateExercises } from '@/api/exercise'
 
 /* ---------------------------- Schema ---------------------------- */
 
-const schema = z.object({
-  name: z.string().min(2, 'Name is required'),
-  muscleGroup: z.string().optional(),
-  notes: z.string().optional(),
-})
-
-type Form = z.infer<typeof schema>
-
 /* ---------------------------- Component ---------------------------- */
 
 export default function ExerciseCreateEdit() {
+  const { t } = useTranslation()
   const { id } = useParams()
   const isEditing = Boolean(id)
   const navigate = useNavigate()
@@ -28,13 +22,21 @@ export default function ExerciseCreateEdit() {
   const { user } = useAuth()
   const invalidateExercises = useInvalidateExercises()
 
+  const getSchema = () => z.object({
+    name: z.string().min(2, t('validation.exerciseNameMin')),
+    muscleGroup: z.string().optional(),
+    notes: z.string().optional(),
+  })
+
+  type Form = z.infer<ReturnType<typeof getSchema>>
+
   const {
     register,
     handleSubmit,
     reset,
     formState: { errors, isSubmitting },
   } = useForm<Form>({
-    resolver: zodResolver(schema),
+    resolver: zodResolver(getSchema()),
     defaultValues: { name: '', muscleGroup: '', notes: '' },
   })
 
@@ -52,11 +54,11 @@ export default function ExerciseCreateEdit() {
         if (!canEdit) {
           toast({
             variant: 'error',
-            title: 'Access denied',
+            title: t('exercise.accessDenied'),
             description:
               data.isGlobal === true
-                ? 'Only admins can edit global exercises.'
-                : 'You can only edit your own exercises.',
+                ? t('exercise.onlyAdminsCanEdit')
+                : t('exercise.onlyOwnExercises'),
           })
           navigate('/app/exercises')
           return
@@ -79,15 +81,15 @@ export default function ExerciseCreateEdit() {
         await api.put(`/exercises/${id}`, form)
         toast({
           variant: 'success',
-          title: 'Exercise updated',
-          description: 'Changes were saved successfully.',
+          title: t('exercise.exerciseUpdated'),
+          description: t('exercise.exerciseUpdatedDescription'),
         })
       } else {
         await api.post('/exercises', form)
         toast({
           variant: 'success',
-          title: 'Exercise created',
-          description: 'Your new exercise was added successfully.',
+          title: t('exercise.exerciseCreated'),
+          description: t('exercise.exerciseCreatedDescription'),
         })
       }
       invalidateExercises()
@@ -95,8 +97,8 @@ export default function ExerciseCreateEdit() {
     } catch (err: any) {
       toast({
         variant: 'error',
-        title: 'Error',
-        description: err?.message ?? 'Something went wrong.',
+        title: t('common.error'),
+        description: err?.message ?? t('exercise.deleteFailedDescription'),
       })
     }
   }
@@ -111,10 +113,10 @@ export default function ExerciseCreateEdit() {
     <div className="max-w-2xl mx-auto space-y-8 relative pb-32 md:pb-0">
       <header>
         <h1 className="text-3xl font-bold mb-2">
-          {isEditing ? 'Edit Exercise' : 'New Exercise'}
+          {isEditing ? t('exercise.editExercise') : t('exercise.newExercise')}
         </h1>
         <p className="text-gray-400 text-sm">
-          Define your exercise name, group, and optional notes.
+          {t('exercise.defineExercise')}
         </p>
       </header>
 
@@ -122,11 +124,11 @@ export default function ExerciseCreateEdit() {
         {/* Name */}
         <div>
           <label className="block text-sm font-medium text-gray-300 mb-1">
-            Name
+            {t('exercise.name')}
           </label>
           <input
             {...register('name')}
-            placeholder="Exercise name"
+            placeholder={t('exercise.exerciseNamePlaceholder')}
             className={`w-full border rounded-lg p-3 bg-dark text-base text-gray-100 focus:outline-none transition
               ${errors.name ? 'border-red-600' : 'border-gray-700 focus:border-primary'}
             `}
@@ -139,22 +141,22 @@ export default function ExerciseCreateEdit() {
         {/* Muscle Group */}
         <div>
           <label className="block text-sm font-medium text-gray-300 mb-1">
-            Muscle Group
+            {t('exercise.muscleGroup')}
           </label>
           <select
             {...register('muscleGroup')}
             className="w-full border border-gray-700 bg-dark rounded-lg p-3 text-gray-100 focus:border-primary outline-none transition"
           >
-            <option value="">Select group</option>
+            <option value="">{t('exercise.selectGroup')}</option>
             {[
-              ['CHEST', 'Chest'],
-              ['BACK', 'Back'],
-              ['LEGS', 'Legs'],
-              ['SHOULDERS', 'Shoulders'],
-              ['BICEPS', 'Biceps'],
-              ['TRICEPS', 'Triceps'],
-              ['CORE', 'Core'],
-              ['FULL_BODY', 'Full Body'],
+              ['CHEST', t('muscleGroups.CHEST')],
+              ['BACK', t('muscleGroups.BACK')],
+              ['LEGS', t('muscleGroups.LEGS')],
+              ['SHOULDERS', t('muscleGroups.SHOULDERS')],
+              ['BICEPS', t('muscleGroups.BICEPS')],
+              ['TRICEPS', t('muscleGroups.TRICEPS')],
+              ['CORE', t('muscleGroups.CORE')],
+              ['FULL_BODY', t('muscleGroups.FULL_BODY')],
             ].map(([value, label]) => (
               <option key={value} value={value}>
                 {label}
@@ -166,11 +168,11 @@ export default function ExerciseCreateEdit() {
         {/* Notes */}
         <div>
           <label className="block text-sm font-medium text-gray-300 mb-1">
-            Notes
+            {t('exercise.notes')}
           </label>
           <textarea
             {...register('notes')}
-            placeholder="Optional notes about this exercise..."
+            placeholder={t('exercise.optionalNotes')}
             className="w-full border border-gray-700 bg-dark rounded-lg p-3 text-base text-gray-100 focus:border-primary outline-none transition"
             rows={4}
           />
@@ -197,10 +199,10 @@ export default function ExerciseCreateEdit() {
               "
             >
               {isSubmitting
-                ? 'Saving...'
+                ? t('common.saving')
                 : isEditing
-                ? 'Save Changes'
-                : 'Save Exercise'}
+                ? t('exercise.saveChanges')
+                : t('exercise.saveExercise')}
             </button>
           </div>
         </div>

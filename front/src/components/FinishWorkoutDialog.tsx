@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 export type FinishWorkoutData = {
   feeling?: 'GREAT' | 'GOOD' | 'OKAY' | 'BAD' | 'TERRIBLE'
@@ -15,6 +16,7 @@ type Props = {
 const feelings = ['GREAT', 'GOOD', 'OKAY', 'BAD', 'TERRIBLE'] as const
 
 export function FinishWorkoutDialog({ open, onClose, onConfirm }: Props) {
+  const { t } = useTranslation()
   const [feeling, setFeeling] = useState<FinishWorkoutData['feeling']>()
   const [fatigue, setFatigue] = useState<number>(5)
   const [notes, setNotes] = useState('')
@@ -32,12 +34,12 @@ export function FinishWorkoutDialog({ open, onClose, onConfirm }: Props) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
       <div className="bg-[#181818] border border-gray-800 rounded-xl p-6 w-full max-w-md">
-        <h2 className="text-xl font-semibold text-gray-100 mb-4">Finish Workout</h2>
+        <h2 className="text-xl font-semibold text-gray-100 mb-4">{t('dialog.finishWorkout')}</h2>
 
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-1">
-              How was your workout?
+              {t('dialog.howWasWorkout')}
             </label>
             <div className="grid grid-cols-5 gap-2">
               {feelings.map((f) => (
@@ -51,7 +53,7 @@ export function FinishWorkoutDialog({ open, onClose, onConfirm }: Props) {
                         : 'border-gray-700 text-gray-400 hover:border-primary hover:text-primary'
                     }`}
                 >
-                  {f}
+                  {t(`feelings.${f}`)}
                 </button>
               ))}
             </div>
@@ -59,7 +61,7 @@ export function FinishWorkoutDialog({ open, onClose, onConfirm }: Props) {
 
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-1">
-              Fatigue level (1–10)
+              {t('dialog.fatigueLevel')}
             </label>
             <input
               type="range"
@@ -73,11 +75,11 @@ export function FinishWorkoutDialog({ open, onClose, onConfirm }: Props) {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-1">Notes</label>
+            <label className="block text-sm font-medium text-gray-300 mb-1">{t('dialog.notes')}</label>
             <textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              placeholder="Optional notes about this workout..."
+              placeholder={t('dialog.optionalNotes')}
               rows={3}
               className="w-full rounded-md border border-gray-700 bg-[#0f0f0f] px-3 py-2 text-base text-gray-100 focus:border-primary outline-none resize-none"
             />
@@ -90,14 +92,14 @@ export function FinishWorkoutDialog({ open, onClose, onConfirm }: Props) {
             disabled={loading}
             className="px-4 py-2 text-sm text-gray-400 hover:text-gray-200 transition"
           >
-            Cancel
+            {t('common.cancel')}
           </button>
           <button
             onClick={handleConfirm}
             disabled={loading}
             className="px-4 py-2 bg-primary text-black text-sm font-semibold rounded-md hover:brightness-110 transition disabled:opacity-70"
           >
-            {loading ? 'Saving...' : 'Confirm'}
+            {loading ? t('common.saving') : t('dialog.confirm')}
           </button>
         </div>
       </div>
