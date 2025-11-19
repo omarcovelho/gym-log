@@ -50,6 +50,8 @@ model User {
   email     String   @unique
   password  String
   name      String?
+  height    Float?
+  weight    Float?
   role      Role     @default(USER)
   createdAt DateTime @default(now())
   sessions  WorkoutSession[]

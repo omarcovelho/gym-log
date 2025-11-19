@@ -1,7 +1,7 @@
 import { createContext, useContext, useMemo, useState, useEffect } from 'react'
 import { validateToken, refreshToken, isTokenExpiringSoon, isTokenExpired } from '@/api/auth'
 
-export type User = { sub: string; email: string; name?: string; role?: string } | null
+export type User = { sub: string; email: string; name?: string; height?: number; weight?: number; role?: string } | null
 type AuthCtx = {
   user: User
   loading: boolean

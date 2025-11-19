@@ -4,12 +4,14 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { createBrowserRouter, RouterProvider } from 'react-router-dom'
 import { AuthProvider } from '@/auth/AuthContext'
 import ProtectedRoute from '@/auth/ProtectedRoute'
+import ProtectedRouteWithStats from '@/auth/ProtectedRouteWithStats'
 import PublicRoute from '@/auth/PublicRoute'
 import AppLayout from '@/layouts/AppLayout'
 import Welcome from '@/pages/Welcome'
 import Home from '@/pages/Home'
 import Login from '@/pages/Login'
 import Signup from '@/pages/Signup'
+import UserStats from '@/pages/UserStats'
 import ExercisesList from '@/pages/ExercisesList'
 import ExerciseCreateEdit from '@/pages/ExerciseCreateEdit'
 import WorkoutTemplateCreateEdit from '@/pages/WorkoutTemplateCreateEdit'
@@ -61,13 +63,23 @@ const router = createBrowserRouter([
 
     // Protected routes (under /app)
     {
-        path: '/app',
+        path: '/app/stats',
         element: (
             <ProtectedRoute>
                 <AppLayout>
-                    <Home />
+                    <UserStats />
                 </AppLayout>
             </ProtectedRoute>
+        ),
+    },
+    {
+        path: '/app',
+        element: (
+            <ProtectedRouteWithStats>
+                <AppLayout>
+                    <Home />
+                </AppLayout>
+            </ProtectedRouteWithStats>
         ),
     },
 
@@ -75,31 +87,31 @@ const router = createBrowserRouter([
     {
         path: '/app/exercises',
         element: (
-            <ProtectedRoute>
+            <ProtectedRouteWithStats>
                 <AppLayout>
                     <ExercisesList />
                 </AppLayout>
-            </ProtectedRoute>
+            </ProtectedRouteWithStats>
         ),
     },
     {
         path: '/app/exercises/new',
         element: (
-            <ProtectedRoute>
+            <ProtectedRouteWithStats>
                 <AppLayout>
                     <ExerciseCreateEdit />
                 </AppLayout>
-            </ProtectedRoute>
+            </ProtectedRouteWithStats>
         ),
     },
     {
         path: '/app/exercises/:id/edit',
         element: (
-            <ProtectedRoute>
+            <ProtectedRouteWithStats>
                 <AppLayout>
                     <ExerciseCreateEdit />
                 </AppLayout>
-            </ProtectedRoute>
+            </ProtectedRouteWithStats>
         ),
     },
 
@@ -107,61 +119,61 @@ const router = createBrowserRouter([
     {
         path: '/app/templates',
         element: (
-            <ProtectedRoute>
+            <ProtectedRouteWithStats>
                 <AppLayout>
                     <WorkoutTemplatesList />
                 </AppLayout>
-            </ProtectedRoute>
+            </ProtectedRouteWithStats>
         ),
     },
     {
         path: '/app/templates/new',
         element: (
-            <ProtectedRoute>
+            <ProtectedRouteWithStats>
                 <AppLayout>
                     <WorkoutTemplateCreateEdit />
                 </AppLayout>
-            </ProtectedRoute>
+            </ProtectedRouteWithStats>
         ),
     },
     {
         path: '/app/templates/:id/edit',
         element: (
-            <ProtectedRoute>
+            <ProtectedRouteWithStats>
                 <AppLayout>
                     <WorkoutTemplateCreateEdit />
                 </AppLayout>
-            </ProtectedRoute>
+            </ProtectedRouteWithStats>
         ),
     },
     {
         path: '/app/workouts',
         element: (
-            <ProtectedRoute>
+            <ProtectedRouteWithStats>
                 <AppLayout>
                     <WorkoutLogsList />
                 </AppLayout>
-            </ProtectedRoute>
+            </ProtectedRouteWithStats>
         ),
     },
     {
         path: '/app/workouts/:id',
         element: (
-            <ProtectedRoute>
+            <ProtectedRouteWithStats>
                 <AppLayout>
                     <WorkoutSessionView />
                 </AppLayout>
-            </ProtectedRoute>
+            </ProtectedRouteWithStats>
         ),
     },
     {
         path: '/app/workouts/:id/view',
         element: (
-            <ProtectedRoute>
+            <ProtectedRouteWithStats>
                 <AppLayout>
                     <WorkoutSessionDetails />
                 </AppLayout>
-            </ProtectedRoute>
+            </ProtectedRouteWithStats>
         ),
     },
 
