@@ -1,13 +1,14 @@
 import { useState } from 'react'
 import { createPortal } from 'react-dom'
-import { useNavigate } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { X, Plus, FileText, Zap, AlertCircle } from 'lucide-react'
+import { Home, Dumbbell, FileText, History, Plus, X, Zap, AlertCircle } from 'lucide-react'
 import { startManualWorkout, startWorkout, getActiveWorkout } from '@/api/workoutSession'
 import { listWorkoutTemplates } from '@/api/workoutTemplates'
 import { useToast } from './ToastProvider'
 
-export function FloatingActionButton() {
+export function BottomNavigation() {
+  const location = useLocation()
   const navigate = useNavigate()
   const { toast } = useToast()
   const [open, setOpen] = useState(false)
@@ -98,28 +99,100 @@ export function FloatingActionButton() {
     setOpen(true)
   }
 
+  const isActive = (path: string) => {
+    if (path === '/app') {
+      return location.pathname === '/app' || location.pathname === '/app/'
+    }
+    const pathMatch = location.pathname === path || location.pathname.startsWith(path + '/')
+    return pathMatch
+  }
+
   return (
     <>
-      {/* FAB Button - Fixo na parte inferior (apenas desktop) */}
-      <div className="fixed bottom-6 right-6 z-40 group hidden md:block">
-        {/* Tooltip/Label - Visível no hover (desktop) */}
-        <div className="hidden md:block absolute right-full mr-3 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-          <div className="bg-gray-900 text-gray-100 text-sm font-medium px-3 py-2 rounded-lg whitespace-nowrap shadow-lg border border-gray-700">
-            Iniciar Treino
-            <div className="absolute left-full top-1/2 -translate-y-1/2 border-4 border-transparent border-l-gray-900"></div>
+      <nav className="fixed bottom-0 left-0 right-0 z-50 bg-[#0f0f0f]/95 backdrop-blur-md border-t border-gray-800 md:hidden">
+        <div className="max-w-5xl mx-auto flex items-center justify-around px-2 py-2">
+          {/* Home */}
+          <Link
+            to="/app"
+            className={`
+              flex flex-col items-center justify-center gap-1
+              px-3 py-2 rounded-lg transition
+              ${isActive('/app') 
+                ? 'text-primary' 
+                : 'text-gray-400 hover:text-gray-200'
+              }
+            `}
+            aria-label="Home"
+          >
+            <Home className={`w-6 h-6 ${isActive('/app') ? 'stroke-[2.5]' : ''}`} />
+            <span className="text-[10px] font-medium">Home</span>
+          </Link>
+
+          {/* Exercises */}
+          <Link
+            to="/app/exercises"
+            className={`
+              flex flex-col items-center justify-center gap-1
+              px-3 py-2 rounded-lg transition
+              ${isActive('/app/exercises') 
+                ? 'text-primary' 
+                : 'text-gray-400 hover:text-gray-200'
+              }
+            `}
+            aria-label="Exercises"
+          >
+            <Dumbbell className={`w-6 h-6 ${isActive('/app/exercises') ? 'stroke-[2.5]' : ''}`} />
+            <span className="text-[10px] font-medium">Exercises</span>
+          </Link>
+
+          {/* Botão de Iniciar Treino (centro destacado) */}
+          <div className="flex flex-col items-center">
+            <button
+              onClick={handleButtonClick}
+              className="w-12 h-12 -mt-2 bg-primary text-dark rounded-full shadow-lg shadow-primary/30 hover:shadow-primary/50 hover:scale-110 active:scale-95 transition-all flex items-center justify-center"
+              aria-label="Iniciar treino"
+              title="Iniciar Treino"
+            >
+              <Plus className="w-6 h-6" strokeWidth={2.5} />
+            </button>
+            <span className="text-[10px] font-medium text-primary mt-1">Treino</span>
           </div>
+
+          {/* Templates */}
+          <Link
+            to="/app/templates"
+            className={`
+              flex flex-col items-center justify-center gap-1
+              px-3 py-2 rounded-lg transition
+              ${isActive('/app/templates') 
+                ? 'text-primary' 
+                : 'text-gray-400 hover:text-gray-200'
+              }
+            `}
+            aria-label="Templates"
+          >
+            <FileText className={`w-6 h-6 ${isActive('/app/templates') ? 'stroke-[2.5]' : ''}`} />
+            <span className="text-[10px] font-medium">Templates</span>
+          </Link>
+
+          {/* Workouts */}
+          <Link
+            to="/app/workouts"
+            className={`
+              flex flex-col items-center justify-center gap-1
+              px-3 py-2 rounded-lg transition
+              ${isActive('/app/workouts') 
+                ? 'text-primary' 
+                : 'text-gray-400 hover:text-gray-200'
+              }
+            `}
+            aria-label="Workouts"
+          >
+            <History className={`w-6 h-6 ${isActive('/app/workouts') ? 'stroke-[2.5]' : ''}`} />
+            <span className="text-[10px] font-medium">Workouts</span>
+          </Link>
         </div>
-        
-        {/* Botão */}
-        <button
-          onClick={handleButtonClick}
-          className="w-16 h-16 bg-primary text-dark rounded-full shadow-lg shadow-primary/30 hover:shadow-primary/50 hover:scale-110 active:scale-95 transition-all flex items-center justify-center"
-          aria-label="Iniciar treino"
-          title="Iniciar Treino"
-        >
-          <Plus className="w-7 h-7" strokeWidth={2.5} />
-        </button>
-      </div>
+      </nav>
 
       {/* Diálogo de treino ativo */}
       {showActiveDialog && activeWorkout &&
