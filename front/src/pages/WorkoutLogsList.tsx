@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
+import { Eye, Trash2 } from 'lucide-react'
 import { api } from '@/lib/api'
 import { useAuth } from '@/auth/AuthContext'
 import { useToast } from '@/components/ToastProvider'
@@ -91,11 +92,11 @@ export default function WorkoutLogsList() {
         {sessions.map((s) => (
           <div
             key={s.id}
-            className="p-4 bg-[#181818] rounded-lg border border-gray-800 hover:border-gray-600 transition"
+            className="bg-[#181818] rounded-xl p-5 border border-gray-800 shadow-sm transition-all duration-200 ease-in-out hover:shadow-lg hover:-translate-y-0.5 hover:border-gray-700"
           >
-            <div className="flex justify-between items-start gap-3">
+            <div className="flex justify-between items-start gap-4">
               <div>
-                <h2 className="text-lg font-semibold text-gray-100">
+                <h2 className="font-semibold text-lg text-gray-100">
                   {s.title ?? 'Free Workout'}
                 </h2>
 
@@ -104,17 +105,17 @@ export default function WorkoutLogsList() {
                 </p>
 
                 {s.endAt ? (
-                  <span className="text-xs mt-2 inline-block px-2 py-1 rounded bg-green-900/40 text-green-400">
+                  <span className="inline-flex items-center gap-1 text-xs mt-2 px-2 py-1 rounded-md bg-green-900/20 text-green-400 border border-green-800/30 font-medium">
                     Finished
                   </span>
                 ) : (
-                  <span className="text-xs mt-2 inline-block px-2 py-1 rounded bg-yellow-900/40 text-yellow-400">
+                  <span className="inline-flex items-center gap-1 text-xs mt-2 px-2 py-1 rounded-md bg-yellow-900/20 text-yellow-400 border border-yellow-800/30 font-medium">
                     In progress
                   </span>
                 )}
               </div>
 
-              <div className="flex flex-col gap-2">
+              <div className="flex gap-2 flex-shrink-0">
                 <button
                   onClick={() =>
                     navigate(
@@ -123,24 +124,28 @@ export default function WorkoutLogsList() {
                         : `/app/workouts/${s.id}`
                     )
                   }
-                  className="text-xs px-3 py-1.5 rounded-md bg-[#101010] text-gray-400 hover:text-gray-200 transition"
+                  className="p-2 rounded-md bg-[#101010] text-gray-400 hover:text-gray-200 border border-gray-800 transition"
+                  aria-label="View workout"
+                  title="View"
                 >
-                  View
+                  <Eye className="w-4 h-4" />
                 </button>
 
                 <button
                   onClick={() => setConfirmId(s.id)}
                   disabled={deletingId === s.id}
                   className={`
-                    text-xs px-3 py-1.5 rounded-md
+                    p-2 rounded-md border transition
                     ${
                       deletingId === s.id
-                        ? 'opacity-50 bg-red-900/20 text-red-700'
-                        : 'bg-red-900/40 text-red-400 hover:bg-red-900 hover:text-red-200'
+                        ? 'opacity-50 cursor-not-allowed bg-[#101010] text-gray-500 border-gray-800'
+                        : 'bg-[#101010] text-gray-400 hover:text-gray-200 border-gray-800'
                     }
                   `}
+                  aria-label="Delete workout"
+                  title="Delete"
                 >
-                  {deletingId === s.id ? 'Deleting...' : 'Delete'}
+                  <Trash2 className="w-4 h-4" />
                 </button>
               </div>
             </div>

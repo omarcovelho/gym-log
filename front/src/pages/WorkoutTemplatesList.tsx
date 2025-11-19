@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { Eye, EyeOff, Pencil, Trash2 } from 'lucide-react'
 import {
   listWorkoutTemplates,
   deleteWorkoutTemplate,
@@ -116,9 +117,9 @@ export default function WorkoutTemplatesList() {
         {templates.map((tpl) => (
           <div
             key={tpl.id}
-            className="bg-[#181818] rounded-xl p-5 border border-gray-800 hover:border-gray-600 transition"
+            className="bg-[#181818] rounded-xl p-5 border border-gray-800 shadow-sm transition-all duration-200 ease-in-out hover:shadow-lg hover:-translate-y-0.5 hover:border-gray-700"
           >
-            <div className="flex justify-between items-start">
+            <div className="flex justify-between items-start gap-4">
               <div>
                 <h2 className="font-semibold text-lg text-gray-100">{tpl.title}</h2>
                 {tpl.notes && (
@@ -130,36 +131,46 @@ export default function WorkoutTemplatesList() {
                 </p>
               </div>
 
-              <div className="flex gap-2">
+              <div className="flex gap-2 flex-shrink-0">
                 <button
                   onClick={() =>
                     setExpandedId(expandedId === tpl.id ? null : tpl.id)
                   }
-                  className="text-xs px-3 py-1.5 rounded-md bg-[#101010] text-gray-400 hover:text-gray-200"
+                  className="p-2 rounded-md bg-[#101010] text-gray-400 hover:text-gray-200 border border-gray-800 transition"
+                  aria-label={expandedId === tpl.id ? 'Hide exercises' : 'View exercises'}
+                  title={expandedId === tpl.id ? 'Hide' : 'View'}
                 >
-                  {expandedId === tpl.id ? 'Hide' : 'View'}
+                  {expandedId === tpl.id ? (
+                    <EyeOff className="w-4 h-4" />
+                  ) : (
+                    <Eye className="w-4 h-4" />
+                  )}
                 </button>
 
                 <Link
                   to={`/app/templates/${tpl.id}/edit`}
-                  className="text-xs px-3 py-1.5 rounded-md bg-blue-900/40 text-blue-400 hover:bg-blue-900 hover:text-blue-200"
+                  className="p-2 rounded-md bg-[#101010] text-gray-400 hover:text-gray-200 border border-gray-800 transition flex items-center justify-center"
+                  aria-label="Edit template"
+                  title="Edit"
                 >
-                  Edit
+                  <Pencil className="w-4 h-4" />
                 </Link>
 
                 <button
                   onClick={() => setConfirmId(tpl.id)}
                   disabled={deletingId === tpl.id}
                   className={`
-                    text-xs px-3 py-1.5 rounded-md
+                    p-2 rounded-md border transition
                     ${
                       deletingId === tpl.id
-                        ? 'opacity-50 bg-red-900/20 text-red-700'
-                        : 'bg-red-900/40 text-red-400 hover:bg-red-900 hover:text-red-200'
+                        ? 'opacity-50 cursor-not-allowed bg-[#101010] text-gray-500 border-gray-800'
+                        : 'bg-[#101010] text-gray-400 hover:text-gray-200 border-gray-800'
                     }
                   `}
+                  aria-label="Delete template"
+                  title="Delete"
                 >
-                  {deletingId === tpl.id ? 'Deleting...' : 'Delete'}
+                  <Trash2 className="w-4 h-4" />
                 </button>
               </div>
             </div>

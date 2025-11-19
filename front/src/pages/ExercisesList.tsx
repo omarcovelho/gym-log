@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { Pencil, Trash2 } from 'lucide-react'
 import { api } from '@/lib/api'
 import { useAuth, type User } from '@/auth/AuthContext'
 import { useToast } from '@/components/ToastProvider'
@@ -167,18 +168,10 @@ export default function ExercisesList() {
               hover:border-gray-700
             "
           >
-            <div className="flex justify-between items-start">
+            <div className="flex justify-between items-start gap-4">
               <div className="flex-1">
                 <div className="flex items-center gap-2">
                   <h2 className="font-semibold text-lg text-gray-100">{ex.name}</h2>
-                  {ex.isGlobal && (
-                    <span
-                      className="text-xs px-2 py-0.5 rounded bg-blue-900/30 text-blue-400 border border-blue-800/50"
-                      title="Global exercise - Only admins can edit or delete"
-                    >
-                      Global
-                    </span>
-                  )}
                 </div>
                 {ex.muscleGroup && (
                   <p className="text-xs text-gray-500 uppercase mt-0.5">
@@ -191,13 +184,15 @@ export default function ExercisesList() {
               </div>
 
               {user && (canEdit(ex, user) || canDelete(ex, user)) && (
-                <div className="flex gap-2">
+                <div className="flex gap-2 flex-shrink-0">
                   {canEdit(ex, user) && (
                     <button
                       onClick={() => navigate(`/app/exercises/${ex.id}/edit`)}
-                      className="text-xs px-3 py-1.5 rounded-md font-medium bg-[#101010] text-gray-400 hover:text-gray-200 transition"
+                      className="p-2 rounded-md bg-[#101010] text-gray-400 hover:text-gray-200 border border-gray-800 transition"
+                      aria-label="Edit exercise"
+                      title="Edit"
                     >
-                      Edit
+                      <Pencil className="w-4 h-4" />
                     </button>
                   )}
 
@@ -206,15 +201,17 @@ export default function ExercisesList() {
                       disabled={deletingId === ex.id}
                       onClick={() => setConfirmId(ex.id)}
                       className={`
-                        text-xs px-3 py-1.5 rounded-md font-medium transition
+                        p-2 rounded-md transition border
                         ${
                           deletingId === ex.id
-                            ? 'opacity-50 cursor-not-allowed'
-                            : 'bg-red-900/40 text-red-400 hover:bg-red-900 hover:text-red-200'
+                            ? 'opacity-50 cursor-not-allowed bg-[#101010] text-gray-500 border-gray-800'
+                            : 'bg-[#101010] text-gray-400 hover:text-gray-200 border-gray-800'
                         }
                       `}
+                      aria-label="Delete exercise"
+                      title="Delete"
                     >
-                      {deletingId === ex.id ? 'Deleting...' : 'Delete'}
+                      <Trash2 className="w-4 h-4" />
                     </button>
                   )}
                 </div>
