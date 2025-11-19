@@ -126,6 +126,15 @@ export default function Login() {
             </p>
           )}
 
+          <div className="text-right">
+            <a
+              href="/forgot-password"
+              className="text-sm text-primary hover:underline"
+            >
+              {t('passwordReset.forgotPassword')}
+            </a>
+          </div>
+
           <button
             disabled={formState.isSubmitting}
             className="w-full bg-primary text-black p-2 rounded font-semibold hover:bg-green-400 transition"

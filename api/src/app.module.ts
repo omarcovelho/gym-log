@@ -9,6 +9,8 @@ import { WorkoutTemplateModule } from './workout-template/workout-template.modul
 import { WorkoutSessionModule } from './workout-session/workout-session.module';
 import { RestTimerModule } from './rest-timer/rest-timer.module';
 import { UserModule } from './user/user.module';
+import { EmailModule } from './email/email.module';
+import { AppConfigModule } from './config/config.module';
 import { ThrottlerModule } from '@nestjs/throttler';
 
 @Module({
@@ -28,6 +30,8 @@ import { ThrottlerModule } from '@nestjs/throttler';
     WorkoutSessionModule,
     RestTimerModule,
     UserModule,
+    EmailModule,
+    AppConfigModule,
   ],
   controllers: [AppController],
   providers: [AppService],

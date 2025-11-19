@@ -35,7 +35,27 @@
     "alreadyHaveAccount": "Já tem uma conta?",
     "loginHere": "Faça login aqui",
     "backToHome": "Voltar para",
+    "backToLogin": "Voltar para login",
     "createAccount": "Criar Conta"
+  },
+  "passwordReset": {
+    "forgotPassword": "Esqueci minha senha",
+    "forgotPasswordTitle": "Recuperar Senha",
+    "forgotPasswordDescription": "Digite seu email para receber um link de recuperação",
+    "emailSent": "Email enviado",
+    "emailSentDescription": "Se o email existir, você receberá um link de recuperação em breve",
+    "resetPassword": "Redefinir Senha",
+    "resetPasswordTitle": "Nova Senha",
+    "resetPasswordDescription": "Digite sua nova senha",
+    "newPassword": "Nova Senha",
+    "confirmPassword": "Confirmar Senha",
+    "passwordsMustMatch": "As senhas devem ser iguais",
+    "passwordResetSuccess": "Senha redefinida com sucesso",
+    "passwordResetSuccessDescription": "Redirecionando para login...",
+    "tokenExpired": "Link expirado",
+    "tokenExpiredDescription": "O link de recuperação expirou. Solicite um novo.",
+    "tokenInvalid": "Link inválido",
+    "tokenInvalidDescription": "O link de recuperação é inválido ou já foi usado."
   },
   "welcome": {
     "title": "GymLog",
