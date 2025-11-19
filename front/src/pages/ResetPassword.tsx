@@ -24,7 +24,7 @@ export default function ResetPassword() {
   const [error, setError] = useState<string | null>(null)
   const token = searchParams.get('token')
 
-  const { register, handleSubmit, formState, setError: setFormError } = useForm<Form>({
+  const { register, handleSubmit, formState } = useForm<Form>({
     resolver: zodResolver(getSchema()),
   })
 
