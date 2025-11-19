@@ -1,16 +1,21 @@
-import { Injectable, UnauthorizedException, BadRequestException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, BadRequestException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { JwtService } from '@nestjs/jwt';
 import { SignupDto } from './dto/signup.dto';
 import * as bcrypt from 'bcrypt';
 import { LoginDto } from './dto/login.dto';
 import { User } from 'generated/prisma';
+import { EmailService } from '../email/email.service';
+import { AppConfigService } from '../config/config.service';
+import * as crypto from 'crypto';
 
 @Injectable()
 export class AuthService {
     constructor(
         private prisma: PrismaService,
         private jwt: JwtService,
+        private emailService: EmailService,
+        private configService: AppConfigService,
     ) { }
 
     async signup(dto: SignupDto) {
@@ -86,6 +91,101 @@ export class AuthService {
         }
         
         return this.signToken(user);
+    }
+
+    async requestPasswordReset(email: string, acceptLanguage?: string) {
+        // Always return success for security (don't reveal if email exists)
+        const user = await this.prisma.user.findUnique({
+            where: { email },
+        });
+
+        if (!user) {
+            // User doesn't exist, but return success anyway
+            return { success: true };
+        }
+
+        // Check if user has a password (not OAuth)
+        const hasPassword = user.password && user.password.trim() !== '';
+
+        if (!hasPassword) {
+            console.log('User is OAuth, sending informative email');
+            // User is OAuth, send informative email
+            try {
+                await this.emailService.sendOAuthAccountInfo(email, acceptLanguage);
+            } catch (error) {
+                console.error('Error sending informative email', error);
+                throw new BadRequestException('Failed to send informative email');
+            }
+            return { success: true };
+        }
+
+        console.log('User has password, generating reset token');
+        // User has password, generate reset token
+        const token = crypto.randomBytes(32).toString('hex');
+        const expirationHours = await this.configService.getPasswordResetExpirationHours();
+        const expiresAt = new Date(Date.now() + expirationHours * 3600000);
+
+        // Save token to database
+        await this.prisma.passwordResetToken.create({
+            data: {
+                token,
+                userId: user.id,
+                expiresAt,
+            },
+        });
+
+        // Build reset link
+        const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+        const resetLink = `${frontendUrl}/reset-password?token=${token}`;
+
+        // Send email
+        await this.emailService.sendPasswordResetEmail(email, resetLink, acceptLanguage);
+
+        return { success: true };
+    }
+
+    async resetPassword(token: string, newPassword: string) {
+        // Find token in database
+        const resetToken = await this.prisma.passwordResetToken.findUnique({
+            where: { token },
+            include: { user: true },
+        });
+
+        if (!resetToken) {
+            throw new BadRequestException('Invalid or expired token');
+        }
+
+        // Check if token is already used
+        if (resetToken.used) {
+            throw new BadRequestException('Token has already been used');
+        }
+
+        // Check if token is expired
+        if (resetToken.expiresAt < new Date()) {
+            throw new BadRequestException('Token has expired');
+        }
+
+        // Check if user has a password (should not allow reset for OAuth without password)
+        if (!resetToken.user.password || resetToken.user.password.trim() === '') {
+            throw new BadRequestException('This account uses OAuth and cannot reset password');
+        }
+
+        // Hash new password
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+        // Update user password
+        await this.prisma.user.update({
+            where: { id: resetToken.userId },
+            data: { password: hashedPassword },
+        });
+
+        // Mark token as used
+        await this.prisma.passwordResetToken.update({
+            where: { id: resetToken.id },
+            data: { used: true },
+        });
+
+        return { success: true };
     }
 
     private async signToken(user: User) {

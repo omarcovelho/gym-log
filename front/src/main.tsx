@@ -11,6 +11,8 @@ import Welcome from '@/pages/Welcome'
 import Home from '@/pages/Home'
 import Login from '@/pages/Login'
 import Signup from '@/pages/Signup'
+import ForgotPassword from '@/pages/ForgotPassword'
+import ResetPassword from '@/pages/ResetPassword'
 import UserStats from '@/pages/UserStats'
 import ExercisesList from '@/pages/ExercisesList'
 import ExerciseCreateEdit from '@/pages/ExerciseCreateEdit'
@@ -58,6 +60,22 @@ const router = createBrowserRouter([
         element: (
             <PublicRoute>
                 <Signup />
+            </PublicRoute>
+        )
+    },
+    { 
+        path: '/forgot-password', 
+        element: (
+            <PublicRoute>
+                <ForgotPassword />
+            </PublicRoute>
+        )
+    },
+    { 
+        path: '/reset-password', 
+        element: (
+            <PublicRoute>
+                <ResetPassword />
             </PublicRoute>
         )
     },

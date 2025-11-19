@@ -35,7 +35,27 @@
     "alreadyHaveAccount": "Already have an account?",
     "loginHere": "Login here",
     "backToHome": "Back to",
+    "backToLogin": "Back to login",
     "createAccount": "Create Account"
+  },
+  "passwordReset": {
+    "forgotPassword": "Forgot password",
+    "forgotPasswordTitle": "Recover Password",
+    "forgotPasswordDescription": "Enter your email to receive a recovery link",
+    "emailSent": "Email sent",
+    "emailSentDescription": "If the email exists, you will receive a recovery link shortly",
+    "resetPassword": "Reset Password",
+    "resetPasswordTitle": "New Password",
+    "resetPasswordDescription": "Enter your new password",
+    "newPassword": "New Password",
+    "confirmPassword": "Confirm Password",
+    "passwordsMustMatch": "Passwords must match",
+    "passwordResetSuccess": "Password reset successfully",
+    "passwordResetSuccessDescription": "Redirecting to login...",
+    "tokenExpired": "Link expired",
+    "tokenExpiredDescription": "The recovery link has expired. Please request a new one.",
+    "tokenInvalid": "Invalid link",
+    "tokenInvalidDescription": "The recovery link is invalid or has already been used."
   },
   "welcome": {
     "title": "GymLog",

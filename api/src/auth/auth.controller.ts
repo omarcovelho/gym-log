@@ -1,8 +1,10 @@
-import { Body, Controller, Get, Post, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Post, Req, UseGuards, Headers } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { SignupDto } from './dto/signup.dto';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
 import { AuthGuard } from '@nestjs/passport';
 import { ThrottlerGuard } from '@nestjs/throttler';
 import { CurrentUser } from 'src/common/decorators/current-user';
@@ -92,5 +94,23 @@ export class AuthController {
     @ApiResponse({ status: 401, description: 'Token is invalid or expired.' })
     async refresh(@CurrentUser() user) {
         return this.auth.refreshToken(user.id);
+    }
+
+    @Post('forgot-password')
+    @ApiOperation({ summary: 'Request password reset' })
+    @ApiResponse({ status: 200, description: 'If the email exists, a reset link will be sent.' })
+    async forgotPassword(
+        @Body() dto: ForgotPasswordDto,
+        @Headers('accept-language') acceptLanguage?: string
+    ) {
+        return this.auth.requestPasswordReset(dto.email, acceptLanguage);
+    }
+
+    @Post('reset-password')
+    @ApiOperation({ summary: 'Reset password with token' })
+    @ApiResponse({ status: 200, description: 'Password reset successfully.' })
+    @ApiResponse({ status: 400, description: 'Invalid or expired token.' })
+    async resetPassword(@Body() dto: ResetPasswordDto) {
+        return this.auth.resetPassword(dto.token, dto.newPassword);
     }
 }
