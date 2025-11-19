@@ -100,7 +100,9 @@ export default function UserStats() {
             <h1 className="text-2xl font-bold text-gray-100">Seus Dados</h1>
           </div>
           <p className="text-gray-400 text-sm">
-            Preencha suas informações para começar a usar o app
+            {stats && stats.height !== null && stats.weight !== null
+              ? 'Atualize suas informações pessoais'
+              : 'Preencha suas informações para começar a usar o app'}
           </p>
         </div>
 
