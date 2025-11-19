@@ -17,6 +17,24 @@ export default function Signup() {
     resolver: zodResolver(schema),
   })
 
+  // Get API URL with fallback
+  const API_URL = import.meta.env.VITE_API_URL || '/api'
+  
+  // Safely extract origin from API URL
+  let API_ORIGIN: string
+  try {
+    if (API_URL.startsWith('http://') || API_URL.startsWith('https://')) {
+      // Absolute URL - extract origin
+      API_ORIGIN = new URL(API_URL).origin
+    } else {
+      // Relative URL - use current origin
+      API_ORIGIN = window.location.origin
+    }
+  } catch {
+    // Fallback to current origin if URL parsing fails
+    API_ORIGIN = window.location.origin
+  }
+
   const onSubmit = async (data: Form) => {
     // Signup
     await api.post('/auth/signup', data)
@@ -39,6 +57,55 @@ export default function Signup() {
     
     // Redirect to stats page
     location.href = '/app/stats'
+  }
+
+  function handleGoogleSignup() {
+    const width = 500
+    const height = 600
+    const left = window.screenX + (window.outerWidth - width) / 2
+    const top = window.screenY + (window.outerHeight - height) / 2
+
+    // Construct full URL for Google OAuth
+    const googleAuthUrl = API_URL.startsWith('http')
+      ? `${API_URL}/auth/google`
+      : `${window.location.origin}${API_URL}/auth/google`
+
+    const popup = window.open(
+      googleAuthUrl,
+      'google-signup',
+      `width=${width},height=${height},left=${left},top=${top}`
+    )
+
+    if (!popup) return
+
+    const listener = (event: MessageEvent) => {
+      // segurança — só aceita do backend
+      if (event.origin !== API_ORIGIN) return
+
+      const { token, email, name } = event.data || {}
+      if (!token) return
+
+      // Get user ID from token payload
+      try {
+        const payload = JSON.parse(atob(token.split('.')[1]))
+        const userId = payload.sub
+        
+        // Get role from token payload
+        const role = payload.role || 'USER'
+        
+        // salva no auth context
+        login(token, { sub: userId, email, name, role })
+      } catch {
+        // Fallback if token parsing fails
+        login(token, { sub: 'google', email, name, role: 'USER' })
+      }
+
+      window.removeEventListener('message', listener)
+      popup.close()
+      location.href = '/app'
+    }
+
+    window.addEventListener('message', listener)
   }
 
   return (
@@ -81,6 +148,21 @@ export default function Signup() {
             {formState.isSubmitting ? '...' : 'Create Account'}
           </button>
         </form>
+
+        {/* Divider */}
+        <div className="flex items-center gap-3 pt-2">
+          <div className="flex-1 h-px bg-gray-700" />
+          <span className="text-gray-500 text-xs">OR</span>
+          <div className="flex-1 h-px bg-gray-700" />
+        </div>
+
+        {/* Google Signup Button */}
+        <button
+          onClick={handleGoogleSignup}
+          className="w-full bg-red-500 text-white p-2 rounded font-semibold hover:bg-red-600 transition"
+        >
+          Sign up with Google
+        </button>
 
         <p className="text-sm text-gray-400 text-center">
           Already have an account?{' '}
