@@ -103,7 +103,7 @@ export default function WorkoutTemplatesList() {
 
         <Link
           to="/app/templates/new"
-          className="px-4 py-2 bg-primary text-black rounded-lg font-semibold text-sm hover:brightness-110 transition"
+          className="px-4 py-2 bg-primary text-black rounded-lg font-semibold text-sm hover:brightness-110 transition text-center"
         >
           {t('templates.newTemplate')}
         </Link>

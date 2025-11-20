@@ -168,7 +168,7 @@ export default function UserStats() {
           <button
             type="submit"
             disabled={formState.isSubmitting || mutation.isPending}
-            className="w-full px-4 py-3 bg-primary text-dark font-semibold rounded-lg hover:brightness-110 transition disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full px-4 py-3 bg-primary text-dark font-semibold rounded-lg hover:brightness-110 transition disabled:opacity-50 disabled:cursor-not-allowed text-center"
           >
             {formState.isSubmitting || mutation.isPending ? t('common.loading') : t('common.save')}
           </button>

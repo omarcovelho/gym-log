@@ -72,7 +72,7 @@ export default function ForgotPassword() {
 
           <button
             disabled={formState.isSubmitting}
-            className="w-full bg-primary text-black p-2 rounded font-semibold hover:bg-green-400 transition"
+            className="w-full bg-primary text-black p-2 rounded font-semibold hover:bg-green-400 transition text-center"
           >
             {formState.isSubmitting ? '...' : t('passwordReset.forgotPassword')}
           </button>

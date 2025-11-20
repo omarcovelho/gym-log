@@ -137,7 +137,7 @@ export default function Login() {
 
           <button
             disabled={formState.isSubmitting}
-            className="w-full bg-primary text-black p-2 rounded font-semibold hover:bg-green-400 transition"
+            className="w-full bg-primary text-black p-2 rounded font-semibold hover:bg-green-400 transition text-center"
           >
             {formState.isSubmitting ? '...' : t('auth.login')}
           </button>
@@ -153,7 +153,7 @@ export default function Login() {
         {/* Google Login Button */}
         <button
           onClick={handleGoogleLogin}
-          className="w-full bg-red-500 text-white p-2 rounded font-semibold hover:bg-red-600 transition"
+          className="w-full bg-red-500 text-white p-2 rounded font-semibold hover:bg-red-600 transition text-center"
         >
           {t('auth.loginWithGoogle')}
         </button>
