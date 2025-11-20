@@ -100,14 +100,6 @@ export class WorkoutSessionController {
         return this.service.findAllForUser(user.id, pagination)
     }
 
-    @Get('stats')
-    @ApiOperation({ summary: 'Get workout statistics for dashboard' })
-    @ApiResponse({ status: 200, description: 'Statistics retrieved successfully.' })
-    @ApiResponse({ status: 401, description: 'Unauthorized.' })
-    async getStats(@CurrentUser() user) {
-        return this.service.getUserStats(user.id)
-    }
-
     @Get('active')
     @ApiOperation({ summary: 'Get active workout session (in progress)' })
     @ApiResponse({ status: 200, description: 'Active workout session retrieved successfully, or null if none.' })

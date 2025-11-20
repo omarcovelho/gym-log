@@ -4,7 +4,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import i18n from '@/i18n'
-import { Home, Dumbbell, FileText, History, Plus, X, Zap, AlertCircle } from 'lucide-react'
+import { Home, Dumbbell, FileText, History, Plus, X, Zap, AlertCircle, TrendingUp } from 'lucide-react'
 import { startManualWorkout, startWorkout, getActiveWorkout } from '@/api/workoutSession'
 import { listWorkoutTemplates } from '@/api/workoutTemplates'
 import { useToast } from './ToastProvider'
@@ -176,6 +176,23 @@ export function BottomNavigation() {
           >
             <FileText className={`w-6 h-6 ${isActive('/app/templates') ? 'stroke-[2.5]' : ''}`} />
             <span className="text-[10px] font-medium">{t('navigation.templates')}</span>
+          </Link>
+
+          {/* Progress */}
+          <Link
+            to="/app/progress"
+            className={`
+              flex flex-col items-center justify-center gap-1
+              px-3 py-2 rounded-lg transition
+              ${isActive('/app/progress') 
+                ? 'text-primary' 
+                : 'text-gray-400 hover:text-gray-200'
+              }
+            `}
+            aria-label="Progress"
+          >
+            <TrendingUp className={`w-6 h-6 ${isActive('/app/progress') ? 'stroke-[2.5]' : ''}`} />
+            <span className="text-[10px] font-medium">{t('navigation.progress')}</span>
           </Link>
 
           {/* Workouts */}

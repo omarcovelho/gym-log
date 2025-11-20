@@ -181,6 +181,7 @@
     "home": "Início",
     "exercises": "Exercícios",
     "templates": "Templates",
+    "progress": "Evolução",
     "workouts": "Treinos",
     "myData": "Meus Dados",
     "logout": "Logout"
@@ -197,6 +198,15 @@
     "selectGroup": "Selecionar grupo",
     "notes": "Notas",
     "exerciseName": "Nome do exercício",
+    "chest": "Peito",
+    "back": "Costas",
+    "shoulders": "Ombros",
+    "legs": "Pernas",
+    "biceps": "Bíceps",
+    "triceps": "Tríceps",
+    "core": "Core",
+    "fullbody": "Corpo Inteiro",
+    "other": "Outro",
     "exerciseNamePlaceholder": "Nome do exercício",
     "defineExercise": "Defina o nome do exercício, grupo e notas opcionais.",
     "saveExercise": "Salvar Exercício",
@@ -329,5 +339,21 @@
     "atLeastOneExercise": "Adicione pelo menos um exercício",
     "atLeastOneSet": "Adicione pelo menos uma série",
     "selectExercise": "Selecione um exercício"
+  },
+  "progress": {
+    "title": "Evolução",
+    "subtitle": "Acompanhe seus PRs e volume semanal",
+    "recentPRs": "Últimos PRs",
+    "noPRs": "Nenhum PR registrado ainda",
+    "load": "Carga",
+    "previous": "Anterior",
+    "weeklyVolume": "Volume Semanal",
+    "totalVolume": "Volume Total",
+    "byMuscleGroup": "Por Grupo",
+    "volume": "Volume",
+    "sets": "Séries",
+    "week": "Sem {{week}}",
+    "errorLoading": "Erro ao carregar dados de evolução",
+    "noData": "Nenhum dado disponível"
   }
 }

@@ -219,7 +219,39 @@ export type WorkoutStats = {
 }
 
 export async function getWorkoutStats(): Promise<WorkoutStats> {
-  const { data } = await api.get(`/workouts/stats`)
+  const { data } = await api.get(`/statistics/workouts`)
+  return data
+}
+
+export type EvolutionPR = {
+  exerciseName: string
+  value: number
+  previousValue: number
+  date: string
+  workoutId: string
+  unit: string
+}
+
+export type WeeklyStats = {
+  week: string
+  volume: number
+  sets: number
+  byMuscleGroup: {
+    [muscleGroup: string]: {
+      volume: number
+      sets: number
+    }
+  }
+}
+
+export type EvolutionStats = {
+  recentPRs: EvolutionPR[]
+  weeklyStats: WeeklyStats[]
+}
+
+export async function getEvolutionStats(weeks?: number): Promise<EvolutionStats> {
+  const params = weeks ? { weeks: weeks.toString() } : {}
+  const { data } = await api.get(`/statistics/evolution`, { params })
   return data
 }
 

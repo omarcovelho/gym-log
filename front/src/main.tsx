@@ -25,6 +25,7 @@ import './index.css'
 import WorkoutLogsList from './pages/WorkoutLogsList'
 import WorkoutSessionView from './pages/WorkoutSessionView'
 import WorkoutSessionDetails from './pages/WorkoutSessionDetails'
+import Progress from './pages/Progress'
 
 const qc = new QueryClient({
   defaultOptions: {
@@ -97,6 +98,16 @@ const router = createBrowserRouter([
             <ProtectedRouteWithStats>
                 <AppLayout>
                     <Home />
+                </AppLayout>
+            </ProtectedRouteWithStats>
+        ),
+    },
+    {
+        path: '/app/progress',
+        element: (
+            <ProtectedRouteWithStats>
+                <AppLayout>
+                    <Progress />
                 </AppLayout>
             </ProtectedRouteWithStats>
         ),
