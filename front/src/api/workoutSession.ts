@@ -219,7 +219,7 @@ export type WorkoutStats = {
 }
 
 export async function getWorkoutStats(): Promise<WorkoutStats> {
-  const { data } = await api.get(`/workouts/stats`)
+  const { data } = await api.get(`/statistics/workouts`)
   return data
 }
 

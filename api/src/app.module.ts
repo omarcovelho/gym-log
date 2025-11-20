@@ -11,6 +11,7 @@ import { RestTimerModule } from './rest-timer/rest-timer.module';
 import { UserModule } from './user/user.module';
 import { EmailModule } from './email/email.module';
 import { AppConfigModule } from './config/config.module';
+import { StatisticsModule } from './statistics/statistics.module';
 import { ThrottlerModule } from '@nestjs/throttler';
 
 @Module({
@@ -32,6 +33,7 @@ import { ThrottlerModule } from '@nestjs/throttler';
     UserModule,
     EmailModule,
     AppConfigModule,
+    StatisticsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
