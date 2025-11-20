@@ -145,7 +145,7 @@ export default function Signup() {
 
           <button
             disabled={formState.isSubmitting}
-            className="w-full bg-primary text-black p-2 rounded font-semibold hover:bg-green-400 transition"
+            className="w-full bg-primary text-black p-2 rounded font-semibold hover:bg-green-400 transition text-center"
           >
             {formState.isSubmitting ? '...' : t('auth.createAccount')}
           </button>
@@ -161,7 +161,7 @@ export default function Signup() {
         {/* Google Signup Button */}
         <button
           onClick={handleGoogleSignup}
-          className="w-full bg-red-500 text-white p-2 rounded font-semibold hover:bg-red-600 transition"
+          className="w-full bg-red-500 text-white p-2 rounded font-semibold hover:bg-red-600 transition text-center"
         >
           {t('auth.signupWithGoogle')}
         </button>

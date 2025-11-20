@@ -58,6 +58,7 @@ export default function WorkoutSessionView() {
   const [timerOpen, setTimerOpen] = useState(false)
   const [timerManagerOpen, setTimerManagerOpen] = useState(false)
   const [countdownActive, setCountdownActive] = useState<{ seconds: number; startTime?: number } | null>(null)
+  const [isSaving, setIsSaving] = useState(false)
 
   const { data: exercisesData } = useExercises({ page: 1, limit: 100 })
   const exercises = exercisesData?.data ?? []
@@ -111,6 +112,7 @@ export default function WorkoutSessionView() {
   const debouncedSaveMeta = useDebouncedCallback(
     async (patch: Partial<Pick<WorkoutSession, 'title' | 'notes'>>) => {
       if (!session) return
+      setIsSaving(true)
       try {
         await updateWorkoutSession(session.id, patch)
       } catch {
@@ -118,6 +120,8 @@ export default function WorkoutSessionView() {
           variant: 'error',
           title: t('workout.errorSaving'),
         })
+      } finally {
+        setIsSaving(false)
       }
     },
     500,
@@ -153,6 +157,7 @@ export default function WorkoutSessionView() {
     if (!ex) return
 
     setSavingId(exerciseId)
+    setIsSaving(true)
 
     updateWorkoutExercise(exerciseId, {
       order: ex.order,
@@ -172,7 +177,10 @@ export default function WorkoutSessionView() {
       .catch(() => {
         toast({ variant: 'error', title: t('workout.errorSavingExercise') })
       })
-      .finally(() => setSavingId(null))
+      .finally(() => {
+        setSavingId(null)
+        setIsSaving(false)
+      })
   }
 
   const handleMoveExercise = (exerciseId: string, dir: 'up' | 'down') => {
@@ -346,12 +354,20 @@ export default function WorkoutSessionView() {
       <header className="space-y-3 border-b border-gray-800 pb-4">
         <div className="flex justify-between items-start">
           <div className="flex-1 space-y-2">
-            <input
-              value={session.title ?? ''}
-              onChange={(e) => handleTitleChange(e.target.value)}
-              placeholder={t('workout.workoutTitle')}
-              className="w-full bg-transparent text-3xl font-bold text-gray-100 border-b border-transparent focus:border-primary focus:outline-none"
-            />
+            <div className="flex items-center gap-3">
+              <input
+                value={session.title ?? ''}
+                onChange={(e) => handleTitleChange(e.target.value)}
+                placeholder={t('workout.workoutTitle')}
+                className="flex-1 bg-transparent text-3xl font-bold text-gray-100 border-b border-transparent focus:border-primary focus:outline-none"
+              />
+              {isSaving && (
+                <div className="flex items-center gap-2 text-sm text-primary">
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span>{t('workout.saving')}</span>
+                </div>
+              )}
+            </div>
             <p className="text-sm text-gray-400">
               {t('workout.startedOn')} {new Date(session.startAt).toLocaleString(i18n.language === 'pt' ? 'pt-BR' : 'en-US')}
             </p>
@@ -440,6 +456,7 @@ export default function WorkoutSessionView() {
                     {ex.sets.map((s) => (
                       <div
                         key={s.id}
+                        data-set-id={s.id}
                         className={`rounded-lg border p-3 ${
                           s.completed
                             ? 'border-green-600 bg-green-950/20'
@@ -588,7 +605,7 @@ export default function WorkoutSessionView() {
         <button
           onClick={() => setPickerOpen(true)}
           disabled={addingExercise}
-          className="px-4 py-2 border border-gray-600 rounded-md text-sm text-gray-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+          className="px-4 py-2 border border-gray-600 rounded-md text-sm text-gray-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
         >
           {addingExercise ? (
             <>

@@ -162,6 +162,9 @@
     "status": "Status",
     "kg": "kg",
     "repsLabel": "reps",
+    "quickAddSet": "Add set",
+    "saving": "Saving...",
+    "saved": "Saved",
     "completed": "✅ Done",
     "notCompleted": "—",
     "errorSaving": "Saving failed",
@@ -207,6 +210,7 @@
     "triceps": "Triceps",
     "core": "Core",
     "fullBody": "Full Body",
+    "other": "Other",
     "optionalNotes": "Optional notes about this exercise...",
     "errorLoading": "Error loading exercises",
     "errorLoadingDescription": "Try again later.",
@@ -220,7 +224,10 @@
     "exerciseUpdatedDescription": "Changes were saved successfully.",
     "accessDenied": "Access denied",
     "onlyAdminsCanEdit": "Only admins can edit global exercises.",
-    "onlyOwnExercises": "You can only edit your own exercises."
+    "onlyOwnExercises": "You can only edit your own exercises.",
+    "search": "Search exercises...",
+    "filterByMuscleGroup": "Filter by muscle group",
+    "allMuscleGroups": "All groups"
   },
   "templates": {
     "myTemplates": "My Workout Templates",

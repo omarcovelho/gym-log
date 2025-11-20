@@ -4,6 +4,7 @@ import { useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { Loader2 } from 'lucide-react'
 import { api } from '@/lib/api'
 import { useToast } from '@/components/ToastProvider'
 import { useAuth } from '@/auth/AuthContext'
@@ -110,7 +111,7 @@ export default function ExerciseCreateEdit() {
   }, [user, navigate])
 
   return (
-    <div className="max-w-2xl mx-auto space-y-8 relative pb-32 md:pb-0">
+    <div className="max-w-2xl mx-auto space-y-8 relative">
       <header>
         <h1 className="text-3xl font-bold mb-2">
           {isEditing ? t('exercise.editExercise') : t('exercise.newExercise')}
@@ -178,34 +179,25 @@ export default function ExerciseCreateEdit() {
           />
         </div>
 
-        {/* Save Button */}
-        <div
-          className="
-            fixed bottom-0 left-0 right-0 z-40
-            bg-[#0f0f0f]/95 backdrop-blur-md
-            px-4 py-3 border-t border-gray-800
-            md:static md:px-0 md:py-0 md:border-none md:bg-transparent md:backdrop-blur-none
-          "
+      {/* FOOTER */}
+      <div className="sticky bottom-0 left-0 right-0 bg-[#0f0f0f]/95 border-t border-gray-800 px-4 py-3">
+        <button
+          type="submit"
+          disabled={isSubmitting}
+          className="w-full bg-primary text-black py-3 rounded-md font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
         >
-          <div className="max-w-2xl mx-auto">
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="
-                w-full py-3 rounded-md
-                bg-primary text-black font-semibold text-sm
-                tracking-wide hover:brightness-110 transition
-                disabled:opacity-70
-              "
-            >
-              {isSubmitting
-                ? t('common.saving')
-                : isEditing
-                ? t('exercise.saveChanges')
-                : t('exercise.saveExercise')}
-            </button>
-          </div>
-        </div>
+          {isSubmitting ? (
+            <>
+              <Loader2 className="w-4 h-4 animate-spin" />
+              {t('common.saving')}
+            </>
+          ) : isEditing ? (
+            t('exercise.saveChanges')
+          ) : (
+            t('exercise.saveExercise')
+          )}
+        </button>
+      </div>
       </form>
     </div>
   )

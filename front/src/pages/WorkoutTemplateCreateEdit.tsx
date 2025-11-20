@@ -361,7 +361,7 @@ export default function WorkoutTemplateCreateEdit() {
 
   return (
     <FormProvider {...methods}>
-      <form onSubmit={handleSubmit(onSubmit as any)} className="max-w-2xl mx-auto space-y-8 pb-36">
+      <form onSubmit={handleSubmit(onSubmit as any)} className="max-w-2xl mx-auto space-y-8">
         <h1 className="text-3xl font-bold">{t('templates.workoutTemplate')}</h1>
 
         <div>
@@ -412,12 +412,15 @@ export default function WorkoutTemplateCreateEdit() {
           </button>
         </div>
 
+      {/* FOOTER */}
+      <div className="sticky bottom-0 left-0 right-0 bg-[#0f0f0f]/95 border-t border-gray-800 px-4 py-3">
         <button
           type="submit"
-          className="fixed bottom-5 left-1/2 -translate-x-1/2 w-[90%] bg-primary text-black py-3 rounded-md font-semibold"
+          className="w-full bg-primary text-black py-3 rounded-md font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
         >
           {t('templates.saveTemplate')}
         </button>
+      </div>
       </form>
     </FormProvider>
   )
