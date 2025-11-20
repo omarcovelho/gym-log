@@ -181,6 +181,7 @@
     "home": "Home",
     "exercises": "Exercises",
     "templates": "Templates",
+    "progress": "Progress",
     "workouts": "Workouts",
     "myData": "My Data",
     "logout": "Logout"
@@ -197,6 +198,15 @@
     "selectGroup": "Select group",
     "notes": "Notes",
     "exerciseName": "Exercise name",
+    "chest": "Chest",
+    "back": "Back",
+    "shoulders": "Shoulders",
+    "legs": "Legs",
+    "biceps": "Biceps",
+    "triceps": "Triceps",
+    "core": "Core",
+    "fullbody": "Full Body",
+    "other": "Other",
     "exerciseNamePlaceholder": "Exercise name",
     "defineExercise": "Define your exercise name, group, and optional notes.",
     "saveExercise": "Save Exercise",
@@ -329,5 +339,21 @@
     "atLeastOneExercise": "Add at least one exercise",
     "atLeastOneSet": "Add at least one set",
     "selectExercise": "Select an exercise"
+  },
+  "progress": {
+    "title": "Progress",
+    "subtitle": "Track your PRs and weekly volume",
+    "recentPRs": "Recent PRs",
+    "noPRs": "No PRs recorded yet",
+    "load": "Load",
+    "previous": "Previous",
+    "weeklyVolume": "Weekly Volume",
+    "totalVolume": "Total Volume",
+    "byMuscleGroup": "By Group",
+    "volume": "Volume",
+    "sets": "Sets",
+    "week": "Week {{week}}",
+    "errorLoading": "Error loading progress data",
+    "noData": "No data available"
   }
 }

@@ -151,5 +151,216 @@ export class StatisticsService {
       lastWorkout: lastWorkoutData,
     };
   }
+
+  /** Busca estatísticas de evolução (PRs e volume semanal) */
+  async getEvolutionStats(userId: string, weeks: number = 4) {
+    const now = new Date();
+    const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+    const weeksAgo = new Date(now.getTime() - weeks * 7 * 24 * 60 * 60 * 1000);
+
+    // Buscar todos os treinos finalizados do usuário
+    const allFinishedSessions = await this.prisma.workoutSession.findMany({
+      where: {
+        userId,
+        endAt: { not: null }, // Apenas treinos finalizados
+      },
+      include: {
+        exercises: {
+          include: {
+            sets: true,
+            exercise: true,
+          },
+        },
+      },
+      orderBy: { startAt: 'asc' },
+    });
+
+    // Calcular PRs de carga
+    // Mapa: exerciseName -> { maxLoad, previousMaxLoad, date, workoutId }
+    const exercisePRs = new Map<
+      string,
+      {
+        maxLoad: number;
+        previousMaxLoad: number;
+        date: Date;
+        workoutId: string;
+      }
+    >();
+
+    // Histórico de cargas por exercício (para encontrar segunda maior)
+    const exerciseLoadHistory = new Map<string, number[]>();
+
+    allFinishedSessions.forEach((session) => {
+      session.exercises.forEach((ex) => {
+        // Filtrar exercícios com muscleGroup null ou OTHER
+        if (!ex.exercise.muscleGroup || ex.exercise.muscleGroup === 'OTHER') {
+          return;
+        }
+
+        const exerciseName = ex.exercise.name;
+
+        ex.sets.forEach((set) => {
+          // Considerar apenas sets com actualLoad e actualReps preenchidos
+          if (set.actualLoad != null && set.actualReps != null) {
+            if (!exerciseLoadHistory.has(exerciseName)) {
+              exerciseLoadHistory.set(exerciseName, []);
+            }
+            exerciseLoadHistory.get(exerciseName)!.push(set.actualLoad);
+          }
+        });
+      });
+    });
+
+    // Encontrar PRs (maior carga) e segunda maior carga por exercício
+    exerciseLoadHistory.forEach((loads, exerciseName) => {
+      if (loads.length === 0) return;
+
+      // Ordenar em ordem decrescente
+      const sortedLoads = [...loads].sort((a, b) => b - a);
+      const maxLoad = sortedLoads[0];
+      const previousMaxLoad = sortedLoads.length > 1 ? sortedLoads[1] : maxLoad;
+
+      // Encontrar a data do PR (primeira vez que essa carga foi atingida)
+      let prDate: Date | null = null;
+      let prWorkoutId: string | null = null;
+
+      for (const session of allFinishedSessions) {
+        for (const ex of session.exercises) {
+          if (ex.exercise.name === exerciseName) {
+            for (const set of ex.sets) {
+              if (
+                set.actualLoad != null &&
+                set.actualReps != null &&
+                set.actualLoad === maxLoad
+              ) {
+                prDate = session.startAt;
+                prWorkoutId = session.id;
+                break;
+              }
+            }
+            if (prDate) break;
+          }
+        }
+        if (prDate) break;
+      }
+
+      if (prDate && prWorkoutId) {
+        exercisePRs.set(exerciseName, {
+          maxLoad,
+          previousMaxLoad,
+          date: prDate,
+          workoutId: prWorkoutId,
+        });
+      }
+    });
+
+    // Filtrar apenas PRs dos últimos 30 dias
+    const recentPRs = Array.from(exercisePRs.entries())
+      .filter(([, pr]) => pr.date >= thirtyDaysAgo)
+      .map(([exerciseName, pr]) => ({
+        exerciseName,
+        value: pr.maxLoad,
+        previousValue: pr.previousMaxLoad,
+        date: pr.date,
+        workoutId: pr.workoutId,
+        unit: 'kg',
+      }))
+      .sort((a, b) => b.date.getTime() - a.date.getTime()); // Mais recentes primeiro
+
+    // Calcular volume semanal
+    const weeklyStatsMap = new Map<
+      string,
+      {
+        volume: number;
+        sets: number;
+        byMuscleGroup: Map<string, { volume: number; sets: number }>;
+      }
+    >();
+
+    // Função para obter chave da semana (formato: "2024-W01")
+    const getWeekKey = (date: Date): string => {
+      const d = new Date(date);
+      d.setHours(0, 0, 0, 0);
+      const dayOfWeek = d.getDay();
+      // Ajustar para segunda-feira (0 = domingo, 1 = segunda, etc.)
+      const diff = d.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1);
+      const monday = new Date(d);
+      monday.setDate(diff);
+      
+      const year = monday.getFullYear();
+      const startOfYear = new Date(year, 0, 1);
+      const daysDiff = Math.floor((monday.getTime() - startOfYear.getTime()) / (24 * 60 * 60 * 1000));
+      const weekNumber = Math.floor(daysDiff / 7) + 1;
+      
+      return `${year}-W${weekNumber.toString().padStart(2, '0')}`;
+    };
+
+    // Processar treinos das últimas N semanas
+    const sessionsInRange = allFinishedSessions.filter(
+      (session) => session.startAt >= weeksAgo
+    );
+
+    sessionsInRange.forEach((session) => {
+      const weekKey = getWeekKey(session.startAt);
+
+      if (!weeklyStatsMap.has(weekKey)) {
+        weeklyStatsMap.set(weekKey, {
+          volume: 0,
+          sets: 0,
+          byMuscleGroup: new Map(),
+        });
+      }
+
+      const weekStats = weeklyStatsMap.get(weekKey)!;
+
+      session.exercises.forEach((ex) => {
+        // Filtrar exercícios com muscleGroup null ou OTHER
+        if (!ex.exercise.muscleGroup || ex.exercise.muscleGroup === 'OTHER') {
+          return;
+        }
+
+        const muscleGroup = ex.exercise.muscleGroup;
+
+        if (!weekStats.byMuscleGroup.has(muscleGroup)) {
+          weekStats.byMuscleGroup.set(muscleGroup, { volume: 0, sets: 0 });
+        }
+
+        const muscleGroupStats = weekStats.byMuscleGroup.get(muscleGroup)!;
+
+        ex.sets.forEach((set) => {
+          // Contar todas as séries
+          weekStats.sets++;
+          muscleGroupStats.sets++;
+
+          // Calcular volume apenas para sets com actualLoad e actualReps preenchidos
+          if (set.actualLoad != null && set.actualReps != null) {
+            const volume = set.actualLoad * set.actualReps;
+            weekStats.volume += volume;
+            muscleGroupStats.volume += volume;
+          }
+        });
+      });
+    });
+
+    // Converter para array e ordenar por semana
+    const weeklyStats = Array.from(weeklyStatsMap.entries())
+      .map(([week, stats]) => ({
+        week,
+        volume: stats.volume,
+        sets: stats.sets,
+        byMuscleGroup: Object.fromEntries(
+          Array.from(stats.byMuscleGroup.entries()).map(([mg, data]) => [
+            mg,
+            { volume: data.volume, sets: data.sets },
+          ])
+        ),
+      }))
+      .sort((a, b) => a.week.localeCompare(b.week));
+
+    return {
+      recentPRs,
+      weeklyStats,
+    };
+  }
 }
 
