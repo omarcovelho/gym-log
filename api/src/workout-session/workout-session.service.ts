@@ -7,6 +7,7 @@ import { PrismaService } from 'src/prisma/prisma.service'
 import { UpdateSetDto } from './dto/update-set.dto'
 import { FinishWorkoutDto } from './dto/finish-workout.dto'
 import { UpdateWorkoutExerciseDto } from './dto/update-session.dto'
+import { UpdateWorkoutSessionDto } from './dto/update-workout-session.dto'
 import { PaginationDto } from 'src/common/dto/pagination.dto'
 
 @Injectable()
@@ -65,6 +66,14 @@ export class WorkoutSessionService {
                 exerciseId: dto.exerciseId,
                 notes: dto.notes ?? null,
                 order: dto.order ?? 999,
+                sets: {
+                    create: {
+                        setIndex: 0,
+                        plannedReps: null,
+                        plannedRir: null,
+                        notes: null,
+                    },
+                },
             },
             include: { exercise: true, sets: true },
         })
@@ -297,6 +306,34 @@ export class WorkoutSessionService {
 
         return this.prisma.sessionSet.delete({
             where: { id: setId },
+        });
+    }
+
+    async updateSession(id: string, userId: string, dto: UpdateWorkoutSessionDto) {
+        // Verificar se a sessão pertence ao usuário
+        const session = await this.prisma.workoutSession.findUnique({
+            where: { id },
+        });
+
+        if (!session) throw new NotFoundException('Session not found');
+        if (session.userId !== userId) {
+            throw new ForbiddenException('Access denied');
+        }
+
+        return this.prisma.workoutSession.update({
+            where: { id },
+            data: {
+                title: dto.title,
+                notes: dto.notes,
+            },
+            include: {
+                exercises: {
+                    include: {
+                        sets: true,
+                        exercise: true,
+                    },
+                },
+            },
         });
     }
 

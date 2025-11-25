@@ -352,7 +352,6 @@
     "byMuscleGroup": "Por Grupo",
     "volume": "Volume",
     "sets": "Séries",
-    "week": "Sem {{week}}",
     "errorLoading": "Erro ao carregar dados de evolução",
     "noData": "Nenhum dado disponível"
   }

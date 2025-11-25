@@ -116,9 +116,10 @@ export default function WorkoutSessionDetails() {
                 <thead className="text-xs text-gray-500 border-b border-gray-800">
                   <tr>
                     <th className="text-left py-1 w-12">{t('workout.set')}</th>
-                    <th className="text-left py-1 w-36">{t('workout.planned')}</th>
+                    {session.templateId && (
+                      <th className="text-left py-1 w-36">{t('workout.planned')}</th>
+                    )}
                     <th className="text-left py-1 w-48">{t('workout.actual')}</th>
-                    <th className="text-left py-1 w-24">{t('workout.status')}</th>
                     <th className="text-left py-1">{t('workout.notes')}</th>
                   </tr>
                 </thead>
@@ -126,22 +127,22 @@ export default function WorkoutSessionDetails() {
                   {[...ex.sets].sort((a, b) => a.setIndex - b.setIndex).map((s) => (
                     <tr
                       key={s.id}
-                      className={`border-t border-gray-800 ${s.completed ? 'bg-green-900/10' : ''}`}
+                      className="border-t border-gray-800"
                     >
                       <td className="py-2 whitespace-nowrap">#{s.setIndex + 1}</td>
 
-                      <td className="py-2 whitespace-nowrap">
-                        {(s.plannedReps ?? '—')}{' '}
-                        <span className="text-gray-500">{t('workout.repsLabel')}</span>{' '}
-                        <span className="text-gray-600">·</span>{' '}
-                        <span className="text-gray-500">{t('workout.rir')}</span> {s.plannedRir ?? '—'}
-                      </td>
+                      {session.templateId && (
+                        <td className="py-2 whitespace-nowrap">
+                          {(s.plannedReps ?? '—')}{' '}
+                          <span className="text-gray-500">{t('workout.repsLabel')}</span>{' '}
+                          <span className="text-gray-600">·</span>{' '}
+                          <span className="text-gray-500">{t('workout.rir')}</span> {s.plannedRir ?? '—'}
+                        </td>
+                      )}
 
                       <td className="py-2 whitespace-nowrap">
                         {fmtActual(s.actualLoad, s.actualReps, s.actualRir)}
                       </td>
-
-                      <td className="py-2 whitespace-nowrap">{s.completed ? t('workout.completed') : t('workout.notCompleted')}</td>
 
                       <td className="py-2 min-w-0">
                         <span className="block truncate text-gray-400">{s.notes ?? '—'}</span>

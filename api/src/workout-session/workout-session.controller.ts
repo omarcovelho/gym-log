@@ -19,6 +19,7 @@ import { CurrentUser } from 'src/common/decorators/current-user'
 import { JwtAuthGuard } from 'src/auth/jwt/jwt.guard'
 import { FinishWorkoutDto } from './dto/finish-workout.dto'
 import { UpdateWorkoutExerciseDto } from './dto/update-session.dto'
+import { UpdateWorkoutSessionDto } from './dto/update-workout-session.dto'
 import { PaginationDto } from 'src/common/dto/pagination.dto'
 
 @ApiTags('Workout Sessions')
@@ -169,5 +170,19 @@ export class WorkoutSessionController {
         @Param('id') id: string,
     ) {
         return this.service.deleteSet(id, user.id)
+    }
+
+    @Patch(':id')
+    @ApiOperation({ summary: 'Update a workout session (title, notes)' })
+    @ApiResponse({ status: 200, description: 'Workout session updated successfully.' })
+    @ApiResponse({ status: 403, description: 'Access denied.' })
+    @ApiResponse({ status: 404, description: 'Session not found.' })
+    @ApiResponse({ status: 401, description: 'Unauthorized.' })
+    async updateSession(
+        @CurrentUser() user,
+        @Param('id') id: string,
+        @Body() dto: UpdateWorkoutSessionDto,
+    ) {
+        return this.service.updateSession(id, user.id, dto)
     }
 }

@@ -352,7 +352,6 @@
     "byMuscleGroup": "By Group",
     "volume": "Volume",
     "sets": "Sets",
-    "week": "Week {{week}}",
     "errorLoading": "Error loading progress data",
     "noData": "No data available"
   }
