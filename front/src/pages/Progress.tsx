@@ -35,11 +35,32 @@ export default function Progress() {
   }
 
   const formatWeek = (weekKey: string): string => {
-    // weekKey format: "2024-W01"
+    // weekKey format: "2024-W43"
+    // O backend calcula: pega uma data, ajusta para segunda-feira, calcula dias desde 1º jan, divide por 7 + 1
+    // Para reverter: calcular a segunda-feira da primeira semana, depois adicionar (weekNumber - 1) * 7
     const match = weekKey.match(/(\d{4})-W(\d{2})/)
     if (match) {
-      const [, year, week] = match
-      return t('progress.week', { week, year })
+      const [, yearStr, weekStr] = match
+      const year = parseInt(yearStr, 10)
+      const weekNumber = parseInt(weekStr, 10)
+      
+      // Calcular a segunda-feira da primeira semana do ano
+      // A primeira semana começa na segunda-feira mais próxima de 1º de janeiro
+      const jan1 = new Date(year, 0, 1)
+      const dayOfWeek = jan1.getDay() // 0 = domingo, 1 = segunda, etc.
+      const daysToFirstMonday = dayOfWeek === 0 ? -6 : 1 - dayOfWeek
+      const firstMonday = new Date(jan1)
+      firstMonday.setDate(jan1.getDate() + daysToFirstMonday)
+      
+      // Calcular a segunda-feira da semana solicitada
+      const weekMonday = new Date(firstMonday)
+      weekMonday.setDate(firstMonday.getDate() + (weekNumber - 1) * 7)
+      
+      // Formatar como "DD/MMM" (ex: "01/Nov")
+      return weekMonday.toLocaleDateString(i18n.language === 'pt' ? 'pt-BR' : 'en-US', {
+        day: '2-digit',
+        month: 'short',
+      })
     }
     return weekKey
   }

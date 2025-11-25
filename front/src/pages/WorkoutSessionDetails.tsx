@@ -1,8 +1,12 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams, Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { Share2, Loader2 } from 'lucide-react'
 import { getWorkoutSession, type WorkoutSession } from '@/api/workoutSession'
 import { useAuth } from '@/auth/AuthContext'
+import { useToast } from '@/components/ToastProvider'
+import { WorkoutExportView } from '@/components/WorkoutExportView'
+import { generateWorkoutImage, downloadWorkoutImage, shareWorkoutImage } from '@/utils/workoutExport'
 
 export default function WorkoutSessionDetails() {
   const { t, i18n } = useTranslation()
@@ -12,6 +16,8 @@ export default function WorkoutSessionDetails() {
 
   const [session, setSession] = useState<WorkoutSession | null>(null)
   const [loading, setLoading] = useState(true)
+  const [exporting, setExporting] = useState(false)
+  const { toast } = useToast()
 
   useEffect(() => {
     if (!user) navigate('/login')
@@ -51,14 +57,75 @@ export default function WorkoutSessionDetails() {
         )
       : null
 
+  const handleExport = async () => {
+    if (!session || !session.endAt) return
+
+    setExporting(true)
+    try {
+      // Aguardar um pouco para garantir que o componente está renderizado
+      await new Promise((resolve) => setTimeout(resolve, 100))
+
+      // Gerar imagem
+      const blob = await generateWorkoutImage()
+
+      // Tentar compartilhar primeiro (se disponível)
+      const shared = await shareWorkoutImage(blob)
+      if (!shared) {
+        // Se não conseguir compartilhar, fazer download
+        const dateStr = new Date(session.startAt).toISOString().split('T')[0]
+        const filename = `workout-${dateStr}.png`
+        await downloadWorkoutImage(blob, filename)
+      }
+
+      toast({
+        variant: 'success',
+        title: t('workout.exportSuccess'),
+      })
+    } catch (error) {
+      console.error('Export error:', error)
+      toast({
+        variant: 'error',
+        title: t('workout.exportError'),
+      })
+    } finally {
+      setExporting(false)
+    }
+  }
+
   return (
     <div className="max-w-3xl mx-auto space-y-6">
+      {/* Componente de export (oculto, sempre renderizado quando sessão existe) */}
+      {session && <WorkoutExportView session={session} />}
+
       <header className="space-y-1">
-        <h1 className="text-3xl font-bold">{session.title ?? t('workout.customWorkout')}</h1>
-        <p className="text-sm text-gray-400">{humanDate}</p>
-        <p className="text-xs text-gray-500">
-          {t('workout.setsCompleted', { completed: completedSets, total: totalSets })}
-        </p>
+        <div className="flex justify-between items-start">
+          <div className="flex-1">
+            <h1 className="text-3xl font-bold">{session.title ?? t('workout.customWorkout')}</h1>
+            <p className="text-sm text-gray-400">{humanDate}</p>
+            <p className="text-xs text-gray-500">
+              {t('workout.setsCompleted', { completed: completedSets, total: totalSets })}
+            </p>
+          </div>
+          {session.endAt && (
+            <button
+              onClick={handleExport}
+              disabled={exporting}
+              className="flex items-center gap-2 px-4 py-2 bg-primary text-dark font-semibold rounded-lg hover:brightness-110 transition disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {exporting ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span>{t('workout.exporting')}</span>
+                </>
+              ) : (
+                <>
+                  <Share2 className="w-4 h-4" />
+                  <span>{t('workout.export')}</span>
+                </>
+              )}
+            </button>
+          )}
+        </div>
       </header>
 
       {/* -------- Summary of finished session -------- */}
@@ -116,9 +183,10 @@ export default function WorkoutSessionDetails() {
                 <thead className="text-xs text-gray-500 border-b border-gray-800">
                   <tr>
                     <th className="text-left py-1 w-12">{t('workout.set')}</th>
-                    <th className="text-left py-1 w-36">{t('workout.planned')}</th>
+                    {session.templateId && (
+                      <th className="text-left py-1 w-36">{t('workout.planned')}</th>
+                    )}
                     <th className="text-left py-1 w-48">{t('workout.actual')}</th>
-                    <th className="text-left py-1 w-24">{t('workout.status')}</th>
                     <th className="text-left py-1">{t('workout.notes')}</th>
                   </tr>
                 </thead>
@@ -126,22 +194,22 @@ export default function WorkoutSessionDetails() {
                   {[...ex.sets].sort((a, b) => a.setIndex - b.setIndex).map((s) => (
                     <tr
                       key={s.id}
-                      className={`border-t border-gray-800 ${s.completed ? 'bg-green-900/10' : ''}`}
+                      className="border-t border-gray-800"
                     >
                       <td className="py-2 whitespace-nowrap">#{s.setIndex + 1}</td>
 
-                      <td className="py-2 whitespace-nowrap">
-                        {(s.plannedReps ?? '—')}{' '}
-                        <span className="text-gray-500">{t('workout.repsLabel')}</span>{' '}
-                        <span className="text-gray-600">·</span>{' '}
-                        <span className="text-gray-500">{t('workout.rir')}</span> {s.plannedRir ?? '—'}
-                      </td>
+                      {session.templateId && (
+                        <td className="py-2 whitespace-nowrap">
+                          {(s.plannedReps ?? '—')}{' '}
+                          <span className="text-gray-500">{t('workout.repsLabel')}</span>{' '}
+                          <span className="text-gray-600">·</span>{' '}
+                          <span className="text-gray-500">{t('workout.rir')}</span> {s.plannedRir ?? '—'}
+                        </td>
+                      )}
 
                       <td className="py-2 whitespace-nowrap">
                         {fmtActual(s.actualLoad, s.actualReps, s.actualRir)}
                       </td>
-
-                      <td className="py-2 whitespace-nowrap">{s.completed ? t('workout.completed') : t('workout.notCompleted')}</td>
 
                       <td className="py-2 min-w-0">
                         <span className="block truncate text-gray-400">{s.notes ?? '—'}</span>

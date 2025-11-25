@@ -52,6 +52,7 @@ export type WorkoutSession = {
   id: string
   title: string
   userId: string
+  templateId?: string | null
   startAt: string
   endAt?: string | null
   durationM?: number | null

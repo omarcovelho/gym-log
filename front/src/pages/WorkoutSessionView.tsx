@@ -100,10 +100,23 @@ export default function WorkoutSessionView() {
     setLoading(true)
     try {
       const s = await getWorkoutSession(id!)
-      setSession({
+      const sessionData = {
         ...s,
         title: s.title || t('workout.freeWorkoutLabel'),
-      })
+      }
+      setSession(sessionData)
+
+      // Encontrar o primeiro exercício com séries não completadas
+      const sortedExercises = [...sessionData.exercises].sort((a, b) => a.order - b.order)
+      for (const ex of sortedExercises) {
+        const hasIncompleteSets = ex.sets.some(
+          (set) => !set.completed || set.actualLoad == null || set.actualReps == null
+        )
+        if (hasIncompleteSets) {
+          setExpanded(ex.id)
+          break
+        }
+      }
     } finally {
       setLoading(false)
     }
@@ -124,7 +137,7 @@ export default function WorkoutSessionView() {
         setIsSaving(false)
       }
     },
-    500,
+    1500,
   )
 
   const handleSetChange = (exerciseId: string, setId: string, field: string, raw: any) => {
@@ -301,7 +314,18 @@ export default function WorkoutSessionView() {
         return copy
       })
 
+      // Expandir o exercício recém-criado
+      setExpanded(created.id)
+
       setPickerOpen(false)
+
+      // Fazer scroll para o exercício após um pequeno delay para garantir que o DOM foi atualizado
+      setTimeout(() => {
+        const exerciseElement = document.querySelector(`[data-exercise-id="${created.id}"]`)
+        if (exerciseElement) {
+          exerciseElement.scrollIntoView({ behavior: 'smooth', block: 'center' })
+        }
+      }, 100)
     } catch {
       toast({ variant: 'error', title: t('workout.errorAddingExercise') })
     } finally {
@@ -398,7 +422,7 @@ export default function WorkoutSessionView() {
             const isLast = idx === arr.length - 1
 
             return (
-              <div key={ex.id} className="rounded-xl border border-gray-800 bg-[#151515]">
+              <div key={ex.id} data-exercise-id={ex.id} className="rounded-xl border border-gray-800 bg-[#151515]">
                 <div className="flex items-center justify-between px-4 py-3">
                   <button
                     onClick={() => setExpanded(expanded === ex.id ? null : ex.id)}
@@ -503,6 +527,28 @@ export default function WorkoutSessionView() {
                             </button>
                           </div>
                         </div>
+
+                        {/* Mostrar valores planejados apenas se for treino de template */}
+                        {session.templateId && (s.plannedReps != null || s.plannedRir != null) && (
+                          <div className="mb-3 p-2 rounded-md bg-gray-900/50 border border-gray-800">
+                            <div className="text-xs text-gray-500 mb-1">{t('workout.planned')}</div>
+                            <div className="text-sm text-gray-300">
+                              {s.plannedReps != null && (
+                                <span>
+                                  {s.plannedReps} {t('workout.repsLabel')}
+                                </span>
+                              )}
+                              {s.plannedReps != null && s.plannedRir != null && (
+                                <span className="text-gray-600 mx-1">·</span>
+                              )}
+                              {s.plannedRir != null && (
+                                <span>
+                                  {t('workout.rir')} {s.plannedRir}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        )}
 
                         <div className="grid grid-cols-3 gap-3">
                           <div>
