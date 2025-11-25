@@ -157,7 +157,14 @@ export class WorkoutSessionService {
         const [data, total] = await Promise.all([
             this.prisma.workoutSession.findMany({
                 where: { userId },
-                include: { exercises: { include: { sets: true, exercise: true } } },
+                include: { 
+                    exercises: { 
+                        include: { sets: true, exercise: true },
+                        orderBy: {
+                            order: 'asc',
+                        },
+                    } 
+                },
                 orderBy: { startAt: 'desc' },
                 skip,
                 take: limit,
@@ -180,7 +187,14 @@ export class WorkoutSessionService {
     async findById(userId: string, sessionId: string) {
         const session = await this.prisma.workoutSession.findUnique({
             where: { id: sessionId },
-            include: { exercises: { include: { sets: true, exercise: true } } },
+            include: { 
+                exercises: { 
+                    include: { sets: true, exercise: true },
+                    orderBy: {
+                        order: 'asc',
+                    },
+                } 
+            },
         })
         if (!session || session.userId !== userId)
             throw new ForbiddenException('Access denied')
@@ -195,7 +209,12 @@ export class WorkoutSessionService {
                 endAt: null,
             },
             include: {
-                exercises: { include: { sets: true, exercise: true } },
+                exercises: { 
+                    include: { sets: true, exercise: true },
+                    orderBy: {
+                        order: 'asc',
+                    },
+                },
             },
             orderBy: { startAt: 'desc' },
         })
