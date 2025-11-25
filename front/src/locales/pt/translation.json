@@ -364,5 +364,18 @@
     "sets": "Séries",
     "errorLoading": "Erro ao carregar dados de evolução",
     "noData": "Nenhum dado disponível"
+  },
+  "about": {
+    "title": "Sobre",
+    "description": "Aplicativo para rastreamento de treinos e progresso",
+    "buildInfo": "Informações do Build",
+    "version": "Versão",
+    "buildId": "Build ID",
+    "buildDate": "Data do Build",
+    "pwaStatus": "Status do PWA",
+    "installationStatus": "Status de Instalação",
+    "installed": "Instalado",
+    "notInstalled": "Não Instalado",
+    "updateAvailable": "Atualização disponível. Recarregue a página para atualizar."
   }
 }

@@ -364,5 +364,18 @@
     "sets": "Sets",
     "errorLoading": "Error loading progress data",
     "noData": "No data available"
+  },
+  "about": {
+    "title": "About",
+    "description": "Workout tracking and progress app",
+    "buildInfo": "Build Information",
+    "version": "Version",
+    "buildId": "Build ID",
+    "buildDate": "Build Date",
+    "pwaStatus": "PWA Status",
+    "installationStatus": "Installation Status",
+    "installed": "Installed",
+    "notInstalled": "Not Installed",
+    "updateAvailable": "Update available. Reload the page to update."
   }
 }
