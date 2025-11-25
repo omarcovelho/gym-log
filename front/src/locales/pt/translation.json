@@ -359,6 +359,7 @@
     "weeklyVolume": "Volume Semanal",
     "totalVolume": "Volume Total",
     "byMuscleGroup": "Por Grupo",
+    "volumeByMuscleGroup": "Volume por grupo",
     "volume": "Volume",
     "sets": "Séries",
     "errorLoading": "Erro ao carregar dados de evolução",

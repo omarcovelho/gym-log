@@ -183,7 +183,7 @@ export function WorkoutExportView({ session }: Props) {
             lineHeight: '1.3',
           }}
         >
-          {t('workout.exercises')}
+          {t('progress.volumeByMuscleGroup')}
         </h2>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
           {volumeByGroup.map(({ muscleGroup, volume, sets, exerciseCount }) => {

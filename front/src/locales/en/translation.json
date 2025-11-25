@@ -359,6 +359,7 @@
     "weeklyVolume": "Weekly Volume",
     "totalVolume": "Total Volume",
     "byMuscleGroup": "By Group",
+    "volumeByMuscleGroup": "Volume by group",
     "volume": "Volume",
     "sets": "Sets",
     "errorLoading": "Error loading progress data",
