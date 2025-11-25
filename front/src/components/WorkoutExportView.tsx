@@ -37,46 +37,50 @@ export function WorkoutExportView({ session }: Props) {
     )
   }, 0)
 
-  // Agrupar exercícios por grupo muscular e pegar o top de cada grupo
+  // Agrupar exercícios por grupo muscular e calcular volume total por grupo
   const exercisesByGroup = new Map<string, typeof session.exercises>()
+  const firstAppearanceOrder = new Map<string, number>()
   
-  session.exercises.forEach((ex) => {
+  // Ordenar exercícios pela ordem no treino
+  const sortedExercises = [...session.exercises].sort((a, b) => a.order - b.order)
+  
+  sortedExercises.forEach((ex, index) => {
     const muscleGroup = ex.exercise.muscleGroup
     // Filtrar grupos null ou OTHER
     if (!muscleGroup || muscleGroup === 'OTHER') return
     
     if (!exercisesByGroup.has(muscleGroup)) {
       exercisesByGroup.set(muscleGroup, [])
+      // Registrar a primeira aparição do grupo
+      firstAppearanceOrder.set(muscleGroup, index)
     }
     exercisesByGroup.get(muscleGroup)!.push(ex)
   })
   
-  // Para cada grupo, encontrar o exercício com maior volume
-  const topExercisesByGroup = Array.from(exercisesByGroup.entries())
+  // Para cada grupo, calcular volume total e número de séries
+  const volumeByGroup = Array.from(exercisesByGroup.entries())
     .map(([muscleGroup, exercises]) => {
-      const exercisesWithVolume = exercises.map((ex) => {
-        const volume = ex.sets.reduce(
+      const totalVolume = exercises.reduce((groupVolume, ex) => {
+        const exerciseVolume = ex.sets.reduce(
           (acc, s) => (s.actualLoad && s.actualReps ? acc + s.actualLoad * s.actualReps : acc),
           0
         )
-        return { exercise: ex, volume }
-      })
+        return groupVolume + exerciseVolume
+      }, 0)
       
-      // Encontrar o exercício com maior volume do grupo
-      const topExercise = exercisesWithVolume.reduce((max, current) => 
-        current.volume > max.volume ? current : max
-      )
+      const totalSets = exercises.reduce((acc, ex) => acc + ex.sets.length, 0)
+      const exerciseCount = exercises.length
       
       return {
         muscleGroup,
-        exercise: topExercise.exercise,
-        volume: topExercise.volume,
+        volume: totalVolume,
+        sets: totalSets,
+        exerciseCount,
+        firstOrder: firstAppearanceOrder.get(muscleGroup) ?? 999,
       }
     })
-    // Ordenar por volume total (maior primeiro)
-    .sort((a, b) => b.volume - a.volume)
-    // Limitar a 8 grupos para não ficar muito longo
-    .slice(0, 8)
+    // Ordenar pela ordem de primeira aparição no treino
+    .sort((a, b) => a.firstOrder - b.firstOrder)
 
   return (
     <div
@@ -168,7 +172,7 @@ export function WorkoutExportView({ session }: Props) {
         )}
       </div>
 
-      {/* Top Exercises by Muscle Group */}
+      {/* Volume by Muscle Group */}
       <div style={{ flex: 1, marginBottom: '40px' }}>
         <h2
           style={{
@@ -182,12 +186,12 @@ export function WorkoutExportView({ session }: Props) {
           {t('workout.exercises')}
         </h2>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-          {topExercisesByGroup.map(({ muscleGroup, exercise: ex, volume: exerciseVolume }) => {
+          {volumeByGroup.map(({ muscleGroup, volume, sets, exerciseCount }) => {
             // Normalizar FULLBODY para FULL_BODY para tradução
             const muscleGroupKey = muscleGroup === 'FULLBODY' ? 'FULL_BODY' : muscleGroup
             return (
               <div
-                key={ex.id}
+                key={muscleGroup}
                 style={{
                   backgroundColor: '#151515',
                   padding: '25px',
@@ -198,19 +202,16 @@ export function WorkoutExportView({ session }: Props) {
                 }}
               >
                 <div>
-                  <p style={{ fontSize: '20px', color: '#9CA3AF', marginBottom: '6px', lineHeight: '1.3', textTransform: 'uppercase' }}>
+                  <p style={{ fontSize: '32px', fontWeight: '600', marginBottom: '8px', lineHeight: '1.3' }}>
                     {t(`muscleGroups.${muscleGroupKey}`)}
                   </p>
-                  <p style={{ fontSize: '32px', fontWeight: '600', marginBottom: '8px', lineHeight: '1.3' }}>
-                    {ex.exercise.name}
-                  </p>
                   <p style={{ fontSize: '24px', color: '#9CA3AF', lineHeight: '1.4' }}>
-                    {ex.sets.length} {t('workout.sets')}
+                    {exerciseCount} {exerciseCount === 1 ? t('workout.exercisesCount') : t('workout.exercisesCountPlural')} · {sets} {t('workout.sets')}
                   </p>
                 </div>
-                {exerciseVolume > 0 && (
+                {volume > 0 && (
                   <p style={{ fontSize: '32px', fontWeight: 'bold', color: '#00E676', lineHeight: '1.2' }}>
-                    {Math.round(exerciseVolume).toLocaleString(i18n.language === 'pt' ? 'pt-BR' : 'en-US')}{' '}
+                    {Math.round(volume).toLocaleString(i18n.language === 'pt' ? 'pt-BR' : 'en-US')}{' '}
                     {t('workout.kg')}
                   </p>
                 )}
