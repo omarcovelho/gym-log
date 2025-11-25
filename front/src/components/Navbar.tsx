@@ -1,7 +1,7 @@
 import { Link, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/auth/AuthContext'
-import { LogOut, User } from 'lucide-react'
+import { LogOut, User, Info } from 'lucide-react'
 
 export default function Navbar() {
   const { t } = useTranslation()
@@ -21,6 +21,20 @@ export default function Navbar() {
 
         {/* Actions */}
         <div className="flex items-center gap-2">
+          {/* About button */}
+          <Link
+            to="/app/about"
+            className={`p-2 rounded-lg transition ${
+              location.pathname === '/app/about'
+                ? 'text-primary bg-primary/10'
+                : 'text-gray-400 hover:text-gray-200 hover:bg-gray-800'
+            }`}
+            aria-label={t('about.title')}
+            title={t('about.title')}
+          >
+            <Info className="w-5 h-5" />
+          </Link>
+
           {/* User Stats button */}
           <Link
             to="/app/stats"
