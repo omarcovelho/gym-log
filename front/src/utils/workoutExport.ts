@@ -6,13 +6,21 @@ export async function generateWorkoutImage(): Promise<Blob> {
     throw new Error('Export view element not found')
   }
 
+  // Obter altura real do elemento
+  const elementHeight = element.scrollHeight
+  const finalHeight = Math.max(1920, elementHeight)
+
   const canvas = await html2canvas(element, {
     width: 1080,
-    height: 1920,
+    height: finalHeight,
     scale: 1,
     backgroundColor: '#0f0f0f',
     useCORS: true,
     logging: false,
+    scrollX: 0,
+    scrollY: 0,
+    windowWidth: 1080,
+    windowHeight: finalHeight,
   })
 
   return new Promise((resolve, reject) => {
