@@ -156,7 +156,18 @@ export class StatisticsService {
   async getEvolutionStats(userId: string, weeks: number = 4) {
     const now = new Date();
     const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-    const weeksAgo = new Date(now.getTime() - weeks * 7 * 24 * 60 * 60 * 1000);
+    
+    // Calcular o início da semana atual (segunda-feira)
+    const today = new Date(now);
+    today.setHours(0, 0, 0, 0);
+    const dayOfWeek = today.getDay();
+    const diff = today.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1);
+    const startOfCurrentWeek = new Date(today);
+    startOfCurrentWeek.setDate(diff);
+    
+    // Calcular o início da semana que está (weeks - 1) semanas atrás
+    // Isso garante que incluímos a semana atual + (weeks - 1) semanas anteriores
+    const weeksAgo = new Date(startOfCurrentWeek.getTime() - (weeks - 1) * 7 * 24 * 60 * 60 * 1000);
 
     // Buscar todos os treinos finalizados do usuário
     const allFinishedSessions = await this.prisma.workoutSession.findMany({
@@ -296,9 +307,12 @@ export class StatisticsService {
     };
 
     // Processar treinos das últimas N semanas
-    const sessionsInRange = allFinishedSessions.filter(
-      (session) => session.startAt >= weeksAgo
-    );
+    // Normalizar startAt para comparação (início do dia)
+    const sessionsInRange = allFinishedSessions.filter((session) => {
+      const sessionDate = new Date(session.startAt);
+      sessionDate.setHours(0, 0, 0, 0);
+      return sessionDate >= weeksAgo;
+    });
 
     sessionsInRange.forEach((session) => {
       const weekKey = getWeekKey(session.startAt);
