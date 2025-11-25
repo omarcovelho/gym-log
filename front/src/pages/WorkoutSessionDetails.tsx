@@ -169,7 +169,7 @@ export default function WorkoutSessionDetails() {
       )}
 
       <div className="space-y-6">
-        {session.exercises.map((ex) => (
+        {[...session.exercises].sort((a, b) => a.order - b.order).map((ex) => (
           <div key={ex.id} className="rounded-xl border border-gray-800 bg-[#151515] overflow-hidden">
             <div className="flex justify-between items-center px-4 py-3 border-b border-gray-800">
               <div>
