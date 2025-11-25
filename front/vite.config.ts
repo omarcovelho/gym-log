@@ -7,10 +7,26 @@ import { readFileSync } from 'fs'
 
 // Função para obter commit hash do Git
 function getGitCommitHash(): string {
+  // Tentar usar variável de ambiente do Railway primeiro
+  if (process.env.RAILWAY_GIT_COMMIT_SHA) {
+    return process.env.RAILWAY_GIT_COMMIT_SHA.substring(0, 7) // Primeiros 7 caracteres (short hash)
+  }
+  
+  // Tentar usar variável de ambiente genérica (Vercel, Netlify, etc.)
+  if (process.env.VERCEL_GIT_COMMIT_SHA) {
+    return process.env.VERCEL_GIT_COMMIT_SHA.substring(0, 7)
+  }
+  
+  if (process.env.NETLIFY_COMMIT_REF) {
+    return process.env.NETLIFY_COMMIT_REF.substring(0, 7)
+  }
+  
+  // Tentar usar Git local
   try {
     return execSync('git rev-parse --short HEAD', { encoding: 'utf-8' }).trim()
   } catch {
-    return 'unknown'
+    // Se tudo falhar, usar timestamp como fallback
+    return `build-${Date.now().toString(36).slice(-7)}`
   }
 }
 

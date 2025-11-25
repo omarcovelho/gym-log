@@ -164,10 +164,12 @@ export class StatisticsService {
     const diff = today.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1);
     const startOfCurrentWeek = new Date(today);
     startOfCurrentWeek.setDate(diff);
+    startOfCurrentWeek.setHours(0, 0, 0, 0);
     
     // Calcular o início da semana que está (weeks - 1) semanas atrás
     // Isso garante que incluímos a semana atual + (weeks - 1) semanas anteriores
     const weeksAgo = new Date(startOfCurrentWeek.getTime() - (weeks - 1) * 7 * 24 * 60 * 60 * 1000);
+    weeksAgo.setHours(0, 0, 0, 0);
 
     // Buscar todos os treinos finalizados do usuário
     const allFinishedSessions = await this.prisma.workoutSession.findMany({
@@ -288,7 +290,7 @@ export class StatisticsService {
       }
     >();
 
-    // Função para obter chave da semana (formato: "2024-W01")
+    // Função para obter chave da semana (formato: "2024-11-24" - data da segunda-feira)
     const getWeekKey = (date: Date): string => {
       const d = new Date(date);
       d.setHours(0, 0, 0, 0);
@@ -298,20 +300,21 @@ export class StatisticsService {
       const monday = new Date(d);
       monday.setDate(diff);
       
+      // Retornar data da segunda-feira no formato YYYY-MM-DD
       const year = monday.getFullYear();
-      const startOfYear = new Date(year, 0, 1);
-      const daysDiff = Math.floor((monday.getTime() - startOfYear.getTime()) / (24 * 60 * 60 * 1000));
-      const weekNumber = Math.floor(daysDiff / 7) + 1;
+      const month = String(monday.getMonth() + 1).padStart(2, '0');
+      const day = String(monday.getDate()).padStart(2, '0');
       
-      return `${year}-W${weekNumber.toString().padStart(2, '0')}`;
+      return `${year}-${month}-${day}`;
     };
 
     // Processar treinos das últimas N semanas
-    // Normalizar startAt para comparação (início do dia)
+    // Incluir todos os treinos desde weeksAgo até agora (incluindo hoje)
     const sessionsInRange = allFinishedSessions.filter((session) => {
       const sessionDate = new Date(session.startAt);
-      sessionDate.setHours(0, 0, 0, 0);
-      return sessionDate >= weeksAgo;
+      // Comparar timestamps para garantir inclusão de treinos de hoje
+      // Não normalizar sessionDate para manter a hora exata, mas comparar com weeksAgo normalizado
+      return sessionDate.getTime() >= weeksAgo.getTime();
     });
 
     sessionsInRange.forEach((session) => {
