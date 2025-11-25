@@ -151,7 +151,7 @@
     "customWorkout": "Treino Personalizado",
     "sessionSummary": "Resumo da Sessão",
     "feeling": "Sensação:",
-    "fatigue": "Fadiga:",
+    "fatigue": "Esforço:",
     "duration": "Duração:",
     "finishedAt": "Finalizado em:",
     "minutes": "min",
@@ -175,7 +175,16 @@
     "errorRemovingSet": "Erro ao remover série",
     "exerciseRemoved": "Exercício removido",
     "setRemoved": "Série removida",
-    "errorFinishing": "Não foi possível finalizar o treino"
+    "errorFinishing": "Não foi possível finalizar o treino",
+    "export": "Exportar",
+    "exportToStory": "Exportar para Story",
+    "downloadImage": "Baixar Imagem",
+    "shareImage": "Compartilhar",
+    "exporting": "Gerando imagem...",
+    "exportSuccess": "Imagem gerada com sucesso!",
+    "exportError": "Erro ao gerar imagem",
+    "exercises": "Exercícios",
+    "volume": "Volume"
   },
   "navigation": {
     "home": "Início",
@@ -291,7 +300,7 @@
     "removeSetMessage": "Tem certeza de que deseja remover esta série?",
     "finishWorkout": "Finalizar Treino",
     "howWasWorkout": "Como foi seu treino?",
-    "fatigueLevel": "Nível de fadiga (1–10)",
+    "fatigueLevel": "Nível de esforço (1–10)",
     "notes": "Notas",
     "optionalNotes": "Notas opcionais sobre este treino...",
     "confirm": "Confirmar"

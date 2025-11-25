@@ -151,7 +151,7 @@
     "customWorkout": "Custom Workout",
     "sessionSummary": "Session Summary",
     "feeling": "Feeling:",
-    "fatigue": "Fatigue:",
+    "fatigue": "Effort:",
     "duration": "Duration:",
     "finishedAt": "Finished at:",
     "minutes": "min",
@@ -175,7 +175,16 @@
     "errorRemovingSet": "Error removing set",
     "exerciseRemoved": "Exercise removed",
     "setRemoved": "Set removed",
-    "errorFinishing": "Could not finish workout"
+    "errorFinishing": "Could not finish workout",
+    "export": "Export",
+    "exportToStory": "Export to Story",
+    "downloadImage": "Download Image",
+    "shareImage": "Share",
+    "exporting": "Generating image...",
+    "exportSuccess": "Image generated successfully!",
+    "exportError": "Error generating image",
+    "exercises": "Exercises",
+    "volume": "Volume"
   },
   "navigation": {
     "home": "Home",
@@ -291,7 +300,7 @@
     "removeSetMessage": "Are you sure you want to remove this set?",
     "finishWorkout": "Finish Workout",
     "howWasWorkout": "How was your workout?",
-    "fatigueLevel": "Fatigue level (1–10)",
+    "fatigueLevel": "Effort level (1–10)",
     "notes": "Notes",
     "optionalNotes": "Optional notes about this workout...",
     "confirm": "Confirm"
