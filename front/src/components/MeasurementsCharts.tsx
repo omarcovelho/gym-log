@@ -158,7 +158,7 @@ export function MeasurementsCharts() {
     }))
   }
 
-  const chartData = weeklyData.map((week, index) => {
+  const chartData = weeklyData.map((week) => {
     const baseData = {
       week: formatWeek(week.week),
       weekKey: week.week,
