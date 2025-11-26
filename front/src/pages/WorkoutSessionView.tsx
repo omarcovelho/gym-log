@@ -268,9 +268,17 @@ export default function WorkoutSessionView() {
     setLoading(true)
     try {
       const s = await getWorkoutSession(id!)
+      // Garantir que completed seja sempre boolean
       const sessionData = {
         ...s,
         title: s.title || t('workout.freeWorkoutLabel'),
+        exercises: (s.exercises || []).map((ex) => ({
+          ...ex,
+          sets: (ex.sets || []).map((set) => ({
+            ...set,
+            completed: Boolean(set.completed),
+          })),
+        })),
       }
       setSession(sessionData)
 
@@ -285,6 +293,12 @@ export default function WorkoutSessionView() {
           break
         }
       }
+    } catch (error) {
+      console.error('Error loading session:', error)
+      toast({
+        variant: 'error',
+        title: t('workout.errorLoading'),
+      })
     } finally {
       setLoading(false)
     }
@@ -309,6 +323,8 @@ export default function WorkoutSessionView() {
   )
 
   const handleSetChange = (exerciseId: string, setId: string, field: string, raw: any) => {
+    if (!session) return
+
     let value = raw
 
     // Campos string ou complexos não devem ser convertidos para número
@@ -317,18 +333,31 @@ export default function WorkoutSessionView() {
     if (value === '' || value == null) value = null
     else if (!isStringField && typeof value !== 'boolean') value = Number(value)
 
+    // Criar o exercício atualizado ANTES de atualizar o estado
+    const ex = session.exercises.find((e) => e.id === exerciseId)
+    if (!ex) return
+    
+    const updatedExercise = structuredClone(ex)
+    const s = updatedExercise.sets.find((ss) => ss.id === setId)
+    if (!s) return
+    
+    // Atualizar o valor no exercício clonado
+    ;(s as any)[field] = value
+
+    // Atualizar o estado
     setSession((prev) => {
       if (!prev) return prev
       const copy = structuredClone(prev)
-      const ex = copy.exercises.find((e) => e.id === exerciseId)
-      if (!ex) return prev
-      const s = ex.sets.find((ss) => ss.id === setId)
-      if (!s) return prev
-      ;(s as any)[field] = value
+      const exCopy = copy.exercises.find((e) => e.id === exerciseId)
+      if (!exCopy) return prev
+      const sCopy = exCopy.sets.find((ss) => ss.id === setId)
+      if (!sCopy) return prev
+      ;(sCopy as any)[field] = value
       return copy
     })
 
-    persistExercise(exerciseId)
+    // Usar o exercício atualizado diretamente
+    persistExercise(exerciseId, updatedExercise)
 
     // Abrir modal automaticamente quando marcar set como concluído
     if (field === 'completed' && value === true) {
@@ -336,10 +365,10 @@ export default function WorkoutSessionView() {
     }
   }
 
-  function persistExercise(exerciseId: string) {
-    if (!session) return
-    const ex = session.exercises.find((e) => e.id === exerciseId)
-    if (!ex) return
+  function persistExercise(exerciseId: string, exercise?: SessionExercise) {
+    // Usar o exercício passado como parâmetro ou buscar do estado
+    const ex = exercise || session?.exercises.find((e) => e.id === exerciseId)
+    if (!ex || !session) return
 
     setSavingId(exerciseId)
     setIsSaving(true)
@@ -352,7 +381,7 @@ export default function WorkoutSessionView() {
       actualLoad: s.actualLoad ?? null,
       actualReps: s.actualReps ?? null,
       actualRir: s.actualRir ?? null,
-      completed: s.completed ?? false,
+      completed: Boolean(s.completed),
       notes: s.notes ?? null,
       intensityType: s.intensityType ?? undefined,
       intensityBlocks: (s.intensityBlocks ?? []).map((b) => ({
