@@ -136,6 +136,48 @@ export class EmailService {
       html,
     });
   }
+
+  /**
+   * Send new user notification email to admin
+   */
+  async sendNewUserNotification(
+    userEmail: string,
+    userName?: string | null
+  ): Promise<void> {
+    // Verificar se a variável de ambiente está definida
+    const adminEmail = process.env.ADMIN_NOTIFICATION_EMAIL;
+    if (!adminEmail) {
+      // Se não estiver definida, retornar silenciosamente (fail-safe)
+      return;
+    }
+
+    try {
+      // Usar português como padrão para notificações administrativas
+      const template = this.loadTemplate('new-user-notification', 'pt');
+      
+      const registrationDate = new Date().toLocaleString('pt-BR', {
+        dateStyle: 'long',
+        timeStyle: 'short',
+      });
+      
+      const html = this.replacePlaceholders(template, {
+        appName: 'GymLog',
+        userEmail,
+        userName: userName || 'Não informado',
+        registrationDate,
+      });
+
+      await this.resend.emails.send({
+        from: this.fromEmail,
+        to: adminEmail,
+        subject: 'Novo Usuário Registrado - GymLog',
+        html,
+      });
+    } catch (error) {
+      // Log do erro mas não propagar para não quebrar o fluxo de registro
+      console.error('Error sending new user notification email:', error);
+    }
+  }
 }
 
 

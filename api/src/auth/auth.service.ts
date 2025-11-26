@@ -27,6 +27,14 @@ export class AuthService {
                 name: dto.name,
             }
         });
+        
+        // Enviar notificação de novo usuário (não bloquear se falhar)
+        try {
+            await this.emailService.sendNewUserNotification(user.email, user.name);
+        } catch (error) {
+            console.error('Error sending new user notification:', error);
+        }
+        
         return this.signToken(user);
     }
 
@@ -47,7 +55,9 @@ export class AuthService {
             where: { email: profile.email },
         })
 
+        let isNewUser = false;
         if (!user) {
+            isNewUser = true;
             user = await this.prisma.user.create({
                 data: {
                     email: profile.email,
@@ -55,6 +65,13 @@ export class AuthService {
                     name: profile.name ?? null,
                 },
             })
+            
+            // Enviar notificação APENAS quando criar novo usuário (não bloquear se falhar)
+            try {
+                await this.emailService.sendNewUserNotification(user.email, user.name);
+            } catch (error) {
+                console.error('Error sending new user notification:', error);
+            }
         }
 
         return await this.signToken(user)

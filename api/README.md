@@ -23,6 +23,13 @@ npm run seed
 - `ADMIN_EMAIL`: Email do usuário administrador
 - `ADMIN_PASSWORD`: Senha do usuário administrador
 
+### Notificações de Novo Usuário
+
+O sistema envia automaticamente um email de notificação quando um novo usuário se registra (via signup ou Google OAuth).
+
+**Variável de ambiente opcional:**
+- `ADMIN_NOTIFICATION_EMAIL`: Email que receberá as notificações de novos usuários. Se não estiver definida, as notificações não serão enviadas (fail-safe).
+
 ### Seed de Evolução (`seed-evolution.ts`)
 
 Cria dados de teste para visualizar funcionalidades de evolução e progresso (PRs, volume semanal).
