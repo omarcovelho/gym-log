@@ -39,7 +39,7 @@ export function useRestTimers(forceRefresh = false) {
     const isCacheValid = cachedTimers && (now - cacheTimestamp) < CACHE_DURATION
 
     // Se o cache é válido e não foi solicitado refresh, usar cache
-    if (isCacheValid && !skipCache && !forceRefresh) {
+    if (isCacheValid && !skipCache && !forceRefresh && cachedTimers) {
       setTimers(cachedTimers)
       return cachedTimers
     }
@@ -70,8 +70,12 @@ export function useRestTimers(forceRefresh = false) {
         notifyListeners() // Notificar todos os componentes
         return data
       })
-      .finally(() => {
+      .catch((err) => {
         loadingPromise = null
+        throw err
+      })
+      .finally(() => {
+        // loadingPromise já foi limpo no catch se houver erro
       })
 
     try {
