@@ -11,6 +11,7 @@ import Welcome from '@/pages/Welcome'
 import Home from '@/pages/Home'
 import Login from '@/pages/Login'
 import Signup from '@/pages/Signup'
+import ConfirmSignup from '@/pages/ConfirmSignup'
 import ForgotPassword from '@/pages/ForgotPassword'
 import ResetPassword from '@/pages/ResetPassword'
 import UserStats from '@/pages/UserStats'
@@ -72,6 +73,14 @@ const router = createBrowserRouter([
         element: (
             <PublicRoute>
                 <ForgotPassword />
+            </PublicRoute>
+        )
+    },
+    { 
+        path: '/confirm-signup', 
+        element: (
+            <PublicRoute>
+                <ConfirmSignup />
             </PublicRoute>
         )
     },
