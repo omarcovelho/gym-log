@@ -3,6 +3,15 @@ import { api } from '@/lib/api'
 /* ============================================================
  * TYPES
  * ============================================================ */
+export type SetIntensityType = 'NONE' | 'REST_PAUSE' | 'DROP_SET' | 'CLUSTER_SET'
+
+export type SessionSetIntensityBlock = {
+  id: string
+  blockIndex: number
+  reps: number | null
+  restSeconds?: number | null
+}
+
 export type UpdateWorkoutExerciseDto = {
   order?: number
   notes?: string | null
@@ -16,6 +25,8 @@ export type UpdateWorkoutExerciseDto = {
     actualRir?: number | null
     completed?: boolean
     notes?: string | null
+    intensityType?: SetIntensityType
+    intensityBlocks?: SessionSetIntensityBlock[]
   }[]
 }
 export type SessionSet = {
@@ -34,6 +45,8 @@ export type SessionSet = {
   unit?: 'KG' | 'LB' | null
   completed?: boolean
   notes?: string | null
+  intensityType?: SetIntensityType | null
+  intensityBlocks?: SessionSetIntensityBlock[]
 }
 
 export type SessionExercise = {
@@ -86,6 +99,13 @@ export type UpdateSetDto = Partial<{
   actualRir: number | null
   completed: boolean
   notes: string | null
+  intensityType: SetIntensityType
+  intensityBlocks: {
+    id?: string
+    blockIndex: number
+    reps: number
+    restSeconds?: number | null
+  }[]
 }>
 
 export type UpdateSessionDto = Partial<{

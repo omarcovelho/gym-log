@@ -92,6 +92,9 @@ export class WorkoutSessionService {
                 plannedRir: dto.plannedRir ?? null,
                 notes: dto.notes ?? null,
             },
+            include: {
+                intensityBlocks: true,
+            },
         })
     }
 
@@ -112,10 +115,72 @@ export class WorkoutSessionService {
             throw new ForbiddenException('Access denied');
         }
 
-        return this.prisma.sessionSet.update({
+        const updateData: any = {
+            actualLoad: data.actualLoad,
+            actualReps: data.actualReps,
+            actualRir: data.actualRir,
+            completed: data.completed,
+            notes: data.notes,
+        }
+
+        if (data.intensityType !== undefined) {
+            updateData.intensityType = data.intensityType
+        }
+
+        const updated = await this.prisma.sessionSet.update({
             where: { id: setId },
-            data,
+            data: updateData,
         });
+
+        // Sincronizar blocos de intensidade, se enviados
+        if (data.intensityBlocks) {
+            const existingBlocks = await this.prisma.sessionSetIntensityBlock.findMany({
+                where: { sessionSetId: setId },
+            })
+
+            const incomingIds = data.intensityBlocks
+                .map((b) => b.id)
+                .filter((id): id is string => !!id)
+
+            const toDelete = existingBlocks.filter(
+                (b) => !incomingIds.includes(b.id),
+            )
+
+            if (toDelete.length > 0) {
+                await this.prisma.sessionSetIntensityBlock.deleteMany({
+                    where: { id: { in: toDelete.map((b) => b.id) } },
+                })
+            }
+
+            for (const block of data.intensityBlocks) {
+                if (block.id) {
+                    const updateData: any = {
+                        blockIndex: block.blockIndex,
+                        restSeconds: block.restSeconds ?? null,
+                    }
+                    if (typeof block.reps === 'number') {
+                        updateData.reps = block.reps
+                    }
+
+                    await this.prisma.sessionSetIntensityBlock.update({
+                        where: { id: block.id },
+                        data: updateData,
+                    })
+                } else {
+                    await this.prisma.sessionSetIntensityBlock.create({
+                        data: {
+                            sessionSetId: setId,
+                            blockIndex: block.blockIndex,
+                            // se reps não vier, default 0 para satisfazer o schema
+                            reps: typeof block.reps === 'number' ? block.reps : 0,
+                            restSeconds: block.restSeconds ?? null,
+                        },
+                    })
+                }
+            }
+        }
+
+        return updated;
     }
 
     /** Finaliza o treino */
@@ -157,9 +222,16 @@ export class WorkoutSessionService {
         const [data, total] = await Promise.all([
             this.prisma.workoutSession.findMany({
                 where: { userId },
-                include: { 
-                    exercises: { 
-                        include: { sets: true, exercise: true },
+                include: {
+                    exercises: {
+                        include: {
+                            sets: {
+                                include: {
+                                    intensityBlocks: true,
+                                },
+                            },
+                            exercise: true,
+                        },
                         orderBy: {
                             order: 'asc',
                         },
@@ -187,9 +259,16 @@ export class WorkoutSessionService {
     async findById(userId: string, sessionId: string) {
         const session = await this.prisma.workoutSession.findUnique({
             where: { id: sessionId },
-            include: { 
-                exercises: { 
-                    include: { sets: true, exercise: true },
+            include: {
+                exercises: {
+                    include: {
+                        sets: {
+                            include: {
+                                intensityBlocks: true,
+                            },
+                        },
+                        exercise: true,
+                    },
                     orderBy: {
                         order: 'asc',
                     },
@@ -209,8 +288,15 @@ export class WorkoutSessionService {
                 endAt: null,
             },
             include: {
-                exercises: { 
-                    include: { sets: true, exercise: true },
+                exercises: {
+                    include: {
+                        sets: {
+                            include: {
+                                intensityBlocks: true,
+                            },
+                        },
+                        exercise: true,
+                    },
                     orderBy: {
                         order: 'asc',
                     },
@@ -244,7 +330,16 @@ export class WorkoutSessionService {
                 exercises: { create: [] },
             },
             include: {
-                exercises: { include: { sets: true, exercise: true } },
+                exercises: {
+                    include: {
+                        sets: {
+                            include: {
+                                intensityBlocks: true,
+                            },
+                        },
+                        exercise: true,
+                    },
+                },
             },
         })
     }
@@ -261,11 +356,12 @@ export class WorkoutSessionService {
             throw new ForbiddenException('Access denied');
         }
 
-        return this.prisma.sessionExercise.update({
+        const updatedExercise = await this.prisma.sessionExercise.update({
             where: { id },
             data: {
                 order: dto.order,
                 notes: dto.notes,
+                // campos simples de set são atualizados via updateMany; blocos serão sincronizados abaixo
                 sets: {
                     updateMany: dto.sets?.map(s => ({
                         where: { id: s.id },
@@ -278,15 +374,73 @@ export class WorkoutSessionService {
                             actualRir: s.actualRir,
                             completed: s.completed,
                             notes: s.notes,
+                            intensityType: s.intensityType,
                         }
                     })) ?? [],
                 }
             },
             include: {
-                sets: true,
+                sets: {
+                    include: {
+                        intensityBlocks: true,
+                    },
+                },
                 exercise: true,
             }
         })
+
+        // Sincronizar blocos de intensidade por set, se enviados
+        if (dto.sets) {
+            for (const setDto of dto.sets) {
+                if (!setDto.intensityBlocks) continue
+
+                const existingBlocks = await this.prisma.sessionSetIntensityBlock.findMany({
+                    where: { sessionSetId: setDto.id },
+                })
+
+                const incomingIds = setDto.intensityBlocks
+                    .map((b) => b.id)
+                    .filter((id): id is string => !!id)
+
+                const toDelete = existingBlocks.filter(
+                    (b) => !incomingIds.includes(b.id),
+                )
+
+                if (toDelete.length > 0) {
+                    await this.prisma.sessionSetIntensityBlock.deleteMany({
+                        where: { id: { in: toDelete.map((b) => b.id) } },
+                    })
+                }
+
+                for (const block of setDto.intensityBlocks) {
+                    if (block.id) {
+                        const updateData: any = {
+                            blockIndex: block.blockIndex,
+                            restSeconds: block.restSeconds ?? null,
+                        }
+                        if (typeof block.reps === 'number') {
+                            updateData.reps = block.reps
+                        }
+
+                        await this.prisma.sessionSetIntensityBlock.update({
+                            where: { id: block.id },
+                            data: updateData,
+                        })
+                    } else {
+                        await this.prisma.sessionSetIntensityBlock.create({
+                            data: {
+                                sessionSetId: setDto.id,
+                                blockIndex: block.blockIndex,
+                                reps: typeof block.reps === 'number' ? block.reps : 0,
+                                restSeconds: block.restSeconds ?? null,
+                            },
+                        })
+                    }
+                }
+            }
+        }
+
+        return updatedExercise
     }
 
     async deleteExercise(id: string, userId: string) {

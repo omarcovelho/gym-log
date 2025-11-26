@@ -2,7 +2,6 @@ import { createPortal } from 'react-dom'
 import { useEffect, useState } from 'react'
 import { X, Plus, Trash2, Edit2 } from 'lucide-react'
 import {
-  getRestTimers,
   createRestTimer,
   updateRestTimer,
   deleteRestTimer,
@@ -11,6 +10,7 @@ import {
 import { useToast } from './ToastProvider'
 import { ConfirmDialog } from './ConfirmDialog'
 import { Loader2 } from 'lucide-react'
+import { useRestTimers } from '@/hooks/useRestTimers'
 
 type Props = {
   open: boolean
@@ -19,41 +19,24 @@ type Props = {
 
 export function RestTimerManager({ open, onClose }: Props) {
   const { toast } = useToast()
-  const [timers, setTimers] = useState<RestTimer[]>([])
-  const [loading, setLoading] = useState(false)
+  const { timers: allTimers, loading, loadTimers, invalidateCache } = useRestTimers()
   const [editingId, setEditingId] = useState<string | null>(null)
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const [minutes, setMinutes] = useState('')
   const [seconds, setSeconds] = useState('')
   const [saving, setSaving] = useState(false)
 
+  // Filter out default timers for management
+  const timers = allTimers.filter((t) => !t.isDefault)
+
   useEffect(() => {
-    if (open) {
-      loadTimers()
-    } else {
+    if (!open) {
       // Reset form when closing
       setEditingId(null)
       setMinutes('')
       setSeconds('')
     }
   }, [open])
-
-  async function loadTimers() {
-    setLoading(true)
-    try {
-      const data = await getRestTimers()
-      // Filter out default timers for management
-      setTimers(data.filter((t) => !t.isDefault))
-    } catch (err) {
-      toast({
-        variant: 'error',
-        title: 'Failed to load timers',
-        description: 'Please try again.',
-      })
-    } finally {
-      setLoading(false)
-    }
-  }
 
   function startEdit(timer: RestTimer) {
     setEditingId(timer.id)
@@ -110,7 +93,8 @@ export function RestTimerManager({ open, onClose }: Props) {
         })
       }
       cancelEdit()
-      loadTimers()
+      invalidateCache()
+      await loadTimers(true) // Recarregar após criar/atualizar
     } catch (err: any) {
       // Handle duplicate error
       const errorMessage = err?.response?.data?.message || err?.message || 'Please try again.'
@@ -143,7 +127,8 @@ export function RestTimerManager({ open, onClose }: Props) {
         title: 'Timer deleted',
         description: 'Your timer has been deleted successfully.',
       })
-      loadTimers()
+      invalidateCache()
+      await loadTimers(true) // Recarregar após deletar
     } catch (err: any) {
       toast({
         variant: 'error',

@@ -44,7 +44,7 @@ async function bootstrap() {
   // Swagger only in non-production environments
   if (process.env.NODE_ENV !== 'production') {
     const packageJson = JSON.parse(
-      readFileSync(join(__dirname, '../../package.json'), 'utf8')
+      readFileSync(join(__dirname, '../package.json'), 'utf8')
     );
     const config = new DocumentBuilder()
       .setTitle('GymLog API')
