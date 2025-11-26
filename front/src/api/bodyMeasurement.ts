@@ -81,3 +81,34 @@ export async function checkMeasurementToday(): Promise<boolean> {
   return data.hasMeasurement
 }
 
+export type MeasurementsStats = {
+  weeklyData: {
+    weight: Array<{ week: string; date: string; value: number }>
+    waist: Array<{ week: string; date: string; value: number }>
+    arm: Array<{ week: string; date: string; value: number }>
+  }
+  trends: {
+    weight: { change: number; changePercent: number; direction: 'up' | 'down' | 'stable' }
+    waist: { change: number; changePercent: number; direction: 'up' | 'down' | 'stable' }
+    arm: { change: number; changePercent: number; direction: 'up' | 'down' | 'stable' }
+  }
+  current: {
+    weight: number | null
+    waist: number | null
+    arm: number | null
+    date: string | null
+  }
+  averages: {
+    weight: number | null
+    waist: number | null
+    arm: number | null
+  }
+}
+
+export async function getMeasurementsStats(weeks?: number): Promise<MeasurementsStats> {
+  const { data } = await api.get<MeasurementsStats>('/body-measurements/stats', {
+    params: weeks ? { weeks } : {},
+  })
+  return data
+}
+

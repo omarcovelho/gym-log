@@ -404,6 +404,16 @@
     "measurementDeleted": "Measurement deleted successfully",
     "errorSaving": "Error saving measurement",
     "errorDeleting": "Error deleting measurement",
-    "errorLoading": "Error loading measurements"
+    "errorLoading": "Error loading measurements",
+    "charts": "Charts",
+    "currentValue": "Current Value",
+    "average": "Average",
+    "change7d": "Weekly Change",
+    "lastWeekChange": "Last week change",
+    "change7dPercent": "Percent Change",
+    "noData": "No data",
+    "weeks": "vs previous week",
+    "weeksAverage": "Average of previous weeks",
+    "trendLine": "Trend Line"
   }
 }

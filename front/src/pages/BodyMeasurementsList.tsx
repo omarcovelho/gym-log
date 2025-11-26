@@ -8,6 +8,7 @@ import { useAuth } from '@/auth/AuthContext'
 import { useToast } from '@/components/ToastProvider'
 import { ConfirmDialog } from '@/components/ConfirmDialog'
 import { Pagination } from '@/components/Pagination'
+import { MeasurementsCharts } from '@/components/MeasurementsCharts'
 
 export default function BodyMeasurementsList() {
   const { t, i18n } = useTranslation()
@@ -88,10 +89,37 @@ export default function BodyMeasurementsList() {
 
   return (
     <div className="max-w-3xl mx-auto space-y-6 pb-24">
-      <header>
-        <h1 className="text-3xl font-bold text-gray-100">{t('measurements.history')}</h1>
-        <p className="text-sm text-gray-400 mt-1">{t('measurements.historyDescription')}</p>
-      </header>
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-100">{t('measurements.history')}</h1>
+          <p className="text-sm text-gray-400 mt-1">{t('measurements.historyDescription')}</p>
+        </div>
+
+        <Link
+          to="/app/measurements/new"
+          className="
+            w-full sm:w-auto
+            px-4 py-2
+            bg-primary
+            text-black
+            rounded-lg
+            font-semibold
+            text-sm
+            shadow-md
+            hover:brightness-110
+            transition
+            text-center
+            flex items-center justify-center gap-2
+          "
+        >
+          <Plus className="w-4 h-4" />
+          <span>{t('measurements.addMeasurement')}</span>
+        </Link>
+      </div>
+
+      {/* Charts Section */}
+      <MeasurementsCharts />
 
       {measurements.length === 0 ? (
         <div className="text-center py-12 space-y-4">
@@ -191,17 +219,6 @@ export default function BodyMeasurementsList() {
           )}
         </>
       )}
-
-      {/* Sticky Button */}
-      <div className="sticky bottom-0 left-0 right-0 z-40 bg-dark pb-4 pt-4 border-t border-gray-800">
-        <Link
-          to="/app/measurements/new"
-          className="w-full bg-primary text-black py-3 rounded-md font-semibold flex items-center justify-center gap-2 hover:brightness-110 transition"
-        >
-          <Plus className="w-5 h-5" />
-          <span>{t('measurements.addMeasurement')}</span>
-        </Link>
-      </div>
     </div>
   )
 }

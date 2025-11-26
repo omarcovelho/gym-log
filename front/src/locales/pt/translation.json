@@ -404,6 +404,16 @@
     "measurementDeleted": "Medida excluída com sucesso",
     "errorSaving": "Erro ao salvar medida",
     "errorDeleting": "Erro ao excluir medida",
-    "errorLoading": "Erro ao carregar medidas"
+    "errorLoading": "Erro ao carregar medidas",
+    "charts": "Gráficos",
+    "currentValue": "Valor Atual",
+    "average": "Média",
+    "change7d": "Variação Semanal",
+    "lastWeekChange": "Variação da última semana",
+    "change7dPercent": "Variação Percentual",
+    "noData": "Sem dados",
+    "weeks": "vs semana anterior",
+    "weeksAverage": "Média das semanas anteriores",
+    "trendLine": "Linha de Tendência"
   }
 }

@@ -26,6 +26,7 @@
     "seed": "dotenv -e .env.local -- prisma db seed",
     "seed:prod": "ts-node --compiler-options '{\"module\":\"CommonJS\"}' prisma/seed.ts",
     "seed:evolution": "dotenv -e .env.local -- ts-node --compiler-options '{\"module\":\"CommonJS\"}' prisma/seed-evolution.ts",
+    "seed:measurements": "dotenv -e .env.local -- ts-node --compiler-options '{\"module\":\"CommonJS\"}' prisma/seed-measurements.ts",
     "prisma:init": "prisma init",
     "prisma:generate": "dotenv -e .env.local -- prisma generate",
     "prisma:migrate": "dotenv -e .env.local -- prisma migrate dev",
