@@ -1,8 +1,8 @@
 import { createPortal } from 'react-dom'
-import { useEffect, useState } from 'react'
 import { X, Settings } from 'lucide-react'
-import { getRestTimers, type RestTimer } from '@/api/restTimer'
+import { type RestTimer } from '@/api/restTimer'
 import { Loader2 } from 'lucide-react'
+import { useRestTimers } from '@/hooks/useRestTimers'
 
 type Props = {
   open: boolean
@@ -12,26 +12,7 @@ type Props = {
 }
 
 export function RestTimer({ open, onClose, onStart, onManageClick }: Props) {
-  const [timers, setTimers] = useState<RestTimer[]>([])
-  const [loading, setLoading] = useState(false)
-
-  useEffect(() => {
-    if (open) {
-      loadTimers()
-    }
-  }, [open])
-
-  async function loadTimers() {
-    setLoading(true)
-    try {
-      const data = await getRestTimers()
-      setTimers(data)
-    } catch (err) {
-      console.error('Failed to load timers:', err)
-    } finally {
-      setLoading(false)
-    }
-  }
+  const { timers, loading } = useRestTimers()
 
   function formatTime(seconds: number): string {
     const mins = Math.floor(seconds / 60)
