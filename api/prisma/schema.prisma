@@ -32,6 +32,13 @@ enum EffortUnit {
     LB 
 }
 
+enum SetIntensityType {
+    NONE
+    REST_PAUSE
+    DROP_SET
+    CLUSTER_SET
+}
+
 enum Feeling { 
     GREAT 
     GOOD 
@@ -152,6 +159,20 @@ model SessionSet {
   unit          EffortUnit?     @default(KG)
   completed     Boolean         @default(false)
   notes         String?         
+  intensityType SetIntensityType @default(NONE)
+
+  intensityBlocks SessionSetIntensityBlock[]
+}
+
+model SessionSetIntensityBlock {
+  id          String           @id @default(uuid())
+  sessionSetId String
+  sessionSet  SessionSet       @relation(fields: [sessionSetId], references: [id], onDelete: Cascade)
+  blockIndex  Int
+  reps        Int
+  restSeconds Int?
+
+  @@index([sessionSetId, blockIndex])
 }
 
 model RestTimer {

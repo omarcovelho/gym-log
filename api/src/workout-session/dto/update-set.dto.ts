@@ -1,4 +1,32 @@
-import { IsBoolean, IsInt, IsNumber, IsOptional, IsString } from 'class-validator'
+import {
+  IsBoolean,
+  IsEnum,
+  IsInt,
+  IsNumber,
+  IsOptional,
+  IsString,
+  IsArray,
+  ValidateNested,
+} from 'class-validator'
+import { Type } from 'class-transformer'
+import { SetIntensityType } from '../../../generated/prisma'
+
+export class UpdateSetIntensityBlockDto {
+  @IsOptional()
+  @IsString()
+  id?: string
+
+  @IsInt()
+  blockIndex: number
+
+  @IsOptional()
+  @IsInt()
+  reps?: number | null
+
+  @IsOptional()
+  @IsInt()
+  restSeconds?: number | null
+}
 
 export class UpdateSetDto {
   @IsOptional()
@@ -20,4 +48,14 @@ export class UpdateSetDto {
   @IsOptional()
   @IsString()
   notes?: string
+
+  @IsOptional()
+  @IsEnum(SetIntensityType)
+  intensityType?: SetIntensityType
+
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => UpdateSetIntensityBlockDto)
+  intensityBlocks?: UpdateSetIntensityBlockDto[]
 }

@@ -18,6 +18,10 @@ import {
   deleteSetFromExercise,
   type WorkoutSession,
   type SessionExercise,
+  type SessionSet,
+  type SetIntensityType,
+  type UpdateWorkoutExerciseDto,
+  type SessionSetIntensityBlock,
 } from '@/api/workoutSession'
 import { ExercisePickerModal } from '@/components/ExercisePickerModal'
 import { FinishWorkoutDialog, type FinishWorkoutData } from '@/components/FinishWorkoutDialog'
@@ -26,6 +30,170 @@ import { RestTimer } from '@/components/RestTimer'
 import { RestTimerManager } from '@/components/RestTimerManager'
 import { RestTimerCountdown } from '@/components/RestTimerCountdown'
 import { useExercises } from '@/api/exercise'
+
+type SetIntensityEditorProps = {
+  set: SessionSet
+  onChangeType: (type: SetIntensityType | null) => void
+  onChangeBlocks: (blocks: SessionSet['intensityBlocks']) => void
+  onChangeTypeAndBlocks?: (type: SetIntensityType | null, blocks: SessionSet['intensityBlocks']) => void
+}
+
+function SetIntensityEditor({ set, onChangeType, onChangeBlocks, onChangeTypeAndBlocks }: SetIntensityEditorProps) {
+  const { t } = useTranslation()
+
+  const intensityType: SetIntensityType =
+    set.intensityType && set.intensityType !== 'NONE' ? set.intensityType : 'NONE'
+
+  const handleAddBlock = () => {
+    const currentBlocks = set.intensityBlocks ?? []
+    const nextIndex =
+      currentBlocks.length > 0
+        ? Math.max(...currentBlocks.map((b) => b.blockIndex)) + 1
+        : 0
+
+    const newBlock = {
+      // id temporário apenas para chave de renderização; o backend gerará o id real
+      id: `temp-${crypto.randomUUID()}`,
+      blockIndex: nextIndex,
+      reps: null,
+      restSeconds: null,
+    }
+
+    onChangeBlocks([...currentBlocks, newBlock])
+  }
+
+  const handleBlockChange = (
+    blockId: string,
+    field: 'reps' | 'restSeconds',
+    value: number | null,
+  ) => {
+    const currentBlocks = set.intensityBlocks ?? []
+    onChangeBlocks(
+      currentBlocks.map((b) =>
+        b.id === blockId
+          ? {
+              ...b,
+              [field]: value,
+            }
+          : b,
+      ),
+    )
+  }
+
+  const handleRemoveBlock = (blockId: string) => {
+    const currentBlocks = set.intensityBlocks ?? []
+    onChangeBlocks(currentBlocks.filter((b) => b.id !== blockId))
+  }
+
+  return (
+    <div className="mt-3 border-t border-gray-800 pt-3">
+      <div className="flex items-center justify-between mb-2">
+        <span className="text-xs text-gray-400">
+          {t('workout.intensityTechniques', 'Técnicas de intensidade')}
+        </span>
+        <select
+          value={intensityType}
+          onChange={(e) => {
+            const next = e.target.value as SetIntensityType
+            if (next === 'NONE') {
+              if (onChangeTypeAndBlocks) {
+                onChangeTypeAndBlocks(null, [])
+              } else {
+                onChangeType(null)
+                onChangeBlocks([])
+              }
+            } else {
+              const currentBlocks = set.intensityBlocks ?? []
+              const shouldAddFirstBlock = currentBlocks.length === 0 && next === 'REST_PAUSE'
+              
+              // Atualizar tipo e blocos em uma única operação para evitar requisições duplicadas
+              if (shouldAddFirstBlock && onChangeTypeAndBlocks) {
+                const firstBlock = {
+                  id: `temp-${crypto.randomUUID()}`,
+                  blockIndex: 0,
+                  reps: null,
+                  restSeconds: null,
+                }
+                onChangeTypeAndBlocks(next, [firstBlock])
+              } else {
+                onChangeType(next)
+              }
+            }
+          }}
+          className="text-xs bg-[#0f0f0f] border border-gray-700 rounded px-2 py-1 text-gray-200"
+        >
+          <option value="NONE">{t('workout.intensityNone', 'Nenhuma')}</option>
+          <option value="REST_PAUSE">{t('workout.intensityRestPause', 'Rest-pause')}</option>
+          {/* futuros tipos: DROP_SET, CLUSTER_SET */}
+        </select>
+      </div>
+
+      {intensityType === 'REST_PAUSE' && (
+        <div className="space-y-2">
+          {(set.intensityBlocks ?? []).length === 0 && (
+            <p className="text-[11px] text-gray-500">
+              {t(
+                'workout.intensityRestPauseHint',
+                'Adicione blocos de reps extras com descanso curto. Ex: +2 reps, +3 reps.',
+              )}
+            </p>
+          )}
+
+          {(set.intensityBlocks ?? []).map((block, idx) => (
+            <div key={block.id ?? idx} className="flex items-center gap-2">
+              <span className="text-[11px] text-gray-500 w-10">
+                RP #{idx + 1}
+              </span>
+              <input
+                type="number"
+                min={0}
+                value={block.reps ?? ''}
+                onChange={(e) =>
+                  handleBlockChange(
+                    block.id!,
+                    'reps',
+                    e.target.value === '' ? null : Number(e.target.value),
+                  )
+                }
+                className="w-16 rounded-md border border-gray-700 bg-[#0f0f0f] px-2 py-1 text-xs text-gray-100"
+                placeholder={t('workout.repsLabel', 'reps')}
+              />
+              <input
+                type="number"
+                min={0}
+                value={block.restSeconds ?? ''}
+                onChange={(e) =>
+                  handleBlockChange(
+                    block.id!,
+                    'restSeconds',
+                    e.target.value === '' ? null : Number(e.target.value),
+                  )
+                }
+                className="w-20 rounded-md border border-gray-700 bg-[#0f0f0f] px-2 py-1 text-xs text-gray-100"
+                placeholder={t('workout.seconds', 'seg')}
+              />
+              <button
+                type="button"
+                onClick={() => handleRemoveBlock(block.id!)}
+                className="text-[11px] text-red-400 border border-red-900/60 rounded px-2 py-1 hover:bg-red-900/40"
+              >
+                {t('workout.remove', 'Remover')}
+              </button>
+            </div>
+          ))}
+
+          <button
+            type="button"
+            onClick={handleAddBlock}
+            className="text-[11px] mt-1 px-2 py-1 border border-gray-700 rounded text-gray-300 hover:bg-gray-800/60"
+          >
+            {t('workout.addRestPauseBlock', 'Adicionar bloco rest-pause')}
+          </button>
+        </div>
+      )}
+    </div>
+  )
+}
 
 function useDebouncedCallback<T extends (...args: any[]) => void>(cb: T, delay = 300) {
   const t = useRef<number | undefined>(undefined)
@@ -142,8 +310,12 @@ export default function WorkoutSessionView() {
 
   const handleSetChange = (exerciseId: string, setId: string, field: string, raw: any) => {
     let value = raw
+
+    // Campos string ou complexos não devem ser convertidos para número
+    const isStringField = field === 'notes' || field === 'intensityType'
+
     if (value === '' || value == null) value = null
-    else if (typeof value !== 'boolean') value = Number(value)
+    else if (!isStringField && typeof value !== 'boolean') value = Number(value)
 
     setSession((prev) => {
       if (!prev) return prev
@@ -172,20 +344,29 @@ export default function WorkoutSessionView() {
     setSavingId(exerciseId)
     setIsSaving(true)
 
+    const payloadSets: NonNullable<UpdateWorkoutExerciseDto['sets']> = ex.sets.map((s) => ({
+      id: s.id,
+      setIndex: s.setIndex,
+      plannedReps: s.plannedReps ?? null,
+      plannedRir: s.plannedRir ?? null,
+      actualLoad: s.actualLoad ?? null,
+      actualReps: s.actualReps ?? null,
+      actualRir: s.actualRir ?? null,
+      completed: s.completed ?? false,
+      notes: s.notes ?? null,
+      intensityType: s.intensityType ?? undefined,
+      intensityBlocks: (s.intensityBlocks ?? []).map((b) => ({
+        id: b.id && b.id.startsWith('temp-') ? '' : b.id,
+        blockIndex: b.blockIndex,
+        reps: b.reps,
+        restSeconds: b.restSeconds ?? null,
+      })) as SessionSetIntensityBlock[],
+    }))
+
     updateWorkoutExercise(exerciseId, {
       order: ex.order,
       notes: ex.notes ?? null,
-      sets: ex.sets.map((s) => ({
-        id: s.id,
-        setIndex: s.setIndex,
-        plannedReps: s.plannedReps ?? null,
-        plannedRir: s.plannedRir ?? null,
-        actualLoad: s.actualLoad ?? null,
-        actualReps: s.actualReps ?? null,
-        actualRir: s.actualRir ?? null,
-        completed: s.completed ?? false,
-        notes: s.notes ?? null,
-      })),
+      sets: payloadSets,
     })
       .catch(() => {
         toast({ variant: 'error', title: t('workout.errorSavingExercise') })
@@ -622,6 +803,44 @@ export default function WorkoutSessionView() {
                             className="w-full rounded-md border border-gray-700 bg-[#0f0f0f] px-3 py-2 text-base text-gray-100"
                           />
                         </div>
+
+                        {/* INTENSITY TECHNIQUES */}
+                        <SetIntensityEditor
+                          set={s}
+                          onChangeType={(type) => {
+                            // Atualizar apenas o tipo
+                            handleSetChange(ex.id, s.id, 'intensityType', type)
+                          }}
+                          onChangeBlocks={(blocks) => {
+                            // Atualizar apenas os blocos
+                            setSession((prev) => {
+                              if (!prev) return prev
+                              const copy = structuredClone(prev)
+                              const exercise = copy.exercises.find((e) => e.id === ex.id)
+                              if (!exercise) return prev
+                              const set = exercise.sets.find((ss) => ss.id === s.id)
+                              if (!set) return prev
+                              ;(set as any).intensityBlocks = blocks
+                              return copy
+                            })
+                            persistExercise(ex.id)
+                          }}
+                          onChangeTypeAndBlocks={(type, blocks) => {
+                            // Atualizar tipo e blocos em uma única operação para evitar requisições duplicadas
+                            setSession((prev) => {
+                              if (!prev) return prev
+                              const copy = structuredClone(prev)
+                              const exercise = copy.exercises.find((e) => e.id === ex.id)
+                              if (!exercise) return prev
+                              const set = exercise.sets.find((ss) => ss.id === s.id)
+                              if (!set) return prev
+                              ;(set as any).intensityType = type
+                              ;(set as any).intensityBlocks = blocks
+                              return copy
+                            })
+                            persistExercise(ex.id)
+                          }}
+                        />
                       </div>
                     ))}
 
