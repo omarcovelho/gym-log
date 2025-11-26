@@ -4,6 +4,7 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { ValidationPipe, Logger } from '@nestjs/common';
 import { AllExceptionsFilter } from './common/filters/http-exception.filter';
 import { PrismaExceptionFilter } from './common/filters/prisma-exception.filter';
+import * as packageJson from '../package.json';
 
 async function bootstrap() {
   const logger = new Logger('Bootstrap');
@@ -43,7 +44,7 @@ async function bootstrap() {
   if (process.env.NODE_ENV !== 'production') {
     const config = new DocumentBuilder()
       .setTitle('GymLog API')
-      .setVersion('0.1')
+      .setVersion(packageJson.version)
       .addBearerAuth()
       .build();
     const doc = SwaggerModule.createDocument(app, config);
