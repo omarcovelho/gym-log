@@ -38,13 +38,17 @@ async function bootstrap() {
   app.useGlobalFilters(new AllExceptionsFilter(), new PrismaExceptionFilter());
 
   app.setGlobalPrefix('api');
-  const config = new DocumentBuilder()
-    .setTitle('GymLog API')
-    .setVersion('0.1')
-    .addBearerAuth()
-    .build();
-  const doc = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('docs', app, doc);
+  
+  // Swagger only in non-production environments
+  if (process.env.NODE_ENV !== 'production') {
+    const config = new DocumentBuilder()
+      .setTitle('GymLog API')
+      .setVersion('0.1')
+      .addBearerAuth()
+      .build();
+    const doc = SwaggerModule.createDocument(app, config);
+    SwaggerModule.setup('docs', app, doc);
+  }
 
   const port = process.env.PORT || 3000;
   await app.listen(port);
