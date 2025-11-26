@@ -194,7 +194,8 @@
     "measurements": "Medidas",
     "workouts": "Treinos",
     "myData": "Meus Dados",
-    "logout": "Logout"
+    "logout": "Logout",
+    "menu": "Menu"
   },
   "exercise": {
     "newExercise": "Novo Exercício",

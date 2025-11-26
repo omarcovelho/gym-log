@@ -2,6 +2,7 @@ import { Link, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/auth/AuthContext'
 import { LogOut, User, Info } from 'lucide-react'
+import { NavbarMenu } from './NavbarMenu'
 
 export default function Navbar() {
   const { t } = useTranslation()
@@ -21,6 +22,10 @@ export default function Navbar() {
 
         {/* Actions */}
         <div className="flex items-center gap-2">
+          {/* Menu Dropdown */}
+          <NavbarMenu />
+
+          {/* About button */}
           {/* About button */}
           <Link
             to="/app/about"
