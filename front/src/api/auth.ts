@@ -68,3 +68,23 @@ export async function resetPassword(token: string, newPassword: string): Promise
   await api.post('/auth/reset-password', { token, newPassword })
 }
 
+/* ---------- Request signup (send confirmation email) ---------- */
+export async function requestSignup(email: string): Promise<{ success: boolean; message: string }> {
+  const { data } = await api.post<{ success: boolean; message: string }>('/auth/signup', { email })
+  return data
+}
+
+/* ---------- Confirm signup (set password and create user) ---------- */
+export async function confirmSignup(
+  token: string,
+  password: string,
+  name?: string
+): Promise<AuthResponse> {
+  const { data } = await api.post<AuthResponse>('/auth/confirm-signup', {
+    token,
+    password,
+    name,
+  })
+  return data
+}
+

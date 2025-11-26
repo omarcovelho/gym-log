@@ -1,6 +1,8 @@
 import { Body, Controller, Get, Post, Req, UseGuards, Headers } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { SignupDto } from './dto/signup.dto';
+import { RequestSignupDto } from './dto/request-signup.dto';
+import { ConfirmSignupDto } from './dto/confirm-signup.dto';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
@@ -17,11 +19,25 @@ export class AuthController {
     constructor(private auth: AuthService) { }
 
     @Post('signup')
-    @ApiOperation({ summary: 'Register a new user' })
-    @ApiResponse({ status: 201, description: 'User registered successfully.' })
-    @ApiResponse({ status: 400, description: 'Bad request.' })
-    signup(@Body() dto: SignupDto) {
-        return this.auth.signup(dto);
+    @ApiOperation({ summary: 'Request signup - sends confirmation email' })
+    @ApiResponse({ status: 200, description: 'Confirmation email sent successfully.' })
+    @ApiResponse({ status: 400, description: 'Bad request (e.g., email already registered).' })
+    async requestSignup(
+        @Body() dto: RequestSignupDto,
+        @Headers('accept-language') acceptLanguage?: string
+    ) {
+        return this.auth.requestSignup(dto, acceptLanguage);
+    }
+
+    @Post('confirm-signup')
+    @ApiOperation({ summary: 'Confirm signup and set password' })
+    @ApiResponse({ status: 200, description: 'User registered and logged in successfully.' })
+    @ApiResponse({ status: 400, description: 'Invalid or expired token.' })
+    async confirmSignup(
+        @Body() dto: ConfirmSignupDto,
+        @Headers('accept-language') acceptLanguage?: string
+    ) {
+        return this.auth.confirmSignup(dto, acceptLanguage);
     }
 
     @Get('google')

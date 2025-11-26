@@ -1,20 +1,23 @@
+import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useTranslation } from 'react-i18next'
-import { api } from '@/lib/api'
+import { requestSignup } from '@/api/auth'
+import { useToast } from '@/components/ToastProvider'
 import { useAuth } from '@/auth/AuthContext'
 
 const schema = z.object({
   email: z.string().email(),
-  password: z.string().min(6),
-  name: z.string().optional(),
 })
 type Form = z.infer<typeof schema>
 
 export default function Signup() {
   const { t } = useTranslation()
   const { login } = useAuth()
+  const { toast } = useToast()
+  const [emailSent, setEmailSent] = useState(false)
+  const [submittedEmail, setSubmittedEmail] = useState<string>('')
   const { register, handleSubmit, formState } = useForm<Form>({
     resolver: zodResolver(schema),
   })
@@ -38,27 +41,23 @@ export default function Signup() {
   }
 
   const onSubmit = async (data: Form) => {
-    // Signup
-    await api.post('/auth/signup', data)
-    
-    // Auto login after signup
-    const loginRes = await api.post('/auth/login', {
-      email: data.email,
-      password: data.password,
-    })
-    
-    const token = loginRes.data.access_token
-    const userData = loginRes.data.user
-
-    login(token, {
-      sub: userData.id,
-      email: userData.email,
-      name: userData.name,
-      role: userData.role,
-    })
-    
-    // Redirect to stats page
-    location.href = '/app/stats'
+    try {
+      await requestSignup(data.email)
+      setEmailSent(true)
+      setSubmittedEmail(data.email)
+      toast({
+        variant: 'success',
+        title: t('auth.confirmationEmailSent', 'Email de confirmação enviado!'),
+        description: t('auth.checkYourEmail', 'Verifique sua caixa de entrada e clique no link de confirmação.'),
+      })
+    } catch (error: any) {
+      const message = error.response?.data?.message || error.message || t('auth.errorSendingEmail', 'Erro ao enviar email')
+      toast({
+        variant: 'error',
+        title: t('auth.error', 'Erro'),
+        description: message,
+      })
+    }
   }
 
   function handleGoogleSignup() {
@@ -110,10 +109,57 @@ export default function Signup() {
     window.addEventListener('message', listener)
   }
 
+  if (emailSent) {
+    return (
+      <div className="min-h-screen flex flex-col justify-center items-center bg-dark text-gray-100 p-6">
+        <div className="w-full max-w-sm border border-gray-700 p-6 rounded-lg space-y-4">
+          <h1 className="text-2xl font-bold text-primary text-center">{t('auth.signup')}</h1>
+          
+          <div className="space-y-4 text-center">
+            <div className="p-4 bg-green-900/20 border border-green-700 rounded-lg">
+              <p className="text-green-400 font-semibold mb-2">
+                {t('auth.confirmationEmailSent', 'Email de confirmação enviado!')}
+              </p>
+              <p className="text-sm text-gray-300">
+                {t('auth.checkYourEmail', 'Verifique sua caixa de entrada e clique no link de confirmação.')}
+              </p>
+              <p className="text-xs text-gray-500 mt-2">
+                {t('auth.emailSentTo', 'Email enviado para:')} {submittedEmail}
+              </p>
+            </div>
+            
+            <button
+              onClick={() => {
+                setEmailSent(false)
+                setSubmittedEmail('')
+              }}
+              className="w-full bg-gray-700 text-white p-2 rounded font-semibold hover:bg-gray-600 transition text-center"
+            >
+              {t('auth.sendAnotherEmail', 'Enviar outro email')}
+            </button>
+          </div>
+
+          <p className="text-sm text-gray-400 text-center">
+            {t('auth.alreadyHaveAccount')}{' '}
+            <a href="/login" className="text-primary hover:underline">
+              {t('auth.loginHere')}
+            </a>
+          </p>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen flex flex-col justify-center items-center bg-dark text-gray-100 p-6">
       <div className="w-full max-w-sm border border-gray-700 p-6 rounded-lg space-y-4">
         <h1 className="text-2xl font-bold text-primary text-center">{t('auth.signup')}</h1>
+
+        <div className="p-3 bg-blue-900/20 border border-blue-700 rounded-lg mb-4">
+          <p className="text-sm text-blue-300">
+            {t('auth.youWillReceiveLink', 'Você receberá um email com um link para confirmar seu cadastro e definir sua senha.')}
+          </p>
+        </div>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-3">
           <input
@@ -125,29 +171,11 @@ export default function Signup() {
             <p className="text-sm text-red-500">{formState.errors.email.message}</p>
           )}
 
-          <input
-            className="w-full border p-2 rounded bg-dark border-gray-700 text-base"
-            placeholder={t('auth.nameOptional')}
-            {...register('name')}
-          />
-
-          <input
-            className="w-full border p-2 rounded bg-dark border-gray-700 text-base"
-            type="password"
-            placeholder={t('auth.password')}
-            {...register('password')}
-          />
-          {formState.errors.password && (
-            <p className="text-sm text-red-500">
-              {formState.errors.password.message}
-            </p>
-          )}
-
           <button
             disabled={formState.isSubmitting}
             className="w-full bg-primary text-black p-2 rounded font-semibold hover:bg-green-400 transition text-center"
           >
-            {formState.isSubmitting ? '...' : t('auth.createAccount')}
+            {formState.isSubmitting ? '...' : t('auth.sendConfirmationLink', 'Enviar link de confirmação')}
           </button>
         </form>
 
