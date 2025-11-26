@@ -127,56 +127,6 @@ export default function Progress() {
         <p className="text-gray-400 text-sm md:text-base">{t('progress.subtitle')}</p>
       </div>
 
-      {/* Seção PRs */}
-      <div className="rounded-xl border border-gray-800 bg-[#101010] p-4 md:p-6">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="p-2 bg-primary/10 rounded-lg">
-            <Trophy className="w-5 h-5 text-primary" />
-          </div>
-          <h2 className="text-lg font-semibold text-gray-200">{t('progress.recentPRs')}</h2>
-        </div>
-
-        {stats?.recentPRs && stats.recentPRs.length > 0 ? (
-          <div className="space-y-3">
-            {stats.recentPRs.map((pr, idx) => (
-              <Link
-                key={idx}
-                to={`/app/workouts/${pr.workoutId}/view`}
-                className="block rounded-lg border border-gray-800 bg-[#151515] p-4 hover:border-primary/50 transition"
-              >
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex-1">
-                    <div className="text-lg font-semibold text-gray-100 mb-1">
-                      {pr.exerciseName}
-                    </div>
-                    <div className="text-sm text-gray-400">
-                      {t('progress.load')}:{' '}
-                      <span className="text-primary font-semibold">
-                        {pr.value.toLocaleString(i18n.language === 'pt' ? 'pt-BR' : 'en-US')}{' '}
-                        {pr.unit}
-                      </span>
-                    </div>
-                    {pr.previousValue !== pr.value && (
-                      <div className="text-xs text-gray-500 mt-1">
-                        {t('progress.previous')}: {pr.previousValue.toLocaleString(i18n.language === 'pt' ? 'pt-BR' : 'en-US')} {pr.unit}
-                      </div>
-                    )}
-                  </div>
-                  <div className="text-xs text-gray-500 whitespace-nowrap">
-                    {formatDate(pr.date)}
-                  </div>
-                </div>
-              </Link>
-            ))}
-          </div>
-        ) : (
-          <div className="text-center py-8">
-            <Trophy className="w-12 h-12 text-gray-600 mx-auto mb-3" />
-            <p className="text-gray-400 text-sm">{t('progress.noPRs')}</p>
-          </div>
-        )}
-      </div>
-
       {/* Seção Volume Semanal */}
       <div className="rounded-xl border border-gray-800 bg-[#101010] p-4 md:p-6">
         <div className="flex items-center gap-3 mb-4">
@@ -310,6 +260,56 @@ export default function Progress() {
           <div className="text-center py-8">
             <TrendingUp className="w-12 h-12 text-gray-600 mx-auto mb-3" />
             <p className="text-gray-400 text-sm">{t('progress.noData')}</p>
+          </div>
+        )}
+      </div>
+
+      {/* Seção PRs */}
+      <div className="rounded-xl border border-gray-800 bg-[#101010] p-4 md:p-6">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="p-2 bg-primary/10 rounded-lg">
+            <Trophy className="w-5 h-5 text-primary" />
+          </div>
+          <h2 className="text-lg font-semibold text-gray-200">{t('progress.recentPRs')}</h2>
+        </div>
+
+        {stats?.recentPRs && stats.recentPRs.length > 0 ? (
+          <div className="space-y-3">
+            {stats.recentPRs.map((pr, idx) => (
+              <Link
+                key={idx}
+                to={`/app/workouts/${pr.workoutId}/view`}
+                className="block rounded-lg border border-gray-800 bg-[#151515] p-4 hover:border-primary/50 transition"
+              >
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex-1">
+                    <div className="text-lg font-semibold text-gray-100 mb-1">
+                      {pr.exerciseName}
+                    </div>
+                    <div className="text-sm text-gray-400">
+                      {t('progress.load')}:{' '}
+                      <span className="text-primary font-semibold">
+                        {pr.value.toLocaleString(i18n.language === 'pt' ? 'pt-BR' : 'en-US')}{' '}
+                        {pr.unit}
+                      </span>
+                    </div>
+                    {pr.previousValue !== pr.value && (
+                      <div className="text-xs text-gray-500 mt-1">
+                        {t('progress.previous')}: {pr.previousValue.toLocaleString(i18n.language === 'pt' ? 'pt-BR' : 'en-US')} {pr.unit}
+                      </div>
+                    )}
+                  </div>
+                  <div className="text-xs text-gray-500 whitespace-nowrap">
+                    {formatDate(pr.date)}
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-8">
+            <Trophy className="w-12 h-12 text-gray-600 mx-auto mb-3" />
+            <p className="text-gray-400 text-sm">{t('progress.noPRs')}</p>
           </div>
         )}
       </div>

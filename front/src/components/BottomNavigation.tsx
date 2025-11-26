@@ -4,7 +4,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import i18n from '@/i18n'
-import { Home, Dumbbell, FileText, History, Plus, X, Zap, AlertCircle, TrendingUp } from 'lucide-react'
+import { History, Plus, X, Zap, AlertCircle, TrendingUp, FileText, Home, Ruler } from 'lucide-react'
 import { startManualWorkout, startWorkout, getActiveWorkout } from '@/api/workoutSession'
 import { listWorkoutTemplates } from '@/api/workoutTemplates'
 import { useToast } from './ToastProvider'
@@ -131,21 +131,21 @@ export function BottomNavigation() {
             <span className="text-[10px] font-medium">{t('navigation.home')}</span>
           </Link>
 
-          {/* Exercises */}
+          {/* Workouts */}
           <Link
-            to="/app/exercises"
+            to="/app/workouts"
             className={`
               flex flex-col items-center justify-center gap-1
               px-3 py-2 rounded-lg transition
-              ${isActive('/app/exercises') 
+              ${isActive('/app/workouts') 
                 ? 'text-primary' 
                 : 'text-gray-400 hover:text-gray-200'
               }
             `}
-            aria-label="Exercises"
+            aria-label="Workouts"
           >
-            <Dumbbell className={`w-6 h-6 ${isActive('/app/exercises') ? 'stroke-[2.5]' : ''}`} />
-            <span className="text-[10px] font-medium">{t('navigation.exercises')}</span>
+            <History className={`w-6 h-6 ${isActive('/app/workouts') ? 'stroke-[2.5]' : ''}`} />
+            <span className="text-[10px] font-medium">{t('navigation.workouts')}</span>
           </Link>
 
           {/* Botão de Iniciar Treino (centro destacado) */}
@@ -160,23 +160,6 @@ export function BottomNavigation() {
             </button>
             <span className="text-[10px] font-medium text-primary mt-1">{t('workout.title')}</span>
           </div>
-
-          {/* Templates */}
-          <Link
-            to="/app/templates"
-            className={`
-              flex flex-col items-center justify-center gap-1
-              px-3 py-2 rounded-lg transition
-              ${isActive('/app/templates') 
-                ? 'text-primary' 
-                : 'text-gray-400 hover:text-gray-200'
-              }
-            `}
-            aria-label="Templates"
-          >
-            <FileText className={`w-6 h-6 ${isActive('/app/templates') ? 'stroke-[2.5]' : ''}`} />
-            <span className="text-[10px] font-medium">{t('navigation.templates')}</span>
-          </Link>
 
           {/* Progress */}
           <Link
@@ -195,21 +178,21 @@ export function BottomNavigation() {
             <span className="text-[10px] font-medium">{t('navigation.progress')}</span>
           </Link>
 
-          {/* Workouts */}
+          {/* Measurements */}
           <Link
-            to="/app/workouts"
+            to="/app/measurements"
             className={`
               flex flex-col items-center justify-center gap-1
               px-3 py-2 rounded-lg transition
-              ${isActive('/app/workouts') 
+              ${isActive('/app/measurements') 
                 ? 'text-primary' 
                 : 'text-gray-400 hover:text-gray-200'
               }
             `}
-            aria-label="Workouts"
+            aria-label="Measurements"
           >
-            <History className={`w-6 h-6 ${isActive('/app/workouts') ? 'stroke-[2.5]' : ''}`} />
-            <span className="text-[10px] font-medium">{t('navigation.workouts')}</span>
+            <Ruler className={`w-6 h-6 ${isActive('/app/measurements') ? 'stroke-[2.5]' : ''}`} />
+            <span className="text-[10px] font-medium">{t('navigation.measurements')}</span>
           </Link>
         </div>
       </nav>

@@ -27,6 +27,8 @@ import WorkoutSessionView from './pages/WorkoutSessionView'
 import WorkoutSessionDetails from './pages/WorkoutSessionDetails'
 import Progress from './pages/Progress'
 import About from './pages/About'
+import BodyMeasurementsList from './pages/BodyMeasurementsList'
+import BodyMeasurementForm from './pages/BodyMeasurementForm'
 
 const qc = new QueryClient({
   defaultOptions: {
@@ -213,6 +215,36 @@ const router = createBrowserRouter([
             <ProtectedRouteWithStats>
                 <AppLayout>
                     <About />
+                </AppLayout>
+            </ProtectedRouteWithStats>
+        ),
+    },
+    {
+        path: '/app/measurements',
+        element: (
+            <ProtectedRouteWithStats>
+                <AppLayout>
+                    <BodyMeasurementsList />
+                </AppLayout>
+            </ProtectedRouteWithStats>
+        ),
+    },
+    {
+        path: '/app/measurements/new',
+        element: (
+            <ProtectedRouteWithStats>
+                <AppLayout>
+                    <BodyMeasurementForm />
+                </AppLayout>
+            </ProtectedRouteWithStats>
+        ),
+    },
+    {
+        path: '/app/measurements/:id/edit',
+        element: (
+            <ProtectedRouteWithStats>
+                <AppLayout>
+                    <BodyMeasurementForm />
                 </AppLayout>
             </ProtectedRouteWithStats>
         ),
