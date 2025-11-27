@@ -112,5 +112,27 @@ export class StatisticsController {
     await this.statisticsService.unpinExercise(user.id, exerciseId);
     return { message: 'Exercise unpinned successfully' };
   }
+
+  @Get('exercise/:exerciseId/history')
+  @ApiOperation({ summary: 'Get exercise history (previous sessions with sets)' })
+  @ApiQuery({ name: 'limit', required: false, type: Number, description: 'Number of sessions to return (default: 5)' })
+  @ApiResponse({ status: 200, description: 'Exercise history retrieved successfully. Returns empty array if no sessions found.' })
+  @ApiResponse({ status: 401, description: 'Unauthorized.' })
+  @ApiResponse({ status: 400, description: 'Bad request (invalid limit).' })
+  async getExerciseHistory(
+    @CurrentUser() user,
+    @Param('exerciseId') exerciseId: string,
+    @Query('limit') limit?: string,
+  ) {
+    let limitNumber = 5;
+    if (limit) {
+      const parsed = parseInt(limit, 10);
+      if (isNaN(parsed) || parsed < 1 || parsed > 20) {
+        throw new BadRequestException('Limit must be a number between 1 and 20');
+      }
+      limitNumber = parsed;
+    }
+    return this.statisticsService.getExerciseHistory(user.id, exerciseId, limitNumber);
+  }
 }
 

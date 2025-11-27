@@ -19,7 +19,8 @@
     "loadingSession": "Loading session...",
     "loadingExercises": "Loading exercises...",
     "loadingTemplates": "Loading templates...",
-    "loadingSessions": "Loading sessions..."
+    "loadingSessions": "Loading sessions...",
+    "close": "Close"
   },
   "auth": {
     "login": "Login",
@@ -184,7 +185,16 @@
     "exportSuccess": "Image generated successfully!",
     "exportError": "Error generating image",
     "exercises": "Exercises",
-    "volume": "Volume"
+    "volume": "Volume",
+    "viewHistory": "History",
+    "historyTitle": "Previous sets history",
+    "historyForExercise": "History: {{name}}",
+    "noHistory": "No history available for this exercise",
+    "sessionDate": "Session from {{date}}",
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "daysAgo": "{{count}} days ago",
+    "noCompletedSets": "No completed sets in this session"
   },
   "navigation": {
     "home": "Home",
