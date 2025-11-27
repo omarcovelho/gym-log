@@ -19,7 +19,8 @@
     "loadingSession": "Carregando sessão...",
     "loadingExercises": "Carregando exercícios...",
     "loadingTemplates": "Carregando templates...",
-    "loadingSessions": "Carregando sessões..."
+    "loadingSessions": "Carregando sessões...",
+    "close": "Fechar"
   },
   "auth": {
     "login": "Login",
@@ -184,7 +185,16 @@
     "exportSuccess": "Imagem gerada com sucesso!",
     "exportError": "Erro ao gerar imagem",
     "exercises": "Exercícios",
-    "volume": "Volume"
+    "volume": "Volume",
+    "viewHistory": "Histórico",
+    "historyTitle": "Histórico de séries anteriores",
+    "historyForExercise": "Histórico: {{name}}",
+    "noHistory": "Nenhum histórico disponível para este exercício",
+    "sessionDate": "Sessão de {{date}}",
+    "today": "Hoje",
+    "yesterday": "Ontem",
+    "daysAgo": "Há {{count}} dias",
+    "noCompletedSets": "Nenhuma série completada nesta sessão"
   },
   "navigation": {
     "home": "Início",

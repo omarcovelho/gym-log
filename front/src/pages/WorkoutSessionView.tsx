@@ -6,7 +6,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/auth/AuthContext'
 import { useToast } from '@/components/ToastProvider'
-import { Loader2 } from 'lucide-react'
+import { Loader2, TrendingUp } from 'lucide-react'
 import {
   getWorkoutSession,
   updateWorkoutSession,
@@ -29,6 +29,7 @@ import { ConfirmDialog } from '@/components/ConfirmDialog'
 import { RestTimer } from '@/components/RestTimer'
 import { RestTimerManager } from '@/components/RestTimerManager'
 import { RestTimerCountdown } from '@/components/RestTimerCountdown'
+import { ExerciseHistoryBottomSheet } from '@/components/ExerciseHistoryBottomSheet'
 import { useExercises } from '@/api/exercise'
 
 type SetIntensityEditorProps = {
@@ -86,7 +87,7 @@ function SetIntensityEditor({ set, onChangeType, onChangeBlocks, onChangeTypeAnd
   }
 
   return (
-    <div className="mt-3 border-t border-gray-800 pt-3">
+    <div className="mt-3 pt-3 border-t border-gray-800">
       <div className="flex items-center justify-between mb-2">
         <span className="text-xs text-gray-400">
           {t('workout.intensityTechniques', 'Técnicas de intensidade')}
@@ -120,8 +121,7 @@ function SetIntensityEditor({ set, onChangeType, onChangeBlocks, onChangeTypeAnd
               }
             }
           }}
-          className="text-base bg-[#0f0f0f] border border-gray-700 rounded px-2 py-1 text-gray-200"
-          style={{ fontSize: '16px' }}
+          className="text-sm bg-[#0f0f0f] border border-gray-700 rounded px-2.5 py-1.5 text-gray-200 focus:border-gray-600 focus:outline-none transition"
         >
           <option value="NONE">{t('workout.intensityNone', 'Nenhuma')}</option>
           <option value="REST_PAUSE">{t('workout.intensityRestPause', 'Rest-pause')}</option>
@@ -132,18 +132,18 @@ function SetIntensityEditor({ set, onChangeType, onChangeBlocks, onChangeTypeAnd
       {intensityType === 'REST_PAUSE' && (
         <div className="space-y-2">
           {(set.intensityBlocks ?? []).length === 0 && (
-            <p className="text-[11px] text-gray-500">
+            <p className="text-xs text-gray-500">
               {t(
                 'workout.intensityRestPauseHint',
-                'Adicione blocos de reps extras com descanso curto. Ex: +2 reps, +3 reps.',
+                'Adicione blocos de reps extras com descanso curto.',
               )}
             </p>
           )}
 
           {(set.intensityBlocks ?? []).map((block, idx) => (
             <div key={block.id ?? idx} className="flex items-center gap-2">
-              <span className="text-[11px] text-gray-500 w-10">
-                RP #{idx + 1}
+              <span className="text-xs text-gray-500 w-8">
+                #{idx + 1}
               </span>
               <input
                 type="number"
@@ -156,9 +156,8 @@ function SetIntensityEditor({ set, onChangeType, onChangeBlocks, onChangeTypeAnd
                     e.target.value === '' ? null : Number(e.target.value),
                   )
                 }
-                className="w-16 rounded-md border border-gray-700 bg-[#0f0f0f] px-2 py-1 text-base text-gray-100"
+                className="flex-1 rounded-md border border-gray-700 bg-[#0f0f0f] px-2.5 py-1.5 text-sm text-gray-100 focus:border-gray-600 focus:outline-none transition"
                 placeholder={t('workout.repsLabel', 'reps')}
-                style={{ fontSize: '16px' }}
               />
               <input
                 type="number"
@@ -171,16 +170,16 @@ function SetIntensityEditor({ set, onChangeType, onChangeBlocks, onChangeTypeAnd
                     e.target.value === '' ? null : Number(e.target.value),
                   )
                 }
-                className="w-20 rounded-md border border-gray-700 bg-[#0f0f0f] px-2 py-1 text-base text-gray-100"
+                className="w-20 rounded-md border border-gray-700 bg-[#0f0f0f] px-2.5 py-1.5 text-sm text-gray-100 focus:border-gray-600 focus:outline-none transition"
                 placeholder={t('workout.seconds', 'seg')}
-                style={{ fontSize: '16px' }}
               />
               <button
                 type="button"
                 onClick={() => handleRemoveBlock(block.id!)}
-                className="text-[11px] text-red-400 border border-red-900/60 rounded px-2 py-1 hover:bg-red-900/40"
+                className="p-1.5 rounded border border-red-900/60 text-red-400 hover:bg-red-900/40 transition"
+                title={t('workout.remove', 'Remover')}
               >
-                {t('workout.remove', 'Remover')}
+                <span className="text-sm">×</span>
               </button>
             </div>
           ))}
@@ -188,9 +187,9 @@ function SetIntensityEditor({ set, onChangeType, onChangeBlocks, onChangeTypeAnd
           <button
             type="button"
             onClick={handleAddBlock}
-            className="text-[11px] mt-1 px-2 py-1 border border-gray-700 rounded text-gray-300 hover:bg-gray-800/60"
+            className="text-xs mt-1 px-2.5 py-1.5 border border-gray-700 rounded text-gray-300 hover:bg-gray-800/60 transition"
           >
-            {t('workout.addRestPauseBlock', 'Adicionar bloco rest-pause')}
+            {t('workout.addRestPauseBlock', 'Adicionar bloco')}
           </button>
         </div>
       )}
@@ -230,6 +229,7 @@ export default function WorkoutSessionView() {
   const [timerManagerOpen, setTimerManagerOpen] = useState(false)
   const [countdownActive, setCountdownActive] = useState<{ seconds: number; startTime?: number } | null>(null)
   const [isSaving, setIsSaving] = useState(false)
+  const [historyExerciseId, setHistoryExerciseId] = useState<string | null>(null)
 
   const { data: exercisesData } = useExercises({ page: 1, limit: 100 })
   const exercises = exercisesData?.data ?? []
@@ -636,55 +636,71 @@ export default function WorkoutSessionView() {
 
             return (
               <div key={ex.id} data-exercise-id={ex.id} className="rounded-xl border border-gray-800 bg-[#151515]">
-                <div className="flex items-center justify-between px-4 py-3">
-                  <button
-                    onClick={() => setExpanded(expanded === ex.id ? null : ex.id)}
-                    className="flex-1 text-left flex items-center justify-between gap-3"
-                  >
-                    <div>
-                      <h3 className="text-lg font-semibold text-gray-100">
+                <div className="px-4 py-3">
+                  <div className="flex items-start justify-between gap-3">
+                    <button
+                      onClick={() => setExpanded(expanded === ex.id ? null : ex.id)}
+                      className="flex-1 text-left min-w-0"
+                    >
+                      <h3 className="text-lg font-semibold text-gray-100 truncate">
                         {ex.exercise.name}
                       </h3>
-                      <p className="text-xs text-gray-500 uppercase">
-                        {ex.exercise.muscleGroup ?? ''}
-                      </p>
-                    </div>
-
-                    <div className="text-xs text-gray-400">
-                      {doneCount}/{ex.sets.length}
-                    </div>
-                  </button>
-
-                  <div className="flex flex-col gap-1 ml-3">
-                    <button
-                      disabled={isFirst}
-                      onClick={() => handleMoveExercise(ex.id, 'up')}
-                      className="text-[10px] px-2 py-1 border rounded border-gray-700 text-gray-300 disabled:opacity-30"
-                    >
-                      ↑
-                    </button>
-                    <button
-                      disabled={isLast}
-                      onClick={() => handleMoveExercise(ex.id, 'down')}
-                      className="text-[10px] px-2 py-1 border rounded border-gray-700 text-gray-300 disabled:opacity-30"
-                    >
-                      ↓
+                      <div className="flex items-center gap-2 mt-1">
+                        {ex.exercise.muscleGroup && (
+                          <>
+                            <span className="text-xs text-gray-500 uppercase">
+                              {ex.exercise.muscleGroup}
+                            </span>
+                            <span className="text-gray-600">·</span>
+                          </>
+                        )}
+                        <span className="text-xs text-gray-400">
+                          {doneCount}/{ex.sets.length} {t('workout.sets', 'sets')}
+                        </span>
+                      </div>
                     </button>
 
-                    <button
-                      onClick={() => handleRemoveExerciseClick(ex.id)}
-                      disabled={removingExerciseId === ex.id}
-                      className="text-[10px] px-2 py-1 rounded border border-red-900/60 text-red-400 hover:bg-red-900/40 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
-                    >
-                      {removingExerciseId === ex.id ? (
-                        <>
-                          <Loader2 className="w-3 h-3 animate-spin" />
-                          {t('common.removing')}
-                        </>
-                      ) : (
-                        t('workout.remove')
+                    <div className="flex items-center gap-3 flex-shrink-0">
+                      {expanded === ex.id && (
+                        <button
+                          onClick={() => setHistoryExerciseId(ex.exercise.id)}
+                          className="w-[48px] h-[48px] rounded hover:bg-gray-800/60 text-gray-400 hover:text-gray-200 transition flex items-center justify-center touch-manipulation"
+                          title={t('workout.viewHistory', 'Histórico')}
+                        >
+                          <TrendingUp className="w-5 h-5" />
+                        </button>
                       )}
-                    </button>
+                      <div className="flex flex-col gap-1 h-[48px] justify-center">
+                        <button
+                          disabled={isFirst}
+                          onClick={() => handleMoveExercise(ex.id, 'up')}
+                          className="w-[48px] h-[23px] text-sm rounded border border-gray-700 text-gray-400 hover:text-gray-200 hover:bg-gray-800/40 disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center touch-manipulation"
+                          title={t('workout.moveUp', 'Mover para cima')}
+                        >
+                          ↑
+                        </button>
+                        <button
+                          disabled={isLast}
+                          onClick={() => handleMoveExercise(ex.id, 'down')}
+                          className="w-[48px] h-[23px] text-sm rounded border border-gray-700 text-gray-400 hover:text-gray-200 hover:bg-gray-800/40 disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center touch-manipulation"
+                          title={t('workout.moveDown', 'Mover para baixo')}
+                        >
+                          ↓
+                        </button>
+                      </div>
+                      <button
+                        onClick={() => handleRemoveExerciseClick(ex.id)}
+                        disabled={removingExerciseId === ex.id}
+                        className="w-[48px] h-[48px] rounded border border-red-900/60 text-red-400 hover:bg-red-900/40 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center touch-manipulation"
+                        title={t('workout.remove', 'Remover')}
+                      >
+                        {removingExerciseId === ex.id ? (
+                          <Loader2 className="w-5 h-5 animate-spin" />
+                        ) : (
+                          <span className="text-lg">×</span>
+                        )}
+                      </button>
+                    </div>
                   </div>
                 </div>
 
@@ -694,18 +710,18 @@ export default function WorkoutSessionView() {
                       <div
                         key={s.id}
                         data-set-id={s.id}
-                        className={`rounded-lg border p-3 ${
+                        className={`rounded-lg border p-4 ${
                           s.completed
-                            ? 'border-green-600 bg-green-950/20'
+                            ? 'border-green-600/30 bg-green-950/10'
                             : 'border-gray-800 bg-[#101010]'
                         }`}
                       >
-                        <div className="flex justify-between items-center mb-2">
-                          <span className="text-xs text-gray-400">
+                        <div className="flex items-center justify-between mb-4">
+                          <span className="text-sm font-medium text-gray-200">
                             {t('workout.setNumber', { number: s.setIndex + 1 })}
                           </span>
 
-                          <div className="flex gap-2">
+                          <div className="flex items-center gap-3">
                             <button
                               onClick={() =>
                                 handleSetChange(
@@ -715,27 +731,32 @@ export default function WorkoutSessionView() {
                                   !s.completed,
                                 )
                               }
-                              className="text-xs border px-2 py-1 rounded text-gray-300"
+                              className={`h-[48px] text-xs px-4 rounded font-medium transition flex items-center justify-center touch-manipulation ${
+                                s.completed
+                                  ? 'bg-green-600/20 text-green-400 border border-green-600/30'
+                                  : 'border border-gray-700 text-gray-300 hover:bg-gray-800/60 hover:border-gray-600'
+                              }`}
                             >
-                              {s.completed ? t('workout.done') : t('workout.markDone')}
+                              {s.completed ? '✓ ' + t('workout.done', 'Concluído') : t('workout.markDone', 'Marcar Concluído')}
                             </button>
                             {s.completed && (
                               <button
                                 onClick={() => setTimerOpen(true)}
-                                className="text-xs border px-2 py-1 rounded text-primary border-primary/50 hover:bg-primary/10 transition"
+                                className="h-[48px] text-xs px-4 rounded font-medium text-primary border border-primary/50 hover:bg-primary/10 transition flex items-center justify-center touch-manipulation"
                               >
-                                {t('workout.startRest')}
+                                {t('workout.startRest', 'Descanso')}
                               </button>
                             )}
                             <button
                               onClick={() => handleRemoveSetClick(s.id, ex.id)}
                               disabled={removingSetId === s.id}
-                              className="text-xs border border-red-900/60 px-2 py-1 rounded text-red-400 hover:bg-red-900/40 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
+                              className="w-[48px] h-[48px] rounded border border-red-900/60 text-red-400 hover:bg-red-900/40 disabled:opacity-50 disabled:cursor-not-allowed transition flex items-center justify-center touch-manipulation"
+                              title={t('workout.remove', 'Remover')}
                             >
                               {removingSetId === s.id ? (
-                                <Loader2 className="w-3 h-3 animate-spin" />
+                                <Loader2 className="w-5 h-5 animate-spin" />
                               ) : (
-                                t('workout.remove')
+                                <span className="text-lg">×</span>
                               )}
                             </button>
                           </div>
@@ -743,30 +764,30 @@ export default function WorkoutSessionView() {
 
                         {/* Mostrar valores planejados apenas se for treino de template */}
                         {session.templateId && (s.plannedReps != null || s.plannedRir != null) && (
-                          <div className="mb-3 p-2 rounded-md bg-gray-900/50 border border-gray-800">
-                            <div className="text-xs text-gray-500 mb-1">{t('workout.planned')}</div>
-                            <div className="text-sm text-gray-300">
+                          <div className="mb-3 px-2.5 py-1.5 rounded bg-gray-900/30 border border-gray-800/50">
+                            <div className="text-xs text-gray-500 mb-0.5">{t('workout.planned', 'Planejado')}</div>
+                            <div className="text-xs text-gray-300">
                               {s.plannedReps != null && (
                                 <span>
-                                  {s.plannedReps} {t('workout.repsLabel')}
+                                  {s.plannedReps} {t('workout.repsLabel', 'reps')}
                                 </span>
                               )}
                               {s.plannedReps != null && s.plannedRir != null && (
-                                <span className="text-gray-600 mx-1">·</span>
+                                <span className="text-gray-600 mx-1.5">·</span>
                               )}
                               {s.plannedRir != null && (
                                 <span>
-                                  {t('workout.rir')} {s.plannedRir}
+                                  {t('workout.rir', 'RIR')} {s.plannedRir}
                                 </span>
                               )}
                             </div>
                           </div>
                         )}
 
-                        <div className="grid grid-cols-3 gap-3">
+                        <div className="grid grid-cols-3 gap-3 mb-3">
                           <div>
-                            <label className="text-xs text-gray-400 block mb-1">
-                              {t('workout.load')}
+                            <label className="text-xs text-gray-400 block mb-1.5">
+                              {t('workout.load', 'Carga')}
                             </label>
                             <input
                               type="number"
@@ -779,13 +800,14 @@ export default function WorkoutSessionView() {
                                   e.target.value,
                                 )
                               }
-                              className="w-full rounded-md border border-gray-700 bg-[#0f0f0f] px-3 py-2 text-base text-gray-100"
+                              className="w-full rounded-md border border-gray-700 bg-[#0f0f0f] px-3 py-2.5 text-base text-gray-100 focus:border-primary focus:outline-none transition"
+                              placeholder="0"
                             />
                           </div>
 
                           <div>
-                            <label className="text-xs text-gray-400 block mb-1">
-                              {t('workout.reps')}
+                            <label className="text-xs text-gray-400 block mb-1.5">
+                              {t('workout.reps', 'Reps')}
                             </label>
                             <input
                               type="number"
@@ -798,13 +820,14 @@ export default function WorkoutSessionView() {
                                   e.target.value,
                                 )
                               }
-                              className="w-full rounded-md border border-gray-700 bg-[#0f0f0f] px-3 py-2 text-base text-gray-100"
+                              className="w-full rounded-md border border-gray-700 bg-[#0f0f0f] px-3 py-2.5 text-base text-gray-100 focus:border-primary focus:outline-none transition"
+                              placeholder="0"
                             />
                           </div>
 
                           <div>
-                            <label className="text-xs text-gray-400 block mb-1">
-                              {t('workout.rir')}
+                            <label className="text-xs text-gray-400 block mb-1.5">
+                              {t('workout.rir', 'RIR')}
                             </label>
                             <input
                               type="number"
@@ -817,22 +840,21 @@ export default function WorkoutSessionView() {
                                   e.target.value,
                                 )
                               }
-                              className="w-full rounded-md border border-gray-700 bg-[#0f0f0f] px-3 py-2 text-base text-gray-100"
+                              className="w-full rounded-md border border-gray-700 bg-[#0f0f0f] px-3 py-2.5 text-base text-gray-100 focus:border-primary focus:outline-none transition"
+                              placeholder="0"
                             />
                           </div>
                         </div>
 
-                        <div className="mt-3">
-                          <label className="text-xs text-gray-400 block mb-1">
-                            {t('workout.notes')}
-                          </label>
+                        <div className="mb-3">
                           <input
                             type="text"
                             value={s.notes ?? ''}
                             onChange={(e) =>
                               handleSetChange(ex.id, s.id, 'notes', e.target.value)
                             }
-                            className="w-full rounded-md border border-gray-700 bg-[#0f0f0f] px-3 py-2 text-base text-gray-100"
+                            placeholder={t('workout.notes', 'Notas (opcional)')}
+                            className="w-full rounded-md border border-gray-700 bg-[#0f0f0f] px-3 py-2 text-sm text-gray-100 placeholder-gray-500 focus:border-gray-600 focus:outline-none transition"
                           />
                         </div>
 
@@ -989,6 +1011,16 @@ export default function WorkoutSessionView() {
         open={timerManagerOpen}
         onClose={() => setTimerManagerOpen(false)}
       />
+
+      {/* Exercise History Bottom Sheet */}
+      {historyExerciseId && (
+        <ExerciseHistoryBottomSheet
+          open={historyExerciseId !== null}
+          onClose={() => setHistoryExerciseId(null)}
+          exerciseId={historyExerciseId}
+          exerciseName={session?.exercises.find((e) => e.exercise.id === historyExerciseId)?.exercise.name || ''}
+        />
+      )}
     </div>
   )
 }

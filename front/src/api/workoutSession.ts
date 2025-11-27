@@ -318,6 +318,31 @@ export async function getExerciseProgression(
   return data
 }
 
+export type ExerciseHistorySet = {
+  setIndex: number
+  actualLoad: number | null
+  actualReps: number | null
+  actualRir: number | null
+  completed: boolean
+}
+
+export type ExerciseHistorySession = {
+  sessionId: string
+  sessionTitle: string | null
+  sessionDate: string // ISO string
+  sets: ExerciseHistorySet[]
+}
+
+export async function getExerciseHistory(
+  exerciseId: string,
+  limit?: number,
+): Promise<ExerciseHistorySession[]> {
+  const params: Record<string, string> = {}
+  if (limit) params.limit = limit.toString()
+  const { data } = await api.get(`/statistics/exercise/${exerciseId}/history`, { params })
+  return data
+}
+
 /* ---------- Get active workout session (in progress) ---------- */
 export async function getActiveWorkout(): Promise<WorkoutSession | null> {
   const { data } = await api.get(`/workouts/active`)
