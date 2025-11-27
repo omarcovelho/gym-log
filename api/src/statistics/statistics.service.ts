@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
@@ -153,23 +153,50 @@ export class StatisticsService {
   }
 
   /** Busca estatísticas de evolução (PRs e volume semanal) */
-  async getEvolutionStats(userId: string, weeks: number = 4) {
+  async getEvolutionStats(
+    userId: string,
+    startDate?: Date | null,
+    endDate?: Date | null,
+    weeks?: number, // Deprecated: manter apenas para compatibilidade
+  ) {
     const now = new Date();
-    const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
     
-    // Calcular o início da semana atual (segunda-feira)
-    const today = new Date(now);
-    today.setHours(0, 0, 0, 0);
-    const dayOfWeek = today.getDay();
-    const diff = today.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1);
-    const startOfCurrentWeek = new Date(today);
-    startOfCurrentWeek.setDate(diff);
-    startOfCurrentWeek.setHours(0, 0, 0, 0);
+    // Se startDate e endDate não forem fornecidos, usar default de 4 semanas
+    let dateStart: Date | null = null;
+    let dateEnd: Date | null = null;
     
-    // Calcular o início da semana que está (weeks - 1) semanas atrás
-    // Isso garante que incluímos a semana atual + (weeks - 1) semanas anteriores
-    const weeksAgo = new Date(startOfCurrentWeek.getTime() - (weeks - 1) * 7 * 24 * 60 * 60 * 1000);
-    weeksAgo.setHours(0, 0, 0, 0);
+    if (startDate && endDate) {
+      dateStart = new Date(startDate);
+      dateStart.setHours(0, 0, 0, 0);
+      dateEnd = new Date(endDate);
+      dateEnd.setHours(23, 59, 59, 999);
+    } else if (weeks) {
+      // Compatibilidade: usar weeks se fornecido
+      const today = new Date(now);
+      today.setHours(0, 0, 0, 0);
+      const dayOfWeek = today.getDay();
+      const diff = today.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1);
+      const startOfCurrentWeek = new Date(today);
+      startOfCurrentWeek.setDate(diff);
+      startOfCurrentWeek.setHours(0, 0, 0, 0);
+      dateStart = new Date(startOfCurrentWeek.getTime() - (weeks - 1) * 7 * 24 * 60 * 60 * 1000);
+      dateStart.setHours(0, 0, 0, 0);
+      dateEnd = new Date(now);
+      dateEnd.setHours(23, 59, 59, 999);
+    } else {
+      // Default: 4 semanas
+      const today = new Date(now);
+      today.setHours(0, 0, 0, 0);
+      const dayOfWeek = today.getDay();
+      const diff = today.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1);
+      const startOfCurrentWeek = new Date(today);
+      startOfCurrentWeek.setDate(diff);
+      startOfCurrentWeek.setHours(0, 0, 0, 0);
+      dateStart = new Date(startOfCurrentWeek.getTime() - 3 * 7 * 24 * 60 * 60 * 1000);
+      dateStart.setHours(0, 0, 0, 0);
+      dateEnd = new Date(now);
+      dateEnd.setHours(23, 59, 59, 999);
+    }
 
     // Buscar todos os treinos finalizados do usuário
     const allFinishedSessions = await this.prisma.workoutSession.findMany({
@@ -267,9 +294,15 @@ export class StatisticsService {
       }
     });
 
-    // Filtrar apenas PRs dos últimos 30 dias
+    // Filtrar PRs pelo range de data
     const recentPRs = Array.from(exercisePRs.entries())
-      .filter(([, pr]) => pr.date >= thirtyDaysAgo)
+      .filter(([, pr]) => {
+        if (dateStart && dateEnd) {
+          return pr.date >= dateStart && pr.date <= dateEnd;
+        }
+        // Se ambos forem null, mostrar todos os PRs
+        return true;
+      })
       .map(([exerciseName, pr]) => ({
         exerciseName,
         value: pr.maxLoad,
@@ -308,13 +341,14 @@ export class StatisticsService {
       return `${year}-${month}-${day}`;
     };
 
-    // Processar treinos das últimas N semanas
-    // Incluir todos os treinos desde weeksAgo até agora (incluindo hoje)
+    // Processar treinos dentro do range de data
     const sessionsInRange = allFinishedSessions.filter((session) => {
       const sessionDate = new Date(session.startAt);
-      // Comparar timestamps para garantir inclusão de treinos de hoje
-      // Não normalizar sessionDate para manter a hora exata, mas comparar com weeksAgo normalizado
-      return sessionDate.getTime() >= weeksAgo.getTime();
+      if (dateStart && dateEnd) {
+        return sessionDate.getTime() >= dateStart.getTime() && sessionDate.getTime() <= dateEnd.getTime();
+      }
+      // Se ambos forem null, incluir todos os treinos
+      return true;
     });
 
     sessionsInRange.forEach((session) => {
@@ -377,6 +411,189 @@ export class StatisticsService {
     return {
       recentPRs,
       weeklyStats,
+    };
+  }
+
+  /** Busca progressão de um exercício específico */
+  async getExerciseProgression(
+    userId: string,
+    exerciseId: string,
+    startDate?: Date | null,
+    endDate?: Date | null,
+  ) {
+    // Validar que o exercício existe
+    const exercise = await this.prisma.exercise.findUnique({
+      where: { id: exerciseId },
+    });
+
+    if (!exercise) {
+      throw new BadRequestException('Exercise not found.');
+    }
+    // Normalizar datas
+    let dateStart: Date | null = null;
+    let dateEnd: Date | null = null;
+
+    if (startDate && endDate) {
+      dateStart = new Date(startDate);
+      dateStart.setHours(0, 0, 0, 0);
+      dateEnd = new Date(endDate);
+      dateEnd.setHours(23, 59, 59, 999);
+    }
+
+    // Buscar todos os treinos finalizados do exercício
+    const allFinishedSessions = await this.prisma.workoutSession.findMany({
+      where: {
+        userId,
+        endAt: { not: null },
+        exercises: {
+          some: {
+            exerciseId,
+          },
+        },
+        ...(dateStart && dateEnd
+          ? {
+              startAt: {
+                gte: dateStart,
+                lte: dateEnd,
+              },
+            }
+          : {}),
+      },
+      include: {
+        exercises: {
+          where: {
+            exerciseId,
+          },
+          include: {
+            sets: true,
+            exercise: true,
+          },
+        },
+      },
+      orderBy: { startAt: 'asc' },
+    });
+
+    // Função para obter chave da semana (formato: "2024-11-24" - data da segunda-feira)
+    const getWeekKey = (date: Date): string => {
+      const d = new Date(date);
+      d.setHours(0, 0, 0, 0);
+      const dayOfWeek = d.getDay();
+      const diff = d.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1);
+      const monday = new Date(d);
+      monday.setDate(diff);
+
+      const year = monday.getFullYear();
+      const month = String(monday.getMonth() + 1).padStart(2, '0');
+      const day = String(monday.getDate()).padStart(2, '0');
+
+      return `${year}-${month}-${day}`;
+    };
+
+    // Agrupar por semana
+    const weeklyDataMap = new Map<
+      string,
+      {
+        loads: number[];
+        volumes: number[];
+        reps: number[];
+        setsCount: number;
+      }
+    >();
+
+    allFinishedSessions.forEach((session) => {
+      const weekKey = getWeekKey(session.startAt);
+
+      if (!weeklyDataMap.has(weekKey)) {
+        weeklyDataMap.set(weekKey, {
+          loads: [],
+          volumes: [],
+          reps: [],
+          setsCount: 0,
+        });
+      }
+
+      const weekData = weeklyDataMap.get(weekKey)!;
+
+      session.exercises.forEach((ex) => {
+        ex.sets.forEach((set) => {
+          if (set.completed && set.actualLoad != null && set.actualReps != null) {
+            weekData.loads.push(set.actualLoad);
+            weekData.volumes.push(set.actualLoad * set.actualReps);
+            weekData.reps.push(set.actualReps);
+            weekData.setsCount++;
+          }
+        });
+      });
+    });
+
+    // Calcular estatísticas por semana
+    const weeks = Array.from(weeklyDataMap.entries())
+      .map(([week, data]) => ({
+        week,
+        avgLoad: data.loads.length > 0 ? data.loads.reduce((a, b) => a + b, 0) / data.loads.length : 0,
+        totalVolume: data.volumes.reduce((a, b) => a + b, 0),
+        avgReps: data.reps.length > 0 ? data.reps.reduce((a, b) => a + b, 0) / data.reps.length : 0,
+        setsCount: data.setsCount,
+      }))
+      .sort((a, b) => a.week.localeCompare(b.week));
+
+    // Encontrar semana atual e anterior
+    const currentWeek = weeks.length > 0 ? weeks[weeks.length - 1] : null;
+    const previousWeek = weeks.length > 1 ? weeks[weeks.length - 2] : null;
+
+    // Calcular médias das últimas 4 semanas
+    const last4Weeks = weeks.slice(-4);
+    const avgLast4Weeks =
+      last4Weeks.length > 0
+        ? {
+            avgLoad:
+              last4Weeks.reduce((sum, w) => sum + w.avgLoad, 0) / last4Weeks.length,
+            totalVolume: last4Weeks.reduce((sum, w) => sum + w.totalVolume, 0),
+            avgReps:
+              last4Weeks.reduce((sum, w) => sum + w.avgReps, 0) / last4Weeks.length,
+          }
+        : null;
+
+    // Calcular médias das 4 semanas anteriores
+    const previous4Weeks = weeks.length > 4 ? weeks.slice(-8, -4) : [];
+    const avgPrevious4Weeks =
+      previous4Weeks.length > 0
+        ? {
+            avgLoad:
+              previous4Weeks.reduce((sum, w) => sum + w.avgLoad, 0) / previous4Weeks.length,
+            totalVolume: previous4Weeks.reduce((sum, w) => sum + w.totalVolume, 0),
+            avgReps:
+              previous4Weeks.reduce((sum, w) => sum + w.avgReps, 0) / previous4Weeks.length,
+          }
+        : null;
+
+    // Determinar tendência
+    let trend: 'up' | 'down' | 'stable' = 'stable';
+    if (avgLast4Weeks && avgPrevious4Weeks) {
+      const loadDiff = avgLast4Weeks.avgLoad - avgPrevious4Weeks.avgLoad;
+      const volumeDiff = avgLast4Weeks.totalVolume - avgPrevious4Weeks.totalVolume;
+      if (loadDiff > 0 || volumeDiff > 0) {
+        trend = 'up';
+      } else if (loadDiff < 0 || volumeDiff < 0) {
+        trend = 'down';
+      }
+    } else if (currentWeek && previousWeek) {
+      const loadDiff = currentWeek.avgLoad - previousWeek.avgLoad;
+      const volumeDiff = currentWeek.totalVolume - previousWeek.totalVolume;
+      if (loadDiff > 0 || volumeDiff > 0) {
+        trend = 'up';
+      } else if (loadDiff < 0 || volumeDiff < 0) {
+        trend = 'down';
+      }
+    }
+
+    return {
+      weeks,
+      currentWeek,
+      previousWeek,
+      avgLast4Weeks,
+      avgPrevious4Weeks,
+      trend,
     };
   }
 }

@@ -8,6 +8,15 @@ export default function ProtectedRouteWithStats({ children }: { children: React.
   const { user, loading: authLoading } = useAuth()
   const location = useLocation()
 
+  // Check if user has stats filled - must be called before any conditional returns
+  const { data: stats, isLoading: statsLoading } = useQuery({
+    queryKey: ['user-stats'],
+    queryFn: getUserStats,
+    enabled: !!user && !authLoading,
+    staleTime: 0, // Always consider data stale to ensure fresh data
+    refetchOnMount: true, // Always refetch when component mounts
+  })
+
   // First check authentication - use ProtectedRoute for auth check
   if (authLoading) {
     return (
@@ -23,15 +32,6 @@ export default function ProtectedRouteWithStats({ children }: { children: React.
   if (!user) {
     return <Navigate to="/" state={{ from: location }} replace />
   }
-
-  // Check if user has stats filled
-  const { data: stats, isLoading: statsLoading } = useQuery({
-    queryKey: ['user-stats'],
-    queryFn: getUserStats,
-    enabled: !!user,
-    staleTime: 0, // Always consider data stale to ensure fresh data
-    refetchOnMount: true, // Always refetch when component mounts
-  })
 
   // Show loading while checking stats
   if (statsLoading) {

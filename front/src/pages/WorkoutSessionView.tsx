@@ -120,7 +120,8 @@ function SetIntensityEditor({ set, onChangeType, onChangeBlocks, onChangeTypeAnd
               }
             }
           }}
-          className="text-xs bg-[#0f0f0f] border border-gray-700 rounded px-2 py-1 text-gray-200"
+          className="text-base bg-[#0f0f0f] border border-gray-700 rounded px-2 py-1 text-gray-200"
+          style={{ fontSize: '16px' }}
         >
           <option value="NONE">{t('workout.intensityNone', 'Nenhuma')}</option>
           <option value="REST_PAUSE">{t('workout.intensityRestPause', 'Rest-pause')}</option>
@@ -155,8 +156,9 @@ function SetIntensityEditor({ set, onChangeType, onChangeBlocks, onChangeTypeAnd
                     e.target.value === '' ? null : Number(e.target.value),
                   )
                 }
-                className="w-16 rounded-md border border-gray-700 bg-[#0f0f0f] px-2 py-1 text-xs text-gray-100"
+                className="w-16 rounded-md border border-gray-700 bg-[#0f0f0f] px-2 py-1 text-base text-gray-100"
                 placeholder={t('workout.repsLabel', 'reps')}
+                style={{ fontSize: '16px' }}
               />
               <input
                 type="number"
@@ -169,8 +171,9 @@ function SetIntensityEditor({ set, onChangeType, onChangeBlocks, onChangeTypeAnd
                     e.target.value === '' ? null : Number(e.target.value),
                   )
                 }
-                className="w-20 rounded-md border border-gray-700 bg-[#0f0f0f] px-2 py-1 text-xs text-gray-100"
+                className="w-20 rounded-md border border-gray-700 bg-[#0f0f0f] px-2 py-1 text-base text-gray-100"
                 placeholder={t('workout.seconds', 'seg')}
+                style={{ fontSize: '16px' }}
               />
               <button
                 type="button"

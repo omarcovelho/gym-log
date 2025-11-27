@@ -270,9 +270,51 @@ export type EvolutionStats = {
   weeklyStats: WeeklyStats[]
 }
 
-export async function getEvolutionStats(weeks?: number): Promise<EvolutionStats> {
-  const params = weeks ? { weeks: weeks.toString() } : {}
+export async function getEvolutionStats(
+  startDate?: string | null,
+  endDate?: string | null,
+): Promise<EvolutionStats> {
+  const params: Record<string, string> = {}
+  if (startDate) params.startDate = startDate
+  if (endDate) params.endDate = endDate
   const { data } = await api.get(`/statistics/evolution`, { params })
+  return data
+}
+
+export type ExerciseProgressionWeek = {
+  week: string
+  avgLoad: number
+  totalVolume: number
+  avgReps: number
+  setsCount: number
+}
+
+export type ExerciseProgression = {
+  weeks: ExerciseProgressionWeek[]
+  currentWeek: ExerciseProgressionWeek | null
+  previousWeek: ExerciseProgressionWeek | null
+  avgLast4Weeks: {
+    avgLoad: number
+    totalVolume: number
+    avgReps: number
+  } | null
+  avgPrevious4Weeks: {
+    avgLoad: number
+    totalVolume: number
+    avgReps: number
+  } | null
+  trend: 'up' | 'down' | 'stable'
+}
+
+export async function getExerciseProgression(
+  exerciseId: string,
+  startDate?: string | null,
+  endDate?: string | null,
+): Promise<ExerciseProgression> {
+  const params: Record<string, string> = {}
+  if (startDate) params.startDate = startDate
+  if (endDate) params.endDate = endDate
+  const { data } = await api.get(`/statistics/exercise/${exerciseId}/progression`, { params })
   return data
 }
 

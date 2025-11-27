@@ -1,4 +1,4 @@
-import { Controller, Get, UseGuards, Query } from '@nestjs/common';
+import { Controller, Get, UseGuards, Query, Param, BadRequestException } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { StatisticsService } from './statistics.service';
 import { JwtAuthGuard } from '../auth/jwt/jwt.guard';
@@ -21,15 +21,68 @@ export class StatisticsController {
 
   @Get('evolution')
   @ApiOperation({ summary: 'Get evolution statistics (PRs and weekly volume)' })
-  @ApiQuery({ name: 'weeks', required: false, type: Number, description: 'Number of weeks to analyze (default: 4)' })
+  @ApiQuery({ name: 'weeks', required: false, type: Number, description: 'Number of weeks to analyze (deprecated, use startDate/endDate)' })
+  @ApiQuery({ name: 'startDate', required: false, type: String, description: 'Start date (ISO string)' })
+  @ApiQuery({ name: 'endDate', required: false, type: String, description: 'End date (ISO string)' })
   @ApiResponse({ status: 200, description: 'Evolution statistics retrieved successfully.' })
   @ApiResponse({ status: 401, description: 'Unauthorized.' })
+  @ApiResponse({ status: 400, description: 'Bad request (invalid date range).' })
   async getEvolution(
     @CurrentUser() user,
     @Query('weeks') weeks?: string,
+    @Query('startDate') startDateStr?: string,
+    @Query('endDate') endDateStr?: string,
   ) {
-    const weeksNumber = weeks ? parseInt(weeks, 10) : 4;
-    return this.statisticsService.getEvolutionStats(user.id, weeksNumber);
+    let startDate: Date | null = null;
+    let endDate: Date | null = null;
+
+    if (startDateStr && endDateStr) {
+      startDate = new Date(startDateStr);
+      endDate = new Date(endDateStr);
+
+      if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+        throw new BadRequestException('Invalid date format. Use ISO date strings.');
+      }
+
+      if (startDate > endDate) {
+        throw new BadRequestException('startDate must be less than or equal to endDate.');
+      }
+    }
+
+    const weeksNumber = weeks ? parseInt(weeks, 10) : undefined;
+    return this.statisticsService.getEvolutionStats(user.id, startDate, endDate, weeksNumber);
+  }
+
+  @Get('exercise/:exerciseId/progression')
+  @ApiOperation({ summary: 'Get exercise progression statistics' })
+  @ApiQuery({ name: 'startDate', required: false, type: String, description: 'Start date (ISO string)' })
+  @ApiQuery({ name: 'endDate', required: false, type: String, description: 'End date (ISO string)' })
+  @ApiResponse({ status: 200, description: 'Exercise progression retrieved successfully.' })
+  @ApiResponse({ status: 401, description: 'Unauthorized.' })
+  @ApiResponse({ status: 400, description: 'Bad request (invalid date range or exercise not found).' })
+  async getExerciseProgression(
+    @CurrentUser() user,
+    @Param('exerciseId') exerciseId: string,
+    @Query('startDate') startDateStr?: string,
+    @Query('endDate') endDateStr?: string,
+  ) {
+    let startDate: Date | null = null;
+    let endDate: Date | null = null;
+
+    if (startDateStr && endDateStr) {
+      startDate = new Date(startDateStr);
+      endDate = new Date(endDateStr);
+
+      if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+        throw new BadRequestException('Invalid date format. Use ISO date strings.');
+      }
+
+      if (startDate > endDate) {
+        throw new BadRequestException('startDate must be less than or equal to endDate.');
+      }
+    }
+
+    return this.statisticsService.getExerciseProgression(user.id, exerciseId, startDate, endDate);
   }
 }
 
