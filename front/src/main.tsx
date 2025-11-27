@@ -26,7 +26,8 @@ import './index.css'
 import WorkoutLogsList from './pages/WorkoutLogsList'
 import WorkoutSessionView from './pages/WorkoutSessionView'
 import WorkoutSessionDetails from './pages/WorkoutSessionDetails'
-import Progress from './pages/Progress'
+import ProgressOverview from './pages/ProgressOverview'
+import ProgressExercise from './pages/ProgressExercise'
 import About from './pages/About'
 import BodyMeasurementsList from './pages/BodyMeasurementsList'
 import BodyMeasurementForm from './pages/BodyMeasurementForm'
@@ -119,7 +120,17 @@ const router = createBrowserRouter([
         element: (
             <ProtectedRouteWithStats>
                 <AppLayout>
-                    <Progress />
+                    <ProgressOverview />
+                </AppLayout>
+            </ProtectedRouteWithStats>
+        ),
+    },
+    {
+        path: '/app/progress/exercise',
+        element: (
+            <ProtectedRouteWithStats>
+                <AppLayout>
+                    <ProgressExercise />
                 </AppLayout>
             </ProtectedRouteWithStats>
         ),

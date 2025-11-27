@@ -1,6 +1,6 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { getEvolutionStats, type EvolutionStats } from '@/api/workoutSession'
 import {
@@ -14,15 +14,23 @@ import {
   Legend,
 } from 'recharts'
 import { Trophy, TrendingUp } from 'lucide-react'
+import { ProgressRangeFilter } from '@/components/ProgressRangeFilter'
+import type { RangePreset } from '@/utils/dateRange'
+import { calculateDateRange } from '@/utils/dateRange'
 
-export default function Progress() {
+export default function ProgressOverview() {
   const { t, i18n } = useTranslation()
+  const location = useLocation()
   const [viewMode, setViewMode] = useState<'total' | 'byGroup'>('total')
   const [metricMode, setMetricMode] = useState<'volume' | 'sets'>('volume')
+  const [selectedRange, setSelectedRange] = useState<RangePreset>('4weeks')
+
+  // Calcular dates do range selecionado
+  const dateRange = useMemo(() => calculateDateRange(selectedRange), [selectedRange])
 
   const { data: stats, isLoading, error, refetch } = useQuery<EvolutionStats>({
-    queryKey: ['evolution-stats'],
-    queryFn: () => getEvolutionStats(4),
+    queryKey: ['evolution-stats', dateRange.startDate, dateRange.endDate],
+    queryFn: () => getEvolutionStats(dateRange.startDate, dateRange.endDate),
     staleTime: 5 * 60 * 1000, // 5 minutes
   })
 
@@ -92,6 +100,9 @@ export default function Progress() {
     FULLBODY: '#00E676', // Primary green
   }
 
+  const isOverviewActive = location.pathname === '/app/progress'
+  const isExerciseActive = location.pathname === '/app/progress/exercise'
+
   if (isLoading) {
     return (
       <div className="space-y-6">
@@ -126,6 +137,33 @@ export default function Progress() {
         <h1 className="text-2xl md:text-3xl font-bold">{t('progress.title')}</h1>
         <p className="text-gray-400 text-sm md:text-base">{t('progress.subtitle')}</p>
       </div>
+
+      {/* Tabs de Navegação */}
+      <div className="flex rounded-lg border border-gray-800 bg-[#151515] p-1">
+        <Link
+          to="/app/progress"
+          className={`flex-1 px-4 py-2 rounded-md text-sm font-medium transition text-center ${
+            isOverviewActive
+              ? 'bg-primary text-black'
+              : 'text-gray-400 hover:text-gray-200'
+          }`}
+        >
+          {t('progress.overview', 'Visão Geral')}
+        </Link>
+        <Link
+          to="/app/progress/exercise"
+          className={`flex-1 px-4 py-2 rounded-md text-sm font-medium transition text-center ${
+            isExerciseActive
+              ? 'bg-primary text-black'
+              : 'text-gray-400 hover:text-gray-200'
+          }`}
+        >
+          {t('progress.exerciseProgression', 'Evolução por Exercício')}
+        </Link>
+      </div>
+
+      {/* Filtro de Range */}
+      <ProgressRangeFilter value={selectedRange} onChange={setSelectedRange} />
 
       {/* Seção Volume Semanal */}
       <div className="rounded-xl border border-gray-800 bg-[#101010] p-4 md:p-6">
@@ -189,8 +227,8 @@ export default function Progress() {
 
         {/* Gráfico */}
         {chartData.length > 0 ? (
-          <div className="w-full h-64 md:h-80">
-            <ResponsiveContainer width="100%" height="100%">
+          <div className="w-full h-64 md:h-80 min-h-[256px]">
+            <ResponsiveContainer width="100%" height="100%" minHeight={256}>
               <LineChart data={chartData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
                 <XAxis
