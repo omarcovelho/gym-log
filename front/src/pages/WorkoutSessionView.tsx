@@ -589,19 +589,19 @@ export default function WorkoutSessionView() {
     <div className="max-w-3xl mx-auto space-y-6">
       {/* HEADER */}
       <header className="space-y-3 border-b border-gray-800 pb-4">
-        <div className="flex justify-between items-start">
-          <div className="flex-1 space-y-2">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3">
+          <div className="flex-1 space-y-2 min-w-0">
             <div className="flex items-center gap-3">
               <input
                 value={session.title ?? ''}
                 onChange={(e) => handleTitleChange(e.target.value)}
                 placeholder={t('workout.workoutTitle')}
-                className="flex-1 bg-transparent text-3xl font-bold text-gray-100 border-b border-transparent focus:border-primary focus:outline-none"
+                className="flex-1 bg-transparent text-2xl sm:text-3xl font-bold text-gray-100 border-b border-transparent focus:border-primary focus:outline-none min-w-0"
               />
               {isSaving && (
-                <div className="flex items-center gap-2 text-sm text-primary">
+                <div className="flex items-center gap-2 text-sm text-primary flex-shrink-0">
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  <span>{t('workout.saving')}</span>
+                  <span className="hidden sm:inline">{t('workout.saving')}</span>
                 </div>
               )}
             </div>
@@ -610,7 +610,7 @@ export default function WorkoutSessionView() {
             </p>
           </div>
 
-          <div className="text-xs px-3 py-1 rounded-full bg-gray-900 border border-gray-700 text-gray-300">
+          <div className="text-xs px-3 py-1 rounded-full bg-gray-900 border border-gray-700 text-gray-300 whitespace-nowrap flex-shrink-0 self-start sm:self-auto">
             {completedSets}/{totalSets} {t('workout.sets')}
           </div>
         </div>
