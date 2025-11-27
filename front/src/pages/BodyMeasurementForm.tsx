@@ -23,16 +23,15 @@ export default function BodyMeasurementForm() {
   const { toast } = useToast()
   const queryClient = useQueryClient()
 
-  const getSchema = () =>
-    z.object({
-      weight: z.number().min(0, t('validation.weightMin')).max(500, t('validation.weightMax')),
-      waist: z.number().min(0).max(300).optional().or(z.literal('')),
-      arm: z.number().min(0).max(200).optional().or(z.literal('')),
-      notes: z.string().optional(),
-      date: z.string().optional(),
-    })
+  const schema = z.object({
+    weight: z.number().min(0, t('validation.weightMin')).max(500, t('validation.weightMax')),
+    waist: z.number().min(0).max(300).optional().or(z.literal('')),
+    arm: z.number().min(0).max(200).optional().or(z.literal('')),
+    notes: z.string().optional(),
+    date: z.string().optional(),
+  })
 
-  type Form = z.infer<ReturnType<typeof getSchema>>
+  type Form = z.infer<typeof schema>
 
   // Load measurement for editing
   const { data: measurement, isLoading: loadingMeasurement } = useQuery({
@@ -48,7 +47,7 @@ export default function BodyMeasurementForm() {
     formState: { errors, isSubmitting },
     setFocus,
   } = useForm<Form>({
-    resolver: zodResolver(getSchema()),
+    resolver: zodResolver(schema) as any,
     defaultValues: {
       weight: undefined,
       waist: undefined,
@@ -127,23 +126,24 @@ export default function BodyMeasurementForm() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6 pb-24">
+    <div className="max-w-2xl mx-auto space-y-6 pb-24 px-4 sm:px-0">
       <header className="space-y-1">
-        <h1 className="text-3xl font-bold">
+        <h1 className="text-2xl sm:text-3xl font-bold">
           {isEditing ? t('measurements.editMeasurement') : t('measurements.addMeasurement')}
         </h1>
       </header>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         {/* Date */}
-        <div>
+        <div className="w-full min-w-0">
           <label htmlFor="date" className="block text-sm font-medium text-gray-300 mb-2">
             {t('measurements.date')}
           </label>
           <input
             id="date"
             type="date"
-            className="w-full px-4 py-3 bg-[#101010] border border-gray-800 rounded-lg text-gray-100 placeholder-gray-500 focus:outline-none focus:border-primary transition"
+            className="w-full min-w-0 px-4 py-3 bg-[#101010] border border-gray-800 rounded-lg text-gray-100 placeholder-gray-500 focus:outline-none focus:border-primary transition"
+            style={{ maxWidth: '100%', boxSizing: 'border-box' }}
             {...register('date')}
           />
           {errors.date && <p className="mt-1 text-sm text-red-500">{errors.date.message}</p>}
@@ -178,8 +178,7 @@ export default function BodyMeasurementForm() {
             className="w-full px-4 py-3 bg-[#101010] border border-gray-800 rounded-lg text-gray-100 placeholder-gray-500 focus:outline-none focus:border-primary transition"
             placeholder={t('measurements.waistPlaceholder')}
             {...register('waist', {
-              valueAsNumber: true,
-              setValueAs: (v) => (v === '' ? '' : Number(v)),
+              setValueAs: (v) => (v === '' || v === null || v === undefined ? undefined : Number(v)),
             })}
           />
           {errors.waist && <p className="mt-1 text-sm text-red-500">{errors.waist.message}</p>}
@@ -197,8 +196,7 @@ export default function BodyMeasurementForm() {
             className="w-full px-4 py-3 bg-[#101010] border border-gray-800 rounded-lg text-gray-100 placeholder-gray-500 focus:outline-none focus:border-primary transition"
             placeholder={t('measurements.armPlaceholder')}
             {...register('arm', {
-              valueAsNumber: true,
-              setValueAs: (v) => (v === '' ? '' : Number(v)),
+              setValueAs: (v) => (v === '' || v === null || v === undefined ? undefined : Number(v)),
             })}
           />
           {errors.arm && <p className="mt-1 text-sm text-red-500">{errors.arm.message}</p>}

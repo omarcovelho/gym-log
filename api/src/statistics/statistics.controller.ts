@@ -1,4 +1,4 @@
-import { Controller, Get, UseGuards, Query, Param, BadRequestException } from '@nestjs/common';
+import { Controller, Get, Post, Delete, UseGuards, Query, Param, BadRequestException } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { StatisticsService } from './statistics.service';
 import { JwtAuthGuard } from '../auth/jwt/jwt.guard';
@@ -83,6 +83,34 @@ export class StatisticsController {
     }
 
     return this.statisticsService.getExerciseProgression(user.id, exerciseId, startDate, endDate);
+  }
+
+  @Get('pinned-exercises')
+  @ApiOperation({ summary: 'Get pinned exercises for the current user' })
+  @ApiResponse({ status: 200, description: 'Pinned exercises retrieved successfully.' })
+  @ApiResponse({ status: 401, description: 'Unauthorized.' })
+  async getPinnedExercises(@CurrentUser() user) {
+    return this.statisticsService.getPinnedExercises(user.id);
+  }
+
+  @Post('pinned-exercises/:exerciseId')
+  @ApiOperation({ summary: 'Pin an exercise for the current user' })
+  @ApiResponse({ status: 200, description: 'Exercise pinned successfully.' })
+  @ApiResponse({ status: 401, description: 'Unauthorized.' })
+  @ApiResponse({ status: 400, description: 'Bad request (exercise not found, already pinned, or limit reached).' })
+  async pinExercise(@CurrentUser() user, @Param('exerciseId') exerciseId: string) {
+    await this.statisticsService.pinExercise(user.id, exerciseId);
+    return { message: 'Exercise pinned successfully' };
+  }
+
+  @Delete('pinned-exercises/:exerciseId')
+  @ApiOperation({ summary: 'Unpin an exercise for the current user' })
+  @ApiResponse({ status: 200, description: 'Exercise unpinned successfully.' })
+  @ApiResponse({ status: 401, description: 'Unauthorized.' })
+  @ApiResponse({ status: 400, description: 'Bad request (exercise not found or not pinned).' })
+  async unpinExercise(@CurrentUser() user, @Param('exerciseId') exerciseId: string) {
+    await this.statisticsService.unpinExercise(user.id, exerciseId);
+    return { message: 'Exercise unpinned successfully' };
   }
 }
 

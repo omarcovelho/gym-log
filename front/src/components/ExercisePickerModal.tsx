@@ -167,13 +167,13 @@ export function ExercisePickerModal({
           <>
             {/* Filters */}
             <div className="p-3 border-b border-gray-700">
-              <div className="flex justify-between items-center mb-2">
-                <div className="flex gap-2 overflow-x-auto pb-2">
+              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 mb-2">
+                <div className="flex gap-2 overflow-x-auto pb-2 flex-1 min-w-0">
                   {groups.map(g => (
                     <button
                       key={g}
                       onClick={() => setGroup(g)}
-                      className={`px-3 py-1 rounded-full text-xs border whitespace-nowrap ${
+                      className={`px-3 py-1 rounded-full text-xs border whitespace-nowrap flex-shrink-0 ${
                         group === g
                           ? 'bg-primary text-black border-primary'
                           : 'border-gray-600 text-gray-400 hover:border-gray-400'
@@ -185,7 +185,7 @@ export function ExercisePickerModal({
                 </div>
                 <button
                   onClick={() => setCreating(true)}
-                  className="text-xs border border-gray-600 px-2 py-1 rounded hover:bg-gray-800"
+                  className="text-xs border border-gray-600 px-2 py-1 rounded hover:bg-gray-800 whitespace-nowrap flex-shrink-0"
                 >
                   + New
                 </button>

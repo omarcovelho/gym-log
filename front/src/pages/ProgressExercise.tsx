@@ -11,7 +11,6 @@ export default function ProgressExercise() {
   const { t } = useTranslation()
   const location = useLocation()
   const [selectedRange, setSelectedRange] = useState<RangePreset>('4weeks')
-  const [selectedExerciseId, setSelectedExerciseId] = useState<string | null>(null)
 
   // Calcular dates do range selecionado
   const dateRange = useMemo(() => calculateDateRange(selectedRange), [selectedRange])
@@ -65,10 +64,8 @@ export default function ProgressExercise() {
           </h2>
         </div>
         <ExerciseProgressionChart
-          exerciseId={selectedExerciseId}
           startDate={dateRange.startDate}
           endDate={dateRange.endDate}
-          onExerciseChange={setSelectedExerciseId}
         />
       </div>
     </div>

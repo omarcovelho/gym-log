@@ -596,5 +596,97 @@ export class StatisticsService {
       trend,
     };
   }
+
+  /** Get pinned exercises for a user */
+  async getPinnedExercises(userId: string): Promise<string[]> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { pinnedExerciseIds: true },
+    });
+
+    return user?.pinnedExerciseIds || [];
+  }
+
+  /** Pin an exercise for a user */
+  async pinExercise(userId: string, exerciseId: string): Promise<void> {
+    // Validate that exercise exists
+    await this.validateExerciseExists(exerciseId);
+
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { pinnedExerciseIds: true },
+    });
+
+    if (!user) {
+      throw new BadRequestException('User not found');
+    }
+
+    const currentPinned = user.pinnedExerciseIds || [];
+    const MAX_PINNED = 5;
+
+    // Check if already pinned
+    if (currentPinned.includes(exerciseId)) {
+      throw new BadRequestException('Exercise is already pinned');
+    }
+
+    // Check limit
+    if (currentPinned.length >= MAX_PINNED) {
+      throw new BadRequestException(`Maximum of ${MAX_PINNED} pinned exercises allowed`);
+    }
+
+    // Add to pinned list
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        pinnedExerciseIds: {
+          set: [...currentPinned, exerciseId],
+        },
+      },
+    });
+  }
+
+  /** Unpin an exercise for a user */
+  async unpinExercise(userId: string, exerciseId: string): Promise<void> {
+    // Validate that exercise exists
+    await this.validateExerciseExists(exerciseId);
+
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { pinnedExerciseIds: true },
+    });
+
+    if (!user) {
+      throw new BadRequestException('User not found');
+    }
+
+    const currentPinned = user.pinnedExerciseIds || [];
+
+    // Check if not pinned
+    if (!currentPinned.includes(exerciseId)) {
+      throw new BadRequestException('Exercise is not pinned');
+    }
+
+    // Remove from pinned list
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        pinnedExerciseIds: {
+          set: currentPinned.filter((id) => id !== exerciseId),
+        },
+      },
+    });
+  }
+
+  /** Validate that an exercise exists */
+  private async validateExerciseExists(exerciseId: string): Promise<void> {
+    const exercise = await this.prisma.exercise.findUnique({
+      where: { id: exerciseId },
+      select: { id: true },
+    });
+
+    if (!exercise) {
+      throw new BadRequestException('Exercise not found');
+    }
+  }
 }
 
