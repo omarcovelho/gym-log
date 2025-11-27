@@ -1,7 +1,6 @@
 import { useTranslation } from 'react-i18next'
 import { Calendar } from 'lucide-react'
 import type { RangePreset } from '@/utils/dateRange'
-import { calculateDateRange } from '@/utils/dateRange'
 
 type Props = {
   value: RangePreset
