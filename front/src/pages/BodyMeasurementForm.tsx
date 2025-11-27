@@ -23,22 +23,15 @@ export default function BodyMeasurementForm() {
   const { toast } = useToast()
   const queryClient = useQueryClient()
 
-  const getSchema = () =>
-    z.object({
-      weight: z.number().min(0, t('validation.weightMin')).max(500, t('validation.weightMax')),
-      waist: z.preprocess(
-        (val) => (val === '' || val === null || val === undefined ? undefined : Number(val)),
-        z.number().min(0).max(300).optional(),
-      ),
-      arm: z.preprocess(
-        (val) => (val === '' || val === null || val === undefined ? undefined : Number(val)),
-        z.number().min(0).max(200).optional(),
-      ),
-      notes: z.string().optional(),
-      date: z.string().optional(),
-    })
+  const schema = z.object({
+    weight: z.number().min(0, t('validation.weightMin')).max(500, t('validation.weightMax')),
+    waist: z.number().min(0).max(300).optional().or(z.literal('')),
+    arm: z.number().min(0).max(200).optional().or(z.literal('')),
+    notes: z.string().optional(),
+    date: z.string().optional(),
+  })
 
-  type Form = z.infer<ReturnType<typeof getSchema>>
+  type Form = z.infer<typeof schema>
 
   // Load measurement for editing
   const { data: measurement, isLoading: loadingMeasurement } = useQuery({
@@ -54,7 +47,7 @@ export default function BodyMeasurementForm() {
     formState: { errors, isSubmitting },
     setFocus,
   } = useForm<Form>({
-    resolver: zodResolver(getSchema()),
+    resolver: zodResolver(schema) as any,
     defaultValues: {
       weight: undefined,
       waist: undefined,
@@ -88,8 +81,8 @@ export default function BodyMeasurementForm() {
     mutationFn: async (data: Form) => {
       const dto: CreateBodyMeasurementDto | UpdateBodyMeasurementDto = {
         weight: data.weight,
-        waist: data.waist,
-        arm: data.arm,
+        waist: data.waist === '' ? undefined : data.waist,
+        arm: data.arm === '' ? undefined : data.arm,
         notes: data.notes || undefined,
         date: data.date || undefined,
       }

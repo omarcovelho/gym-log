@@ -287,7 +287,7 @@ function ExerciseChartCard({
 export function ExerciseProgressionChart({ startDate, endDate }: Props) {
   const { t } = useTranslation()
   const { toast } = useToast()
-  const { pinnedExerciseIds, pinExercise, unpinExercise, canPinMore, isPinned } = usePinnedExercises()
+  const { pinnedExerciseIds, pinExercise, unpinExercise, isPinned } = usePinnedExercises()
   const [selectedExerciseId, setSelectedExerciseId] = useState<string | null>(null)
   const [pickerOpen, setPickerOpen] = useState(false)
 
