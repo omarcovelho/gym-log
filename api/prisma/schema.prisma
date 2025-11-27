@@ -53,20 +53,21 @@ enum Role {
 }
 
 model User {
-  id          String              @id @default(uuid())
-  email       String              @unique
-  password    String
-  name        String?
-  height      Float?
-  weight      Float?
-  role        Role                @default(USER)
-  createdAt   DateTime            @default(now())
-  sessions    WorkoutSession[]
-  templates   WorkoutTemplate[]
-  exercises   Exercise[]
-  timers      RestTimer[]
-  resetTokens PasswordResetToken[]
-  measurements BodyMeasurement[]
+  id                String              @id @default(uuid())
+  email             String              @unique
+  password          String
+  name              String?
+  height            Float?
+  weight            Float?
+  role              Role                @default(USER)
+  pinnedExerciseIds String[]            @default([])
+  createdAt         DateTime            @default(now())
+  sessions          WorkoutSession[]
+  templates         WorkoutTemplate[]
+  exercises         Exercise[]
+  timers            RestTimer[]
+  resetTokens       PasswordResetToken[]
+  measurements      BodyMeasurement[]
 }
 
 model Exercise {

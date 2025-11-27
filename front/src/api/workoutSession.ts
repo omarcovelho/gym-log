@@ -323,3 +323,17 @@ export async function getActiveWorkout(): Promise<WorkoutSession | null> {
   const { data } = await api.get(`/workouts/active`)
   return data
 }
+
+/* ---------- Pinned Exercises ---------- */
+export async function getPinnedExercises(): Promise<string[]> {
+  const { data } = await api.get(`/statistics/pinned-exercises`)
+  return data
+}
+
+export async function pinExercise(exerciseId: string): Promise<void> {
+  await api.post(`/statistics/pinned-exercises/${exerciseId}`)
+}
+
+export async function unpinExercise(exerciseId: string): Promise<void> {
+  await api.delete(`/statistics/pinned-exercises/${exerciseId}`)
+}
