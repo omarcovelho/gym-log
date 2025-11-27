@@ -26,8 +26,14 @@ export default function BodyMeasurementForm() {
   const getSchema = () =>
     z.object({
       weight: z.number().min(0, t('validation.weightMin')).max(500, t('validation.weightMax')),
-      waist: z.number().min(0).max(300).optional().or(z.literal('')),
-      arm: z.number().min(0).max(200).optional().or(z.literal('')),
+      waist: z.preprocess(
+        (val) => (val === '' || val === null || val === undefined ? undefined : Number(val)),
+        z.number().min(0).max(300).optional(),
+      ),
+      arm: z.preprocess(
+        (val) => (val === '' || val === null || val === undefined ? undefined : Number(val)),
+        z.number().min(0).max(200).optional(),
+      ),
       notes: z.string().optional(),
       date: z.string().optional(),
     })
@@ -82,8 +88,8 @@ export default function BodyMeasurementForm() {
     mutationFn: async (data: Form) => {
       const dto: CreateBodyMeasurementDto | UpdateBodyMeasurementDto = {
         weight: data.weight,
-        waist: data.waist === '' ? undefined : data.waist,
-        arm: data.arm === '' ? undefined : data.arm,
+        waist: data.waist,
+        arm: data.arm,
         notes: data.notes || undefined,
         date: data.date || undefined,
       }
@@ -178,8 +184,7 @@ export default function BodyMeasurementForm() {
             className="w-full px-4 py-3 bg-[#101010] border border-gray-800 rounded-lg text-gray-100 placeholder-gray-500 focus:outline-none focus:border-primary transition"
             placeholder={t('measurements.waistPlaceholder')}
             {...register('waist', {
-              valueAsNumber: true,
-              setValueAs: (v) => (v === '' ? '' : Number(v)),
+              setValueAs: (v) => (v === '' || v === null || v === undefined ? undefined : Number(v)),
             })}
           />
           {errors.waist && <p className="mt-1 text-sm text-red-500">{errors.waist.message}</p>}
@@ -197,8 +202,7 @@ export default function BodyMeasurementForm() {
             className="w-full px-4 py-3 bg-[#101010] border border-gray-800 rounded-lg text-gray-100 placeholder-gray-500 focus:outline-none focus:border-primary transition"
             placeholder={t('measurements.armPlaceholder')}
             {...register('arm', {
-              valueAsNumber: true,
-              setValueAs: (v) => (v === '' ? '' : Number(v)),
+              setValueAs: (v) => (v === '' || v === null || v === undefined ? undefined : Number(v)),
             })}
           />
           {errors.arm && <p className="mt-1 text-sm text-red-500">{errors.arm.message}</p>}
