@@ -1,7 +1,7 @@
 // WorkoutSessionView.tsx
 // COMPLETE VERSION — Using Single Endpoint PATCH /workouts/exercises/:id
 
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/auth/AuthContext'
@@ -222,7 +222,7 @@ function useDebouncedCallback<T extends (...args: any[]) => void>(cb: T, delay =
 }
 
 export default function WorkoutSessionView() {
-  const { t, i18n } = useTranslation()
+  const { t } = useTranslation()
   const { id } = useParams()
   const navigate = useNavigate()
   const { user } = useAuth()
@@ -578,20 +578,6 @@ export default function WorkoutSessionView() {
     setSession((prev) => (prev ? { ...prev, title: value } : prev))
     debouncedSaveMeta({ title: value || undefined })
   }
-
-  const totalSets = useMemo(
-    () => session?.exercises.reduce((acc, ex) => acc + ex.sets.length, 0) ?? 0,
-    [session],
-  )
-
-  const completedSets = useMemo(
-    () =>
-      session?.exercises.reduce(
-        (acc, ex) => acc + ex.sets.filter((s) => s.completed).length,
-        0,
-      ) ?? 0,
-    [session],
-  )
 
   if (loading || !session)
     return <p className="text-center text-gray-400 mt-10">{t('common.loading')}</p>
