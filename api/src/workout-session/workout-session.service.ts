@@ -322,11 +322,11 @@ export class WorkoutSessionService {
         })
     }
 
-    async startFreeWorkout(userId: string) {
+    async startFreeWorkout(userId: string, title: string) {
         return this.prisma.workoutSession.create({
             data: {
                 userId,
-                title: 'Free Workout',
+                title,
                 exercises: { create: [] },
             },
             include: {

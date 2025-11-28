@@ -134,12 +134,15 @@
     "starting": "Starting...",
     "startFreeWorkout": "Start Free Workout",
     "workoutTitle": "Workout title",
+    "workoutTitlePlaceholder": "Tap to edit workout name",
+    "workoutNamePlaceholder": "Enter workout name",
     "startedOn": "Started on",
     "sets": "sets",
     "sessionNotes": "Session notes...",
     "addExercise": "Add Exercise",
     "addSet": "Add Set",
     "markDone": "Mark Done",
+    "completeSet": "Complete Set",
     "done": "✓ Done",
     "startRest": "Start Rest",
     "remove": "Remove",
@@ -194,7 +197,9 @@
     "today": "Today",
     "yesterday": "Yesterday",
     "daysAgo": "{{count}} days ago",
-    "noCompletedSets": "No completed sets in this session"
+    "noCompletedSets": "No completed sets in this session",
+    "elapsedTime": "Time",
+    "exit": "Exit"
   },
   "navigation": {
     "home": "Home",
