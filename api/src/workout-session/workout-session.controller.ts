@@ -21,6 +21,7 @@ import { FinishWorkoutDto } from './dto/finish-workout.dto'
 import { UpdateWorkoutExerciseDto } from './dto/update-session.dto'
 import { UpdateWorkoutSessionDto } from './dto/update-workout-session.dto'
 import { PaginationDto } from 'src/common/dto/pagination.dto'
+import { StartFreeWorkoutDto } from './dto/start-free-workout.dto'
 
 @ApiTags('Workout Sessions')
 @ApiBearerAuth()
@@ -33,8 +34,8 @@ export class WorkoutSessionController {
     @ApiOperation({ summary: 'Start a free workout session' })
     @ApiResponse({ status: 201, description: 'Free workout session created successfully.' })
     @ApiResponse({ status: 401, description: 'Unauthorized.' })
-    async startFree(@CurrentUser() user) {
-        return this.service.startFreeWorkout(user.id)
+    async startFree(@CurrentUser() user, @Body() dto: StartFreeWorkoutDto) {
+        return this.service.startFreeWorkout(user.id, dto.title)
     }
 
     @Post('start/:templateId')

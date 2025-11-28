@@ -30,7 +30,23 @@ import { RestTimer } from '@/components/RestTimer'
 import { RestTimerManager } from '@/components/RestTimerManager'
 import { RestTimerCountdown } from '@/components/RestTimerCountdown'
 import { ExerciseHistoryBottomSheet } from '@/components/ExerciseHistoryBottomSheet'
+import { WorkoutSessionBottomNav } from '@/components/WorkoutSessionBottomNav'
 import { useExercises } from '@/api/exercise'
+import { createContext, useContext } from 'react'
+
+type WorkoutSessionContextType = {
+  timerOpen: boolean
+  setTimerOpen: (open: boolean) => void
+  countdownActive: { seconds: number; startTime?: number } | null
+  setCountdownActive: (active: { seconds: number; startTime?: number } | null) => void
+}
+
+const WorkoutSessionContext = createContext<WorkoutSessionContextType | null>(null)
+
+export function useWorkoutSessionContext() {
+  const context = useContext(WorkoutSessionContext)
+  return context // Retorna null se não estiver no provider, ao invés de lançar erro
+}
 
 type SetIntensityEditorProps = {
   set: SessionSet
@@ -563,11 +579,6 @@ export default function WorkoutSessionView() {
     debouncedSaveMeta({ title: value || undefined })
   }
 
-  const handleNotesChange = (value: string) => {
-    setSession((prev) => (prev ? { ...prev, notes: value || undefined } : prev))
-    debouncedSaveMeta({ notes: value || undefined })
-  }
-
   const totalSets = useMemo(
     () => session?.exercises.reduce((acc, ex) => acc + ex.sets.length, 0) ?? 0,
     [session],
@@ -585,18 +596,26 @@ export default function WorkoutSessionView() {
   if (loading || !session)
     return <p className="text-center text-gray-400 mt-10">{t('common.loading')}</p>
 
+  const contextValue: WorkoutSessionContextType = {
+    timerOpen,
+    setTimerOpen,
+    countdownActive,
+    setCountdownActive,
+  }
+
   return (
-    <div className="max-w-3xl mx-auto space-y-6">
+    <WorkoutSessionContext.Provider value={contextValue}>
+      <div className="max-w-3xl mx-auto space-y-6">
       {/* HEADER */}
-      <header className="space-y-3 border-b border-gray-800 pb-4">
+      <header className="pb-4">
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3">
           <div className="flex-1 space-y-2 min-w-0">
             <div className="flex items-center gap-3">
               <input
                 value={session.title ?? ''}
                 onChange={(e) => handleTitleChange(e.target.value)}
-                placeholder={t('workout.workoutTitle')}
-                className="flex-1 bg-transparent text-2xl sm:text-3xl font-bold text-gray-100 border-b border-transparent focus:border-primary focus:outline-none min-w-0"
+                placeholder={t('workout.workoutTitlePlaceholder', 'Toque para editar o nome do treino')}
+                className="flex-1 bg-transparent text-2xl sm:text-3xl font-bold text-gray-100 border-b border-gray-700 focus:border-primary focus:outline-none min-w-0 transition-colors placeholder:text-gray-600"
               />
               {isSaving && (
                 <div className="flex items-center gap-2 text-sm text-primary flex-shrink-0">
@@ -605,23 +624,8 @@ export default function WorkoutSessionView() {
                 </div>
               )}
             </div>
-            <p className="text-xs text-gray-500">
-              {t('workout.startedOn')} {new Date(session.startAt).toLocaleString(i18n.language === 'pt' ? 'pt-BR' : 'en-US')}
-            </p>
-          </div>
-
-          <div className="text-xs px-3 py-1 rounded-full bg-gray-900 border border-gray-700 text-gray-300 whitespace-nowrap flex-shrink-0 self-start sm:self-auto">
-            {completedSets}/{totalSets} {t('workout.sets')}
           </div>
         </div>
-
-        <textarea
-          value={session.notes ?? ''}
-          onChange={(e) => handleNotesChange(e.target.value)}
-          placeholder={t('workout.sessionNotes')}
-          className="w-full resize-none rounded-md border border-gray-700 bg-[#111] px-3 py-2 text-base text-gray-100 placeholder:text-gray-500 focus:border-primary focus:outline-none"
-          rows={2}
-        />
       </header>
 
       {/* EXERCISE LIST */}
@@ -1014,6 +1018,12 @@ export default function WorkoutSessionView() {
           exerciseName={session?.exercises.find((e) => e.exercise.id === historyExerciseId)?.exercise.name || ''}
         />
       )}
-    </div>
+
+      {/* Bottom Navigation específica para Workout Session */}
+      {session && (
+        <WorkoutSessionBottomNav session={session} />
+      )}
+      </div>
+    </WorkoutSessionContext.Provider>
   )
 }

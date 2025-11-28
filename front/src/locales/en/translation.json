@@ -134,6 +134,8 @@
     "starting": "Starting...",
     "startFreeWorkout": "Start Free Workout",
     "workoutTitle": "Workout title",
+    "workoutTitlePlaceholder": "Tap to edit workout name",
+    "workoutNamePlaceholder": "Enter workout name",
     "startedOn": "Started on",
     "sets": "sets",
     "sessionNotes": "Session notes...",
@@ -195,7 +197,9 @@
     "today": "Today",
     "yesterday": "Yesterday",
     "daysAgo": "{{count}} days ago",
-    "noCompletedSets": "No completed sets in this session"
+    "noCompletedSets": "No completed sets in this session",
+    "elapsedTime": "Time",
+    "exit": "Exit"
   },
   "navigation": {
     "home": "Home",

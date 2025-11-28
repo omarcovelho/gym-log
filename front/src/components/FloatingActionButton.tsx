@@ -16,6 +16,7 @@ export function FloatingActionButton() {
   const [showActiveDialog, setShowActiveDialog] = useState(false)
   const [loading, setLoading] = useState(false)
   const [selectedOption, setSelectedOption] = useState<'free' | 'template' | null>(null)
+  const [workoutTitle, setWorkoutTitle] = useState('')
 
   // Buscar treino ativo
   const { data: activeWorkout, refetch: refetchActive } = useQuery({
@@ -33,7 +34,7 @@ export function FloatingActionButton() {
   const handleStartFree = async () => {
     try {
       setLoading(true)
-      const session = await startManualWorkout()
+      const session = await startManualWorkout(workoutTitle.trim())
       toast({
         title: t('workout.workoutStarted'),
         description: t('workout.workoutStartedDescription'),
@@ -197,6 +198,7 @@ export function FloatingActionButton() {
                   onClick={() => {
                     setOpen(false)
                     setSelectedOption(null)
+                    setWorkoutTitle('')
                   }}
                   className="text-gray-400 hover:text-gray-200 transition"
                 >
@@ -210,7 +212,10 @@ export function FloatingActionButton() {
                   /* Escolher tipo de treino */
                   <div className="space-y-3">
                     <button
-                      onClick={() => setSelectedOption('free')}
+                      onClick={() => {
+                        setSelectedOption('free')
+                        setWorkoutTitle('')
+                      }}
                       className="w-full p-4 rounded-lg border-2 border-gray-700 hover:border-primary bg-[#101010] text-left transition group"
                     >
                       <div className="flex items-center gap-3">
@@ -227,7 +232,10 @@ export function FloatingActionButton() {
                     </button>
 
                     <button
-                      onClick={() => setSelectedOption('template')}
+                      onClick={() => {
+                        setSelectedOption('template')
+                        setWorkoutTitle('')
+                      }}
                       className="w-full p-4 rounded-lg border-2 border-gray-700 hover:border-primary bg-[#101010] text-left transition group"
                     >
                       <div className="flex items-center gap-3">
@@ -251,21 +259,37 @@ export function FloatingActionButton() {
                         <Zap className="w-5 h-5 text-primary" />
                         <div className="font-semibold text-gray-100">{t('workout.freeWorkout')}</div>
                       </div>
-                      <p className="text-sm text-gray-400">
+                      <p className="text-sm text-gray-400 mb-3">
                         {t('workout.emptyWorkoutDescription')}
                       </p>
+                      <div>
+                        <label className="block text-xs text-gray-500 mb-1.5">
+                          {t('workout.workoutTitle', 'Nome do treino')}
+                        </label>
+                        <input
+                          type="text"
+                          value={workoutTitle}
+                          onChange={(e) => setWorkoutTitle(e.target.value)}
+                          placeholder={t('workout.workoutNamePlaceholder', 'Digite o nome do treino')}
+                          className="w-full rounded-md border border-gray-700 bg-[#0f0f0f] px-3 py-2 text-base text-gray-100 placeholder:text-gray-500 focus:border-primary focus:outline-none transition"
+                          autoFocus
+                        />
+                      </div>
                     </div>
                     <div className="flex gap-3">
                       <button
-                        onClick={() => setSelectedOption(null)}
+                        onClick={() => {
+                          setSelectedOption(null)
+                          setWorkoutTitle('')
+                        }}
                         className="flex-1 px-4 py-2 border border-gray-700 text-gray-300 rounded-lg hover:bg-gray-800 transition"
                       >
                         {t('common.back')}
                       </button>
                       <button
                         onClick={handleStartFree}
-                        disabled={loading}
-                        className="flex-1 px-4 py-2 bg-primary text-dark font-semibold rounded-lg hover:brightness-110 transition disabled:opacity-50"
+                        disabled={loading || workoutTitle.trim() === ''}
+                        className="flex-1 px-4 py-2 bg-primary text-dark font-semibold rounded-lg hover:brightness-110 transition disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         {loading ? t('workout.starting') : t('workout.startFreeWorkout')}
                       </button>

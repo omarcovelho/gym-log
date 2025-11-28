@@ -126,8 +126,8 @@ export async function startWorkout(templateId: string): Promise<WorkoutSession> 
 }
 
 /* ---------- Start workout manually (no template) ---------- */
-export async function startManualWorkout(): Promise<WorkoutSession> {
-  const { data } = await api.post(`/workouts/free/start`)
+export async function startManualWorkout(title: string): Promise<WorkoutSession> {
+  const { data } = await api.post(`/workouts/free/start`, { title })
   return data
 }
 

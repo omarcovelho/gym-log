@@ -134,6 +134,8 @@
     "starting": "Iniciando...",
     "startFreeWorkout": "Iniciar Treino Livre",
     "workoutTitle": "Título do treino",
+    "workoutTitlePlaceholder": "Toque para editar o nome do treino",
+    "workoutNamePlaceholder": "Digite o nome do treino",
     "startedOn": "Iniciado em",
     "sets": "sets",
     "sessionNotes": "Notas da sessão...",
@@ -195,7 +197,9 @@
     "today": "Hoje",
     "yesterday": "Ontem",
     "daysAgo": "Há {{count}} dias",
-    "noCompletedSets": "Nenhuma série completada nesta sessão"
+    "noCompletedSets": "Nenhuma série completada nesta sessão",
+    "elapsedTime": "Tempo",
+    "exit": "Sair"
   },
   "navigation": {
     "home": "Início",
