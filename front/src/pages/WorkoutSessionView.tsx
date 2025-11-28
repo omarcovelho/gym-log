@@ -89,7 +89,7 @@ function SetIntensityEditor({ set, onChangeType, onChangeBlocks, onChangeTypeAnd
   return (
     <div className="mt-3 pt-3 border-t border-gray-800">
       <div className="flex items-center justify-between mb-2">
-        <span className="text-xs text-gray-400">
+        <span className="text-xs text-gray-500">
           {t('workout.intensityTechniques', 'Técnicas de intensidade')}
         </span>
         <select
@@ -121,7 +121,7 @@ function SetIntensityEditor({ set, onChangeType, onChangeBlocks, onChangeTypeAnd
               }
             }
           }}
-          className="text-sm bg-[#0f0f0f] border border-gray-700 rounded px-2.5 py-1.5 text-gray-200 focus:border-gray-600 focus:outline-none transition"
+          className="text-base bg-[#0f0f0f] border border-gray-700 rounded px-2.5 py-1.5 text-gray-200 focus:border-gray-600 focus:outline-none transition"
         >
           <option value="NONE">{t('workout.intensityNone', 'Nenhuma')}</option>
           <option value="REST_PAUSE">{t('workout.intensityRestPause', 'Rest-pause')}</option>
@@ -156,7 +156,7 @@ function SetIntensityEditor({ set, onChangeType, onChangeBlocks, onChangeTypeAnd
                     e.target.value === '' ? null : Number(e.target.value),
                   )
                 }
-                className="flex-1 rounded-md border border-gray-700 bg-[#0f0f0f] px-2.5 py-1.5 text-sm text-gray-100 focus:border-gray-600 focus:outline-none transition"
+                className="flex-1 rounded-md border border-gray-700 bg-[#0f0f0f] px-2.5 py-1.5 text-base text-gray-100 focus:border-gray-600 focus:outline-none transition"
                 placeholder={t('workout.repsLabel', 'reps')}
               />
               <input
@@ -170,13 +170,13 @@ function SetIntensityEditor({ set, onChangeType, onChangeBlocks, onChangeTypeAnd
                     e.target.value === '' ? null : Number(e.target.value),
                   )
                 }
-                className="w-20 rounded-md border border-gray-700 bg-[#0f0f0f] px-2.5 py-1.5 text-sm text-gray-100 focus:border-gray-600 focus:outline-none transition"
+                className="w-20 rounded-md border border-gray-700 bg-[#0f0f0f] px-2.5 py-1.5 text-base text-gray-100 focus:border-gray-600 focus:outline-none transition"
                 placeholder={t('workout.seconds', 'seg')}
               />
               <button
                 type="button"
                 onClick={() => handleRemoveBlock(block.id!)}
-                className="p-1.5 rounded border border-red-900/60 text-red-400 hover:bg-red-900/40 transition"
+                className="p-1.5 rounded text-gray-400 hover:text-gray-200 hover:bg-gray-800/40 transition"
                 title={t('workout.remove', 'Remover')}
               >
                 <span className="text-sm">×</span>
@@ -605,7 +605,7 @@ export default function WorkoutSessionView() {
                 </div>
               )}
             </div>
-            <p className="text-sm text-gray-400">
+            <p className="text-xs text-gray-500">
               {t('workout.startedOn')} {new Date(session.startAt).toLocaleString(i18n.language === 'pt' ? 'pt-BR' : 'en-US')}
             </p>
           </div>
@@ -648,13 +648,13 @@ export default function WorkoutSessionView() {
                       <div className="flex items-center gap-2 mt-1">
                         {ex.exercise.muscleGroup && (
                           <>
-                            <span className="text-xs text-gray-500 uppercase">
+                            <span className="text-xs text-gray-600 uppercase">
                               {ex.exercise.muscleGroup}
                             </span>
-                            <span className="text-gray-600">·</span>
+                            <span className="text-gray-700">·</span>
                           </>
                         )}
-                        <span className="text-xs text-gray-400">
+                        <span className="text-xs text-gray-500">
                           {doneCount}/{ex.sets.length} {t('workout.sets', 'sets')}
                         </span>
                       </div>
@@ -691,7 +691,7 @@ export default function WorkoutSessionView() {
                       <button
                         onClick={() => handleRemoveExerciseClick(ex.id)}
                         disabled={removingExerciseId === ex.id}
-                        className="w-[48px] h-[48px] rounded border border-red-900/60 text-red-400 hover:bg-red-900/40 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center touch-manipulation"
+                        className="w-[48px] h-[48px] rounded text-gray-400 hover:text-gray-200 hover:bg-gray-800/40 disabled:opacity-50 disabled:cursor-not-allowed transition flex items-center justify-center touch-manipulation"
                         title={t('workout.remove', 'Remover')}
                       >
                         {removingExerciseId === ex.id ? (
@@ -712,68 +712,41 @@ export default function WorkoutSessionView() {
                         data-set-id={s.id}
                         className={`rounded-lg border p-4 ${
                           s.completed
-                            ? 'border-green-600/30 bg-green-950/10'
+                            ? 'border-green-600/20 bg-green-950/5'
                             : 'border-gray-800 bg-[#101010]'
                         }`}
                       >
                         <div className="flex items-center justify-between mb-4">
-                          <span className="text-sm font-medium text-gray-200">
+                          <span className="text-xs font-medium text-gray-500">
                             {t('workout.setNumber', { number: s.setIndex + 1 })}
                           </span>
 
-                          <div className="flex items-center gap-3">
-                            <button
-                              onClick={() =>
-                                handleSetChange(
-                                  ex.id,
-                                  s.id,
-                                  'completed',
-                                  !s.completed,
-                                )
-                              }
-                              className={`h-[48px] text-xs px-4 rounded font-medium transition flex items-center justify-center touch-manipulation ${
-                                s.completed
-                                  ? 'bg-green-600/20 text-green-400 border border-green-600/30'
-                                  : 'border border-gray-700 text-gray-300 hover:bg-gray-800/60 hover:border-gray-600'
-                              }`}
-                            >
-                              {s.completed ? '✓ ' + t('workout.done', 'Concluído') : t('workout.markDone', 'Marcar Concluído')}
-                            </button>
-                            {s.completed && (
-                              <button
-                                onClick={() => setTimerOpen(true)}
-                                className="h-[48px] text-xs px-4 rounded font-medium text-primary border border-primary/50 hover:bg-primary/10 transition flex items-center justify-center touch-manipulation"
-                              >
-                                {t('workout.startRest', 'Descanso')}
-                              </button>
+                          <button
+                            onClick={() => handleRemoveSetClick(s.id, ex.id)}
+                            disabled={removingSetId === s.id}
+                            className="w-[48px] h-[48px] rounded text-gray-400 hover:text-gray-200 hover:bg-gray-800/40 disabled:opacity-50 disabled:cursor-not-allowed transition flex items-center justify-center touch-manipulation"
+                            title={t('workout.remove', 'Remover')}
+                          >
+                            {removingSetId === s.id ? (
+                              <Loader2 className="w-5 h-5 animate-spin" />
+                            ) : (
+                              <span className="text-lg">×</span>
                             )}
-                            <button
-                              onClick={() => handleRemoveSetClick(s.id, ex.id)}
-                              disabled={removingSetId === s.id}
-                              className="w-[48px] h-[48px] rounded border border-red-900/60 text-red-400 hover:bg-red-900/40 disabled:opacity-50 disabled:cursor-not-allowed transition flex items-center justify-center touch-manipulation"
-                              title={t('workout.remove', 'Remover')}
-                            >
-                              {removingSetId === s.id ? (
-                                <Loader2 className="w-5 h-5 animate-spin" />
-                              ) : (
-                                <span className="text-lg">×</span>
-                              )}
-                            </button>
-                          </div>
+                          </button>
                         </div>
 
                         {/* Mostrar valores planejados apenas se for treino de template */}
                         {session.templateId && (s.plannedReps != null || s.plannedRir != null) && (
-                          <div className="mb-3 px-2.5 py-1.5 rounded bg-gray-900/30 border border-gray-800/50">
-                            <div className="text-xs text-gray-500 mb-0.5">{t('workout.planned', 'Planejado')}</div>
-                            <div className="text-xs text-gray-300">
+                          <div className="mb-3 px-2.5 py-1.5 rounded bg-gray-900/20 border border-gray-800/30">
+                            <div className="text-xs text-gray-600 mb-0.5">{t('workout.planned', 'Planejado')}</div>
+                            <div className="text-xs text-gray-400">
                               {s.plannedReps != null && (
                                 <span>
                                   {s.plannedReps} {t('workout.repsLabel', 'reps')}
                                 </span>
                               )}
                               {s.plannedReps != null && s.plannedRir != null && (
-                                <span className="text-gray-600 mx-1.5">·</span>
+                                <span className="text-gray-700 mx-1.5">·</span>
                               )}
                               {s.plannedRir != null && (
                                 <span>
@@ -786,7 +759,7 @@ export default function WorkoutSessionView() {
 
                         <div className="grid grid-cols-3 gap-3 mb-3">
                           <div>
-                            <label className="text-xs text-gray-400 block mb-1.5">
+                            <label className="text-xs text-gray-500 block mb-1.5">
                               {t('workout.load', 'Carga')}
                             </label>
                             <input
@@ -806,7 +779,7 @@ export default function WorkoutSessionView() {
                           </div>
 
                           <div>
-                            <label className="text-xs text-gray-400 block mb-1.5">
+                            <label className="text-xs text-gray-500 block mb-1.5">
                               {t('workout.reps', 'Reps')}
                             </label>
                             <input
@@ -826,7 +799,7 @@ export default function WorkoutSessionView() {
                           </div>
 
                           <div>
-                            <label className="text-xs text-gray-400 block mb-1.5">
+                            <label className="text-xs text-gray-500 block mb-1.5">
                               {t('workout.rir', 'RIR')}
                             </label>
                             <input
@@ -854,7 +827,7 @@ export default function WorkoutSessionView() {
                               handleSetChange(ex.id, s.id, 'notes', e.target.value)
                             }
                             placeholder={t('workout.notes', 'Notas (opcional)')}
-                            className="w-full rounded-md border border-gray-700 bg-[#0f0f0f] px-3 py-2 text-sm text-gray-100 placeholder-gray-500 focus:border-gray-600 focus:outline-none transition"
+                            className="w-full rounded-md border border-gray-700 bg-[#0f0f0f] px-3 py-2 text-base text-gray-100 placeholder-gray-500 focus:border-gray-600 focus:outline-none transition"
                           />
                         </div>
 
@@ -895,6 +868,26 @@ export default function WorkoutSessionView() {
                             persistExercise(ex.id)
                           }}
                         />
+
+                        {/* Botão de Completar - no final do card (só aparece quando não está completo) */}
+                        {!s.completed && (
+                          <div className="flex justify-end mt-4 pt-3 border-t border-gray-800">
+                            <button
+                              onClick={() =>
+                                handleSetChange(
+                                  ex.id,
+                                  s.id,
+                                  'completed',
+                                  !s.completed,
+                                )
+                              }
+                              className="px-6 py-2.5 rounded-lg font-semibold transition-all flex items-center justify-center touch-manipulation bg-primary text-dark border-2 border-primary hover:brightness-110 hover:shadow-lg hover:shadow-primary/20 active:scale-95"
+                              title={t('workout.completeSet', 'Concluir Set')}
+                            >
+                              <span className="text-sm font-semibold">{t('workout.completeSet', 'Concluir Set')}</span>
+                            </button>
+                          </div>
+                        )}
                       </div>
                     ))}
 
