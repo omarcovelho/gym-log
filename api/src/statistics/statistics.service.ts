@@ -5,6 +5,132 @@ import { PrismaService } from '../prisma/prisma.service';
 export class StatisticsService {
   constructor(private prisma: PrismaService) {}
 
+  /**
+   * Calcula o volume ajustado de um set, incluindo intensity blocks e fator de intensidade (FI)
+   * @param set Set com intensityBlocks incluídos
+   * @returns Volume ajustado do set
+   */
+  private calculateSetVolume(set: {
+    actualLoad?: number | null;
+    actualReps?: number | null;
+    intensityType?: string | null;
+    intensityBlocks?: Array<{
+      reps: number | null;
+      load?: number | null;
+    }>;
+  }): number {
+    // Se não tem carga ou reps, volume é 0
+    if (!set.actualLoad || !set.actualReps) {
+      return 0;
+    }
+
+    // Se não tem intensity blocks ou tipo é NONE, retorna volume normal
+    if (
+      !set.intensityType ||
+      set.intensityType === 'NONE' ||
+      !set.intensityBlocks ||
+      set.intensityBlocks.length === 0
+    ) {
+      return set.actualLoad * set.actualReps;
+    }
+
+    const blocks = set.intensityBlocks;
+    const blocksCount = blocks.length;
+
+    if (set.intensityType === 'REST_PAUSE') {
+      // REST_PAUSE: total_reps = actualReps + sum(reps dos blocks)
+      const totalRepsBlocks = blocks.reduce((sum, block) => sum + (block.reps || 0), 0);
+      const totalReps = set.actualReps + totalRepsBlocks;
+      const volumeBase = set.actualLoad * totalReps;
+
+      // Calcular FI baseado no número de blocks
+      let fi = 1.0;
+      if (blocksCount === 1) {
+        fi = 1.10; // leve
+      } else if (blocksCount === 2) {
+        fi = 1.15; // médio
+      } else if (blocksCount >= 3) {
+        fi = 1.25; // pesado
+      }
+
+      return volumeBase * fi;
+    } else if (set.intensityType === 'DROP_SET') {
+      // DROP_SET: volume_base = Σ (carga_i × reps_i)
+      // Set principal
+      const mainVolume = set.actualLoad * set.actualReps;
+      // Volume dos blocks
+      const blocksVolume = blocks.reduce(
+        (sum, block) => sum + ((block.load || 0) * (block.reps || 0)),
+        0,
+      );
+      const volumeBase = mainVolume + blocksVolume;
+
+      // Calcular FI baseado no número de blocks (quedas)
+      let fi = 1.0;
+      if (blocksCount === 1) {
+        fi = 1.25; // simples
+      } else if (blocksCount === 2) {
+        fi = 1.40; // duplo
+      } else if (blocksCount >= 3) {
+        fi = 1.50; // triplo
+      }
+
+      return volumeBase * fi;
+    }
+
+    // Fallback: volume normal se tipo não reconhecido
+    return set.actualLoad * set.actualReps;
+  }
+
+  /**
+   * Calcula sets equivalentes de um set, incluindo fator de intensidade (FI)
+   * Sets reais = 1, Sets equivalentes = 1 × FI
+   * @param set Set com intensityBlocks incluídos
+   * @returns Sets equivalentes (1 × FI) ou 1.0 se não tiver intensity blocks
+   */
+  private calculateSetEquivalentSets(set: {
+    intensityType?: string | null;
+    intensityBlocks?: Array<{
+      reps: number | null;
+      load?: number | null;
+    }>;
+  }): number {
+    // Se não tem intensity blocks ou tipo é NONE, retorna 1.0 (set normal)
+    if (
+      !set.intensityType ||
+      set.intensityType === 'NONE' ||
+      !set.intensityBlocks ||
+      set.intensityBlocks.length === 0
+    ) {
+      return 1.0;
+    }
+
+    const blocksCount = set.intensityBlocks.length;
+
+    if (set.intensityType === 'REST_PAUSE') {
+      // REST_PAUSE: sets equivalentes = 1 × FI
+      if (blocksCount === 1) {
+        return 1.10; // leve
+      } else if (blocksCount === 2) {
+        return 1.15; // médio
+      } else if (blocksCount >= 3) {
+        return 1.25; // pesado
+      }
+    } else if (set.intensityType === 'DROP_SET') {
+      // DROP_SET: sets equivalentes = 1 × FI
+      if (blocksCount === 1) {
+        return 1.25; // simples
+      } else if (blocksCount === 2) {
+        return 1.40; // duplo
+      } else if (blocksCount >= 3) {
+        return 1.50; // triplo
+      }
+    }
+
+    // Fallback: set normal
+    return 1.0;
+  }
+
   /** Busca estatísticas do usuário para dashboard */
   async getUserStats(userId: string) {
     const now = new Date();
@@ -31,7 +157,11 @@ export class StatisticsService {
       include: {
         exercises: {
           include: {
-            sets: true,
+            sets: {
+              include: {
+                intensityBlocks: true,
+              },
+            },
             exercise: true,
           },
         },
@@ -43,8 +173,8 @@ export class StatisticsService {
     monthlySessions.forEach((session) => {
       session.exercises.forEach((ex) => {
         ex.sets.forEach((set) => {
-          if (set.completed && set.actualLoad && set.actualReps) {
-            monthlyVolume += set.actualLoad * set.actualReps;
+          if (set.completed) {
+            monthlyVolume += this.calculateSetVolume(set);
           }
         });
       });
@@ -60,7 +190,11 @@ export class StatisticsService {
       include: {
         exercises: {
           include: {
-            sets: true,
+            sets: {
+              include: {
+                intensityBlocks: true,
+              },
+            },
           },
         },
       },
@@ -77,8 +211,8 @@ export class StatisticsService {
       // Só processa se o treino estiver finalizado
       lastWorkout.exercises.forEach((ex) => {
         ex.sets.forEach((set) => {
-          if (set.completed && set.actualLoad && set.actualReps) {
-            lastWorkoutVolume += set.actualLoad * set.actualReps;
+          if (set.completed) {
+            lastWorkoutVolume += this.calculateSetVolume(set);
           }
         });
       });
@@ -101,7 +235,11 @@ export class StatisticsService {
       include: {
         exercises: {
           include: {
-            sets: true,
+            sets: {
+              include: {
+                intensityBlocks: true,
+              },
+            },
           },
         },
       },
@@ -115,8 +253,8 @@ export class StatisticsService {
       let dayVolume = 0;
       session.exercises.forEach((ex) => {
         ex.sets.forEach((set) => {
-          if (set.completed && set.actualLoad && set.actualReps) {
-            dayVolume += set.actualLoad * set.actualReps;
+          if (set.completed) {
+            dayVolume += this.calculateSetVolume(set);
           }
         });
       });
@@ -207,7 +345,11 @@ export class StatisticsService {
       include: {
         exercises: {
           include: {
-            sets: true,
+            sets: {
+              include: {
+                intensityBlocks: true,
+              },
+            },
             exercise: true,
           },
         },
@@ -379,16 +521,15 @@ export class StatisticsService {
         const muscleGroupStats = weekStats.byMuscleGroup.get(muscleGroup)!;
 
         ex.sets.forEach((set) => {
-          // Contar todas as séries
-          weekStats.sets++;
-          muscleGroupStats.sets++;
+          // Contar sets equivalentes (inclui FI)
+          const equivalentSets = this.calculateSetEquivalentSets(set);
+          weekStats.sets += equivalentSets;
+          muscleGroupStats.sets += equivalentSets;
 
-          // Calcular volume apenas para sets com actualLoad e actualReps preenchidos
-          if (set.actualLoad != null && set.actualReps != null) {
-            const volume = set.actualLoad * set.actualReps;
-            weekStats.volume += volume;
-            muscleGroupStats.volume += volume;
-          }
+          // Calcular volume usando função helper (inclui intensity blocks e FI)
+          const volume = this.calculateSetVolume(set);
+          weekStats.volume += volume;
+          muscleGroupStats.volume += volume;
         });
       });
     });
@@ -465,7 +606,11 @@ export class StatisticsService {
             exerciseId,
           },
           include: {
-            sets: true,
+            sets: {
+              include: {
+                intensityBlocks: true,
+              },
+            },
             exercise: true,
           },
         },
@@ -516,11 +661,17 @@ export class StatisticsService {
 
       session.exercises.forEach((ex) => {
         ex.sets.forEach((set) => {
-          if (set.completed && set.actualLoad != null && set.actualReps != null) {
-            weekData.loads.push(set.actualLoad);
-            weekData.volumes.push(set.actualLoad * set.actualReps);
-            weekData.reps.push(set.actualReps);
-            weekData.setsCount++;
+          if (set.completed) {
+            const volume = this.calculateSetVolume(set);
+            const equivalentSets = this.calculateSetEquivalentSets(set);
+            if (set.actualLoad != null) {
+              weekData.loads.push(set.actualLoad);
+            }
+            weekData.volumes.push(volume);
+            if (set.actualReps != null) {
+              weekData.reps.push(set.actualReps);
+            }
+            weekData.setsCount += equivalentSets;
           }
         });
       });

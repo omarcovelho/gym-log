@@ -25,62 +25,10 @@ export function WorkoutExportView({ session }: Props) {
       : null
 
   const totalSets = session.exercises.reduce((acc, e) => acc + e.sets.length, 0)
-  const totalVolume = session.exercises.reduce((acc, ex) => {
-    return (
-      acc +
-      ex.sets.reduce((setAcc, set) => {
-        if (set.actualLoad && set.actualReps) {
-          return setAcc + set.actualLoad * set.actualReps
-        }
-        return setAcc
-      }, 0)
-    )
-  }, 0)
-
-  // Agrupar exercícios por grupo muscular e calcular volume total por grupo
-  const exercisesByGroup = new Map<string, typeof session.exercises>()
-  const firstAppearanceOrder = new Map<string, number>()
   
-  // Ordenar exercícios pela ordem no treino
-  const sortedExercises = [...session.exercises].sort((a, b) => a.order - b.order)
-  
-  sortedExercises.forEach((ex, index) => {
-    const muscleGroup = ex.exercise.muscleGroup
-    // Filtrar grupos null ou OTHER
-    if (!muscleGroup || muscleGroup === 'OTHER') return
-    
-    if (!exercisesByGroup.has(muscleGroup)) {
-      exercisesByGroup.set(muscleGroup, [])
-      // Registrar a primeira aparição do grupo
-      firstAppearanceOrder.set(muscleGroup, index)
-    }
-    exercisesByGroup.get(muscleGroup)!.push(ex)
-  })
-  
-  // Para cada grupo, calcular volume total e número de séries
-  const volumeByGroup = Array.from(exercisesByGroup.entries())
-    .map(([muscleGroup, exercises]) => {
-      const totalVolume = exercises.reduce((groupVolume, ex) => {
-        const exerciseVolume = ex.sets.reduce(
-          (acc, s) => (s.actualLoad && s.actualReps ? acc + s.actualLoad * s.actualReps : acc),
-          0
-        )
-        return groupVolume + exerciseVolume
-      }, 0)
-      
-      const totalSets = exercises.reduce((acc, ex) => acc + ex.sets.length, 0)
-      const exerciseCount = exercises.length
-      
-      return {
-        muscleGroup,
-        volume: totalVolume,
-        sets: totalSets,
-        exerciseCount,
-        firstOrder: firstAppearanceOrder.get(muscleGroup) ?? 999,
-      }
-    })
-    // Ordenar pela ordem de primeira aparição no treino
-    .sort((a, b) => a.firstOrder - b.firstOrder)
+  // Usar valores calculados do backend (sem fallback)
+  const totalVolume = session.totalVolume ?? 0
+  const volumeByGroup = session.volumeByGroup ?? []
 
   return (
     <div
