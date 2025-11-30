@@ -261,6 +261,130 @@ export class WorkoutSessionService {
         };
     }
 
+    /**
+     * Calcula o volume ajustado de um set, incluindo intensity blocks e fator de intensidade (FI)
+     * Mesma lógica do StatisticsService
+     */
+    private calculateSetVolume(set: {
+        actualLoad?: number | null;
+        actualReps?: number | null;
+        intensityType?: string | null;
+        intensityBlocks?: Array<{
+            reps: number | null;
+            load?: number | null;
+        }>;
+    }): number {
+        // Se não tem carga ou reps, volume é 0
+        if (!set.actualLoad || !set.actualReps) {
+            return 0;
+        }
+
+        // Se não tem intensity blocks ou tipo é NONE, retorna volume normal
+        if (
+            !set.intensityType ||
+            set.intensityType === 'NONE' ||
+            !set.intensityBlocks ||
+            set.intensityBlocks.length === 0
+        ) {
+            return set.actualLoad * set.actualReps;
+        }
+
+        const blocks = set.intensityBlocks;
+        const blocksCount = blocks.length;
+
+        if (set.intensityType === 'REST_PAUSE') {
+            // REST_PAUSE: total_reps = actualReps + sum(reps dos blocks)
+            const totalRepsBlocks = blocks.reduce((sum, block) => sum + (block.reps || 0), 0);
+            const totalReps = set.actualReps + totalRepsBlocks;
+            const volumeBase = set.actualLoad * totalReps;
+
+            // Calcular FI baseado no número de blocks
+            let fi = 1.0;
+            if (blocksCount === 1) {
+                fi = 1.10; // leve
+            } else if (blocksCount === 2) {
+                fi = 1.15; // médio
+            } else if (blocksCount >= 3) {
+                fi = 1.25; // pesado
+            }
+
+            return volumeBase * fi;
+        } else if (set.intensityType === 'DROP_SET') {
+            // DROP_SET: volume_base = Σ (carga_i × reps_i)
+            // Set principal
+            const mainVolume = set.actualLoad * set.actualReps;
+            // Volume dos blocks
+            const blocksVolume = blocks.reduce(
+                (sum, block) => sum + ((block.load || 0) * (block.reps || 0)),
+                0,
+            );
+            const volumeBase = mainVolume + blocksVolume;
+
+            // Calcular FI baseado no número de blocks (quedas)
+            let fi = 1.0;
+            if (blocksCount === 1) {
+                fi = 1.25; // simples
+            } else if (blocksCount === 2) {
+                fi = 1.40; // duplo
+            } else if (blocksCount >= 3) {
+                fi = 1.50; // triplo
+            }
+
+            return volumeBase * fi;
+        }
+
+        // Fallback: volume normal se tipo não reconhecido
+        return set.actualLoad * set.actualReps;
+    }
+
+    /**
+     * Calcula sets equivalentes de um set, incluindo fator de intensidade (FI)
+     * Sets reais = 1, Sets equivalentes = 1 × FI
+     * Mesma lógica do StatisticsService
+     */
+    private calculateSetEquivalentSets(set: {
+        intensityType?: string | null;
+        intensityBlocks?: Array<{
+            reps: number | null;
+            load?: number | null;
+        }>;
+    }): number {
+        // Se não tem intensity blocks ou tipo é NONE, retorna 1.0 (set normal)
+        if (
+            !set.intensityType ||
+            set.intensityType === 'NONE' ||
+            !set.intensityBlocks ||
+            set.intensityBlocks.length === 0
+        ) {
+            return 1.0;
+        }
+
+        const blocksCount = set.intensityBlocks.length;
+
+        if (set.intensityType === 'REST_PAUSE') {
+            // REST_PAUSE: sets equivalentes = 1 × FI
+            if (blocksCount === 1) {
+                return 1.10; // leve
+            } else if (blocksCount === 2) {
+                return 1.15; // médio
+            } else if (blocksCount >= 3) {
+                return 1.25; // pesado
+            }
+        } else if (set.intensityType === 'DROP_SET') {
+            // DROP_SET: sets equivalentes = 1 × FI
+            if (blocksCount === 1) {
+                return 1.25; // simples
+            } else if (blocksCount === 2) {
+                return 1.40; // duplo
+            } else if (blocksCount >= 3) {
+                return 1.50; // triplo
+            }
+        }
+
+        // Fallback: set normal
+        return 1.0;
+    }
+
     /** Busca sessão específica */
     async findById(userId: string, sessionId: string) {
         const session = await this.prisma.workoutSession.findUnique({
@@ -283,7 +407,69 @@ export class WorkoutSessionService {
         })
         if (!session || session.userId !== userId)
             throw new ForbiddenException('Access denied')
-        return session
+        
+        // Calcular volume total do treino
+        let totalVolume = 0;
+        session.exercises.forEach((ex) => {
+            ex.sets.forEach((set) => {
+                if (set.completed) {
+                    totalVolume += this.calculateSetVolume(set);
+                }
+            });
+        });
+
+        // Calcular volume por grupo muscular
+        const exercisesByGroup = new Map<string, typeof session.exercises>();
+        const firstAppearanceOrder = new Map<string, number>();
+        
+        session.exercises.forEach((ex, index) => {
+            const muscleGroup = ex.exercise.muscleGroup;
+            // Filtrar grupos null ou OTHER
+            if (!muscleGroup || muscleGroup === 'OTHER') return;
+            
+            if (!exercisesByGroup.has(muscleGroup)) {
+                exercisesByGroup.set(muscleGroup, []);
+                firstAppearanceOrder.set(muscleGroup, index);
+            }
+            exercisesByGroup.get(muscleGroup)!.push(ex);
+        });
+
+        const volumeByGroup = Array.from(exercisesByGroup.entries())
+            .map(([muscleGroup, exercises]) => {
+                const groupVolume = exercises.reduce((groupVol, ex) => {
+                    const exerciseVolume = ex.sets.reduce(
+                        (acc, s) => (s.completed ? acc + this.calculateSetVolume(s) : acc),
+                        0
+                    );
+                    return groupVol + exerciseVolume;
+                }, 0);
+                
+                // Calcular sets equivalentes (inclui FI)
+                const totalSets = exercises.reduce((acc, ex) => {
+                    const exerciseSets = ex.sets.reduce(
+                        (setAcc, s) => (s.completed ? setAcc + this.calculateSetEquivalentSets(s) : setAcc),
+                        0
+                    );
+                    return acc + exerciseSets;
+                }, 0);
+                
+                const exerciseCount = exercises.length;
+                
+                return {
+                    muscleGroup,
+                    volume: groupVolume,
+                    sets: totalSets,
+                    exerciseCount,
+                    firstOrder: firstAppearanceOrder.get(muscleGroup) ?? 999,
+                };
+            })
+            .sort((a, b) => a.firstOrder - b.firstOrder);
+
+        return {
+            ...session,
+            totalVolume,
+            volumeByGroup,
+        };
     }
 
     /** Busca treino em andamento (sem endAt) */

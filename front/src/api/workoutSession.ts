@@ -75,6 +75,13 @@ export type WorkoutSession = {
   notes?: string | null
   exercises: SessionExercise[]
   createdAt: string
+  totalVolume?: number
+  volumeByGroup?: Array<{
+    muscleGroup: string
+    volume: number
+    sets: number
+    exerciseCount: number
+  }>
 }
 
 /* ============================================================
