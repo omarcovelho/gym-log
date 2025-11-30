@@ -25,6 +25,10 @@ export class UpdateSetIntensityBlockDto {
   @IsOptional()
   @IsInt()
   restSeconds?: number | null
+
+  @IsOptional()
+  @IsNumber()
+  load?: number | null
 }
 
 export class UpdateSetDto {

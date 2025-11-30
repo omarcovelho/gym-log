@@ -10,6 +10,7 @@ export type SessionSetIntensityBlock = {
   blockIndex: number
   reps: number | null
   restSeconds?: number | null
+  load?: number | null
 }
 
 export type UpdateWorkoutExerciseDto = {
@@ -105,6 +106,7 @@ export type UpdateSetDto = Partial<{
     blockIndex: number
     reps: number
     restSeconds?: number | null
+    load?: number | null
   }[]
 }>
 

@@ -145,6 +145,7 @@
     "completeSet": "Concluir Set",
     "done": "✓ Concluído",
     "startRest": "Iniciar Descanso",
+    "timer": "Timer",
     "remove": "Remover",
     "set": "Série",
     "load": "Carga",
@@ -199,7 +200,16 @@
     "daysAgo": "Há {{count}} dias",
     "noCompletedSets": "Nenhuma série completada nesta sessão",
     "elapsedTime": "Tempo",
-    "exit": "Sair"
+    "exit": "Sair",
+    "intensityTechniques": "Técnicas de intensidade",
+    "intensityNone": "Nenhuma",
+    "intensityRestPause": "Rest-pause",
+    "intensityDropSet": "Drop Set",
+    "intensityRestPauseHint": "Adicione blocos de reps extras com descanso curto.",
+    "intensityDropSetHint": "Adicione drops com carga reduzida e reps.",
+    "addRestPauseBlock": "Adicionar bloco",
+    "addDropSetBlock": "Adicionar drop",
+    "seconds": "seg"
   },
   "navigation": {
     "home": "Início",

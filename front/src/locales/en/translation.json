@@ -145,6 +145,7 @@
     "completeSet": "Complete Set",
     "done": "✓ Done",
     "startRest": "Start Rest",
+    "timer": "Timer",
     "remove": "Remove",
     "set": "Set",
     "load": "Load",
@@ -199,7 +200,16 @@
     "daysAgo": "{{count}} days ago",
     "noCompletedSets": "No completed sets in this session",
     "elapsedTime": "Time",
-    "exit": "Exit"
+    "exit": "Exit",
+    "intensityTechniques": "Intensity Techniques",
+    "intensityNone": "None",
+    "intensityRestPause": "Rest-pause",
+    "intensityDropSet": "Drop Set",
+    "intensityRestPauseHint": "Add extra rep blocks with short rest.",
+    "intensityDropSetHint": "Add drops with reduced load and reps.",
+    "addRestPauseBlock": "Add block",
+    "addDropSetBlock": "Add drop",
+    "seconds": "sec"
   },
   "navigation": {
     "home": "Home",

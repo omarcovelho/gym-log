@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate, useParams, Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { Share2, Loader2 } from 'lucide-react'
-import { getWorkoutSession, type WorkoutSession } from '@/api/workoutSession'
+import { getWorkoutSession, type WorkoutSession, type SessionSet } from '@/api/workoutSession'
 import { useAuth } from '@/auth/AuthContext'
 import { useToast } from '@/components/ToastProvider'
 import { WorkoutExportView } from '@/components/WorkoutExportView'
@@ -48,6 +48,42 @@ export default function WorkoutSessionDetails() {
     parts.push(`${reps ?? '—'} ${t('workout.repsLabel')}`)
     parts.push(`${t('workout.rir')} ${rir ?? '—'}`)
     return parts.join(' · ')
+  }
+
+  const fmtIntensityBlocks = (set: SessionSet) => {
+    if (!set.intensityType || set.intensityType === 'NONE' || !set.intensityBlocks || set.intensityBlocks.length === 0) {
+      return null
+    }
+
+    const sortedBlocks = [...set.intensityBlocks].sort((a, b) => a.blockIndex - b.blockIndex)
+    const intensityTypeLabel = set.intensityType === 'REST_PAUSE' 
+      ? t('workout.intensityRestPause', 'Rest-pause')
+      : set.intensityType === 'DROP_SET'
+      ? t('workout.intensityDropSet', 'Drop Set')
+      : ''
+
+    const blocksFormatted = sortedBlocks.map((block) => {
+      if (set.intensityType === 'REST_PAUSE') {
+        const parts: string[] = []
+        if (block.reps != null) parts.push(`${block.reps} ${t('workout.repsLabel')}`)
+        if (block.restSeconds != null) parts.push(`${block.restSeconds} ${t('workout.seconds', 'seg')}`)
+        return parts.length > 0 ? parts.join(' · ') : null
+      } else if (set.intensityType === 'DROP_SET') {
+        const parts: string[] = []
+        if (block.load != null) parts.push(`${block.load} ${t('workout.kg')}`)
+        if (block.reps != null) parts.push(`${block.reps} ${t('workout.repsLabel')}`)
+        return parts.length > 0 ? parts.join(' · ') : null
+      }
+      return null
+    }).filter((formatted): formatted is string => formatted !== null)
+
+    if (blocksFormatted.length === 0) return null
+
+    return {
+      type: set.intensityType,
+      typeLabel: intensityTypeLabel,
+      blocks: blocksFormatted,
+    }
   }
 
   const duration =
@@ -179,43 +215,62 @@ export default function WorkoutSessionDetails() {
             </div>
 
             <div className="p-4">
-              <table className="w-full table-fixed text-sm text-gray-300">
+              <table className="w-full text-sm text-gray-300">
                 <thead className="text-xs text-gray-500 border-b border-gray-800">
                   <tr>
                     <th className="text-left py-1 w-12">{t('workout.set')}</th>
                     {session.templateId && (
                       <th className="text-left py-1 w-36">{t('workout.planned')}</th>
                     )}
-                    <th className="text-left py-1 w-48">{t('workout.actual')}</th>
+                    <th className="text-left py-1 min-w-[12rem]">{t('workout.actual')}</th>
                     <th className="text-left py-1">{t('workout.notes')}</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {[...ex.sets].sort((a, b) => a.setIndex - b.setIndex).map((s) => (
-                    <tr
-                      key={s.id}
-                      className="border-t border-gray-800"
-                    >
-                      <td className="py-2 whitespace-nowrap">#{s.setIndex + 1}</td>
+                  {[...ex.sets].sort((a, b) => a.setIndex - b.setIndex).map((s) => {
+                    const intensityInfo = fmtIntensityBlocks(s)
+                    const hasIntensityBlocks = intensityInfo !== null
+                    
+                    return (
+                      <tr
+                        key={s.id}
+                        className="border-t border-gray-800"
+                      >
+                        <td className="py-2 whitespace-nowrap">#{s.setIndex + 1}</td>
 
-                      {session.templateId && (
-                        <td className="py-2 whitespace-nowrap">
-                          {(s.plannedReps ?? '—')}{' '}
-                          <span className="text-gray-500">{t('workout.repsLabel')}</span>{' '}
-                          <span className="text-gray-600">·</span>{' '}
-                          <span className="text-gray-500">{t('workout.rir')}</span> {s.plannedRir ?? '—'}
+                        {session.templateId && (
+                          <td className="py-2 whitespace-nowrap">
+                            {(s.plannedReps ?? '—')}{' '}
+                            <span className="text-gray-500">{t('workout.repsLabel')}</span>{' '}
+                            <span className="text-gray-600">·</span>{' '}
+                            <span className="text-gray-500">{t('workout.rir')}</span> {s.plannedRir ?? '—'}
+                          </td>
+                        )}
+
+                        <td className="py-2 min-w-0">
+                          <div className="flex flex-col gap-1">
+                            <span className="whitespace-nowrap">{fmtActual(s.actualLoad, s.actualReps, s.actualRir)}</span>
+                            {hasIntensityBlocks && (
+                              <div className="text-xs text-gray-500 mt-1">
+                                <div className="text-gray-600 font-medium mb-0.5">{intensityInfo.typeLabel}:</div>
+                                <div className="flex flex-col gap-0.5">
+                                  {intensityInfo.blocks.map((block, idx) => (
+                                    <div key={idx} className="pl-2">
+                                      {block}
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                          </div>
                         </td>
-                      )}
 
-                      <td className="py-2 whitespace-nowrap">
-                        {fmtActual(s.actualLoad, s.actualReps, s.actualRir)}
-                      </td>
-
-                      <td className="py-2 min-w-0">
-                        <span className="block truncate text-gray-400">{s.notes ?? '—'}</span>
-                      </td>
-                    </tr>
-                  ))}
+                        <td className="py-2 min-w-0">
+                          <span className="block truncate text-gray-400">{s.notes ?? '—'}</span>
+                        </td>
+                      </tr>
+                    )
+                  })}
                 </tbody>
               </table>
             </div>

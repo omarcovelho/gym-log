@@ -172,6 +172,7 @@ model SessionSetIntensityBlock {
   blockIndex  Int
   reps        Int
   restSeconds Int?
+  load        Float?
 
   @@index([sessionSetId, blockIndex])
 }
