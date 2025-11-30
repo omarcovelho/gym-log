@@ -161,6 +161,11 @@ export class WorkoutSessionService {
                     if (typeof block.reps === 'number') {
                         updateData.reps = block.reps
                     }
+                    if (typeof block.load === 'number') {
+                        updateData.load = block.load
+                    } else if (block.load === null) {
+                        updateData.load = null
+                    }
 
                     await this.prisma.sessionSetIntensityBlock.update({
                         where: { id: block.id },
@@ -174,6 +179,7 @@ export class WorkoutSessionService {
                             // se reps não vier, default 0 para satisfazer o schema
                             reps: typeof block.reps === 'number' ? block.reps : 0,
                             restSeconds: block.restSeconds ?? null,
+                            load: typeof block.load === 'number' ? block.load : null,
                         },
                     })
                 }
@@ -421,6 +427,11 @@ export class WorkoutSessionService {
                         if (typeof block.reps === 'number') {
                             updateData.reps = block.reps
                         }
+                        if (typeof block.load === 'number') {
+                            updateData.load = block.load
+                        } else if (block.load === null) {
+                            updateData.load = null
+                        }
 
                         await this.prisma.sessionSetIntensityBlock.update({
                             where: { id: block.id },
@@ -433,6 +444,7 @@ export class WorkoutSessionService {
                                 blockIndex: block.blockIndex,
                                 reps: typeof block.reps === 'number' ? block.reps : 0,
                                 restSeconds: block.restSeconds ?? null,
+                                load: typeof block.load === 'number' ? block.load : null,
                             },
                         })
                     }

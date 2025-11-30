@@ -6,7 +6,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/auth/AuthContext'
 import { useToast } from '@/components/ToastProvider'
-import { Loader2, TrendingUp } from 'lucide-react'
+import { Loader2, TrendingUp, Plus } from 'lucide-react'
 import {
   getWorkoutSession,
   updateWorkoutSession,
@@ -74,6 +74,7 @@ function SetIntensityEditor({ set, onChangeType, onChangeBlocks, onChangeTypeAnd
       blockIndex: nextIndex,
       reps: null,
       restSeconds: null,
+      load: null,
     }
 
     onChangeBlocks([...currentBlocks, newBlock])
@@ -81,7 +82,7 @@ function SetIntensityEditor({ set, onChangeType, onChangeBlocks, onChangeTypeAnd
 
   const handleBlockChange = (
     blockId: string,
-    field: 'reps' | 'restSeconds',
+    field: 'reps' | 'restSeconds' | 'load',
     value: number | null,
   ) => {
     const currentBlocks = set.intensityBlocks ?? []
@@ -121,7 +122,7 @@ function SetIntensityEditor({ set, onChangeType, onChangeBlocks, onChangeTypeAnd
               }
             } else {
               const currentBlocks = set.intensityBlocks ?? []
-              const shouldAddFirstBlock = currentBlocks.length === 0 && next === 'REST_PAUSE'
+              const shouldAddFirstBlock = currentBlocks.length === 0 && (next === 'REST_PAUSE' || next === 'DROP_SET')
               
               // Atualizar tipo e blocos em uma única operação para evitar requisições duplicadas
               if (shouldAddFirstBlock && onChangeTypeAndBlocks) {
@@ -130,6 +131,7 @@ function SetIntensityEditor({ set, onChangeType, onChangeBlocks, onChangeTypeAnd
                   blockIndex: 0,
                   reps: null,
                   restSeconds: null,
+                  load: null,
                 }
                 onChangeTypeAndBlocks(next, [firstBlock])
               } else {
@@ -141,7 +143,8 @@ function SetIntensityEditor({ set, onChangeType, onChangeBlocks, onChangeTypeAnd
         >
           <option value="NONE">{t('workout.intensityNone', 'Nenhuma')}</option>
           <option value="REST_PAUSE">{t('workout.intensityRestPause', 'Rest-pause')}</option>
-          {/* futuros tipos: DROP_SET, CLUSTER_SET */}
+          <option value="DROP_SET">{t('workout.intensityDropSet', 'Drop Set')}</option>
+          {/* futuros tipos: CLUSTER_SET */}
         </select>
       </div>
 
@@ -157,42 +160,51 @@ function SetIntensityEditor({ set, onChangeType, onChangeBlocks, onChangeTypeAnd
           )}
 
           {(set.intensityBlocks ?? []).map((block, idx) => (
-            <div key={block.id ?? idx} className="flex items-center gap-2">
-              <span className="text-xs text-gray-500 w-8">
-                #{idx + 1}
-              </span>
-              <input
-                type="number"
-                min={0}
-                value={block.reps ?? ''}
-                onChange={(e) =>
-                  handleBlockChange(
-                    block.id!,
-                    'reps',
-                    e.target.value === '' ? null : Number(e.target.value),
-                  )
-                }
-                className="flex-1 rounded-md border border-gray-700 bg-[#0f0f0f] px-2.5 py-1.5 text-base text-gray-100 focus:border-gray-600 focus:outline-none transition"
-                placeholder={t('workout.repsLabel', 'reps')}
-              />
-              <input
-                type="number"
-                min={0}
-                value={block.restSeconds ?? ''}
-                onChange={(e) =>
-                  handleBlockChange(
-                    block.id!,
-                    'restSeconds',
-                    e.target.value === '' ? null : Number(e.target.value),
-                  )
-                }
-                className="w-20 rounded-md border border-gray-700 bg-[#0f0f0f] px-2.5 py-1.5 text-base text-gray-100 focus:border-gray-600 focus:outline-none transition"
-                placeholder={t('workout.seconds', 'seg')}
-              />
+            <div key={block.id ?? idx} className="flex items-end gap-2">
+              <div className="flex-1">
+                <label className="text-xs text-gray-500 block mb-1">
+                  {t('workout.repsLabel', 'reps')}
+                </label>
+                <input
+                  type="number"
+                  min={0}
+                  value={block.reps ?? ''}
+                  onChange={(e) =>
+                    handleBlockChange(
+                      block.id!,
+                      'reps',
+                      e.target.value === '' ? null : Number(e.target.value),
+                    )
+                  }
+                  style={{ fontSize: '16px' }}
+                  className="w-full rounded-md border border-gray-700 bg-[#0f0f0f] px-2.5 py-1.5 text-base text-gray-100 focus:border-gray-600 focus:outline-none transition"
+                  placeholder="0"
+                />
+              </div>
+              <div className="w-20">
+                <label className="text-xs text-gray-500 block mb-1">
+                  {t('workout.seconds', 'seg')}
+                </label>
+                <input
+                  type="number"
+                  min={0}
+                  value={block.restSeconds ?? ''}
+                  onChange={(e) =>
+                    handleBlockChange(
+                      block.id!,
+                      'restSeconds',
+                      e.target.value === '' ? null : Number(e.target.value),
+                    )
+                  }
+                  style={{ fontSize: '16px' }}
+                  className="w-full rounded-md border border-gray-700 bg-[#0f0f0f] px-2.5 py-1.5 text-base text-gray-100 focus:border-gray-600 focus:outline-none transition"
+                  placeholder="0"
+                />
+              </div>
               <button
                 type="button"
                 onClick={() => handleRemoveBlock(block.id!)}
-                className="p-1.5 rounded text-gray-400 hover:text-gray-200 hover:bg-gray-800/40 transition"
+                className="p-1.5 rounded text-gray-400 hover:text-gray-200 hover:bg-gray-800/40 transition shrink-0 mb-0.5"
                 title={t('workout.remove', 'Remover')}
               >
                 <span className="text-sm">×</span>
@@ -203,9 +215,86 @@ function SetIntensityEditor({ set, onChangeType, onChangeBlocks, onChangeTypeAnd
           <button
             type="button"
             onClick={handleAddBlock}
-            className="text-xs mt-1 px-2.5 py-1.5 border border-gray-700 rounded text-gray-300 hover:bg-gray-800/60 transition"
+            className="mt-1 p-2 border border-gray-700 rounded text-gray-300 hover:bg-gray-800/60 transition flex items-center justify-center"
+            title={t('workout.addRestPauseBlock', 'Adicionar bloco')}
           >
-            {t('workout.addRestPauseBlock', 'Adicionar bloco')}
+            <Plus size={16} />
+          </button>
+        </div>
+      )}
+
+      {intensityType === 'DROP_SET' && (
+        <div className="space-y-2">
+          {(set.intensityBlocks ?? []).length === 0 && (
+            <p className="text-xs text-gray-500">
+              {t(
+                'workout.intensityDropSetHint',
+                'Adicione drops com carga reduzida e reps.',
+              )}
+            </p>
+          )}
+
+          {(set.intensityBlocks ?? []).map((block, idx) => (
+            <div key={block.id ?? idx} className="flex items-end gap-2">
+              <div className="w-24">
+                <label className="text-xs text-gray-500 block mb-1">
+                  {t('workout.load', 'Carga')}
+                </label>
+                <input
+                  type="number"
+                  min={0}
+                  step="0.5"
+                  value={block.load ?? ''}
+                  onChange={(e) =>
+                    handleBlockChange(
+                      block.id!,
+                      'load',
+                      e.target.value === '' ? null : Number(e.target.value),
+                    )
+                  }
+                  style={{ fontSize: '16px' }}
+                  className="w-full rounded-md border border-gray-700 bg-[#0f0f0f] px-2.5 py-1.5 text-base text-gray-100 focus:border-gray-600 focus:outline-none transition"
+                  placeholder="0"
+                />
+              </div>
+              <div className="flex-1">
+                <label className="text-xs text-gray-500 block mb-1">
+                  {t('workout.repsLabel', 'Reps')}
+                </label>
+                <input
+                  type="number"
+                  min={0}
+                  value={block.reps ?? ''}
+                  onChange={(e) =>
+                    handleBlockChange(
+                      block.id!,
+                      'reps',
+                      e.target.value === '' ? null : Number(e.target.value),
+                    )
+                  }
+                  style={{ fontSize: '16px' }}
+                  className="w-full rounded-md border border-gray-700 bg-[#0f0f0f] px-2.5 py-1.5 text-base text-gray-100 focus:border-gray-600 focus:outline-none transition"
+                  placeholder="0"
+                />
+              </div>
+              <button
+                type="button"
+                onClick={() => handleRemoveBlock(block.id!)}
+                className="p-1.5 rounded text-gray-400 hover:text-gray-200 hover:bg-gray-800/40 transition shrink-0 mb-0.5"
+                title={t('workout.remove', 'Remover')}
+              >
+                <span className="text-sm">×</span>
+              </button>
+            </div>
+          ))}
+
+          <button
+            type="button"
+            onClick={handleAddBlock}
+            className="mt-1 p-2 border border-gray-700 rounded text-gray-300 hover:bg-gray-800/60 transition flex items-center justify-center"
+            title={t('workout.addDropSetBlock', 'Adicionar drop')}
+          >
+            <Plus size={16} />
           </button>
         </div>
       )}
@@ -763,6 +852,7 @@ export default function WorkoutSessionView() {
                                   e.target.value,
                                 )
                               }
+                              style={{ fontSize: '16px' }}
                               className="w-full rounded-md border border-gray-700 bg-[#0f0f0f] px-3 py-2.5 text-base text-gray-100 focus:border-primary focus:outline-none transition"
                               placeholder="0"
                             />
@@ -783,6 +873,7 @@ export default function WorkoutSessionView() {
                                   e.target.value,
                                 )
                               }
+                              style={{ fontSize: '16px' }}
                               className="w-full rounded-md border border-gray-700 bg-[#0f0f0f] px-3 py-2.5 text-base text-gray-100 focus:border-primary focus:outline-none transition"
                               placeholder="0"
                             />
@@ -803,6 +894,7 @@ export default function WorkoutSessionView() {
                                   e.target.value,
                                 )
                               }
+                              style={{ fontSize: '16px' }}
                               className="w-full rounded-md border border-gray-700 bg-[#0f0f0f] px-3 py-2.5 text-base text-gray-100 focus:border-primary focus:outline-none transition"
                               placeholder="0"
                             />
@@ -816,6 +908,7 @@ export default function WorkoutSessionView() {
                             onChange={(e) =>
                               handleSetChange(ex.id, s.id, 'notes', e.target.value)
                             }
+                            style={{ fontSize: '16px' }}
                             placeholder={t('workout.notes', 'Notas (opcional)')}
                             className="w-full rounded-md border border-gray-700 bg-[#0f0f0f] px-3 py-2 text-base text-gray-100 placeholder-gray-500 focus:border-gray-600 focus:outline-none transition"
                           />
