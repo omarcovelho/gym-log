@@ -2,11 +2,11 @@ import { useState, useMemo } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { ProgressRangeFilter } from '@/components/ProgressRangeFilter'
-import { ExerciseProgressionChart } from '@/components/ExerciseProgressionChart'
 import type { RangePreset } from '@/utils/dateRange'
 import { calculateDateRange } from '@/utils/dateRange'
+import { MeasurementsCharts } from '@/components/MeasurementsCharts'
 
-export default function ProgressExercise() {
+export default function ProgressBodyWeight() {
   const { t } = useTranslation()
   const location = useLocation()
   const [selectedRange, setSelectedRange] = useState<RangePreset>('4weeks')
@@ -16,6 +16,7 @@ export default function ProgressExercise() {
 
   const isOverviewActive = location.pathname === '/app/progress'
   const isExerciseActive = location.pathname === '/app/progress/exercise'
+  const isBodyWeightActive = location.pathname === '/app/progress/body-weight'
 
   return (
     <div className="space-y-6">
@@ -50,7 +51,7 @@ export default function ProgressExercise() {
         <Link
           to="/app/progress/body-weight"
           className={`flex-1 px-4 py-2 rounded-md text-sm font-medium transition text-center ${
-            location.pathname === '/app/progress/body-weight'
+            isBodyWeightActive
               ? 'bg-primary text-black'
               : 'text-gray-400 hover:text-gray-200'
           }`}
@@ -62,9 +63,9 @@ export default function ProgressExercise() {
       {/* Filtro de Range */}
       <ProgressRangeFilter value={selectedRange} onChange={setSelectedRange} />
 
-      {/* Seção Evolução por Exercício */}
+      {/* Seção Peso Corporal */}
       <div className="rounded-xl border border-gray-800 bg-[#101010] p-4 md:p-6">
-        <ExerciseProgressionChart
+        <MeasurementsCharts
           startDate={dateRange.startDate}
           endDate={dateRange.endDate}
         />

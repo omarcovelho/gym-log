@@ -28,6 +28,7 @@ import WorkoutSessionView from './pages/WorkoutSessionView'
 import WorkoutSessionDetails from './pages/WorkoutSessionDetails'
 import ProgressOverview from './pages/ProgressOverview'
 import ProgressExercise from './pages/ProgressExercise'
+import ProgressBodyWeight from './pages/ProgressBodyWeight'
 import About from './pages/About'
 import BodyMeasurementsList from './pages/BodyMeasurementsList'
 import BodyMeasurementForm from './pages/BodyMeasurementForm'
@@ -131,6 +132,16 @@ const router = createBrowserRouter([
             <ProtectedRouteWithStats>
                 <AppLayout>
                     <ProgressExercise />
+                </AppLayout>
+            </ProtectedRouteWithStats>
+        ),
+    },
+    {
+        path: '/app/progress/body-weight',
+        element: (
+            <ProtectedRouteWithStats>
+                <AppLayout>
+                    <ProgressBodyWeight />
                 </AppLayout>
             </ProtectedRouteWithStats>
         ),

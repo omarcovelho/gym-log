@@ -60,14 +60,20 @@ export class BodyMeasurementController {
   @Get('stats')
   @ApiOperation({ summary: 'Get body measurements statistics with weekly trends' })
   @ApiQuery({ name: 'weeks', required: false, type: Number, description: 'Number of weeks to analyze (default: 8)' })
+  @ApiQuery({ name: 'startDate', required: false, type: String, description: 'Start date (ISO string)' })
+  @ApiQuery({ name: 'endDate', required: false, type: String, description: 'End date (ISO string)' })
   @ApiResponse({ status: 200, description: 'Statistics retrieved successfully.' })
   @ApiResponse({ status: 401, description: 'Unauthorized.' })
   async getStats(
     @CurrentUser() user,
     @Query('weeks') weeks?: string,
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
   ) {
-    const weeksNumber = weeks ? parseInt(weeks, 10) : 8;
-    return this.service.getMeasurementsStats(user.id, weeksNumber);
+    const weeksNumber = weeks ? parseInt(weeks, 10) : undefined;
+    const startDateObj = startDate ? new Date(startDate) : null;
+    const endDateObj = endDate ? new Date(endDate) : null;
+    return this.service.getMeasurementsStats(user.id, weeksNumber, startDateObj, endDateObj);
   }
 
   @Get(':id')

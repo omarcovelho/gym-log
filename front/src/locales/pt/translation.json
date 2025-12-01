@@ -397,7 +397,7 @@
     "weeks": "semanas",
     "months": "meses",
     "allHistory": "Todo o histórico",
-    "exerciseProgression": "Evolução por Exercício",
+    "exerciseProgression": "Por Exercício",
     "selectExercise": "Selecione um exercício",
     "avgLoad": "Carga Média",
     "avgReps": "Reps Média",
@@ -409,7 +409,10 @@
     "trendDown": "Regressão",
     "trendStable": "Estável",
     "noExerciseData": "Nenhum dado disponível para este exercício no período selecionado",
-    "trend": "Tendência"
+    "trend": "Tendência",
+    "general": "Geral",
+    "bodyWeight": "Peso Corporal",
+    "overview": "Visão Geral"
   },
   "about": {
     "title": "Sobre",

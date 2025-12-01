@@ -16,13 +16,18 @@ import { TrendingUp, TrendingDown, Minus } from 'lucide-react'
 
 type MeasurementType = 'weight' | 'waist' | 'arm'
 
-export function MeasurementsCharts() {
+type MeasurementsChartsProps = {
+  startDate?: string | null
+  endDate?: string | null
+}
+
+export function MeasurementsCharts({ startDate = null, endDate = null }: MeasurementsChartsProps = {}) {
   const { t, i18n } = useTranslation()
   const [activeTab, setActiveTab] = useState<MeasurementType>('weight')
 
   const { data: stats, isLoading, error } = useQuery<MeasurementsStats>({
-    queryKey: ['measurements-stats'],
-    queryFn: () => getMeasurementsStats(8),
+    queryKey: ['measurements-stats', startDate, endDate],
+    queryFn: () => getMeasurementsStats(undefined, startDate || undefined, endDate || undefined),
     staleTime: 5 * 60 * 1000, // 5 minutes
   })
 

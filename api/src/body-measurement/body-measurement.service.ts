@@ -122,21 +122,48 @@ export class BodyMeasurementService {
     return count > 0;
   }
 
-  async getMeasurementsStats(userId: string, weeks: number = 8) {
+  async getMeasurementsStats(
+    userId: string,
+    weeks?: number,
+    startDate?: Date | null,
+    endDate?: Date | null,
+  ) {
     const now = new Date();
-    now.setHours(0, 0, 0, 0);
+    now.setHours(23, 59, 59, 999);
     
-    // Calcular data de início (N semanas atrás)
-    const weeksAgo = new Date(now);
-    weeksAgo.setDate(weeksAgo.getDate() - (weeks * 7));
-    weeksAgo.setHours(0, 0, 0, 0);
+    // Determinar data de início e fim
+    let dateStart: Date;
+    let dateEnd: Date;
+
+    if (startDate && endDate) {
+      // Usar datas fornecidas
+      dateStart = new Date(startDate);
+      dateStart.setHours(0, 0, 0, 0);
+      dateEnd = new Date(endDate);
+      dateEnd.setHours(23, 59, 59, 999);
+    } else if (weeks) {
+      // Calcular baseado em semanas (comportamento padrão)
+      dateEnd = new Date(now);
+      dateEnd.setHours(23, 59, 59, 999);
+      dateStart = new Date(now);
+      dateStart.setDate(dateStart.getDate() - (weeks * 7));
+      dateStart.setHours(0, 0, 0, 0);
+    } else {
+      // Default: 8 semanas
+      dateEnd = new Date(now);
+      dateEnd.setHours(23, 59, 59, 999);
+      dateStart = new Date(now);
+      dateStart.setDate(dateStart.getDate() - (8 * 7));
+      dateStart.setHours(0, 0, 0, 0);
+    }
 
     // Buscar todas as medidas do usuário no período
     const allMeasurements = await this.prisma.bodyMeasurement.findMany({
       where: {
         userId,
         date: {
-          gte: weeksAgo,
+          gte: dateStart,
+          lte: dateEnd,
         },
       },
       orderBy: { date: 'desc' },

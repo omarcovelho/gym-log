@@ -105,9 +105,18 @@ export type MeasurementsStats = {
   }
 }
 
-export async function getMeasurementsStats(weeks?: number): Promise<MeasurementsStats> {
+export async function getMeasurementsStats(
+  weeks?: number,
+  startDate?: string | null,
+  endDate?: string | null,
+): Promise<MeasurementsStats> {
+  const params: any = {}
+  if (weeks) params.weeks = weeks
+  if (startDate) params.startDate = startDate
+  if (endDate) params.endDate = endDate
+  
   const { data } = await api.get<MeasurementsStats>('/body-measurements/stats', {
-    params: weeks ? { weeks } : {},
+    params,
   })
   return data
 }
