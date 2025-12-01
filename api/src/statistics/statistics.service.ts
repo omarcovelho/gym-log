@@ -31,7 +31,7 @@ export class StatisticsService {
       !set.intensityBlocks ||
       set.intensityBlocks.length === 0
     ) {
-      return set.actualLoad * set.actualReps;
+      return Math.round(set.actualLoad * set.actualReps);
     }
 
     const blocks = set.intensityBlocks;
@@ -53,7 +53,7 @@ export class StatisticsService {
         fi = 1.25; // pesado
       }
 
-      return volumeBase * fi;
+      return Math.round(volumeBase * fi);
     } else if (set.intensityType === 'DROP_SET') {
       // DROP_SET: volume_base = Σ (carga_i × reps_i)
       // Set principal
@@ -75,11 +75,11 @@ export class StatisticsService {
         fi = 1.50; // triplo
       }
 
-      return volumeBase * fi;
+      return Math.round(volumeBase * fi);
     }
 
     // Fallback: volume normal se tipo não reconhecido
-    return set.actualLoad * set.actualReps;
+    return Math.round(set.actualLoad * set.actualReps);
   }
 
   /**
@@ -110,25 +110,25 @@ export class StatisticsService {
     if (set.intensityType === 'REST_PAUSE') {
       // REST_PAUSE: sets equivalentes = 1 × FI
       if (blocksCount === 1) {
-        return 1.10; // leve
+        return Math.round(1.10); // leve
       } else if (blocksCount === 2) {
-        return 1.15; // médio
+        return Math.round(1.15); // médio
       } else if (blocksCount >= 3) {
-        return 1.25; // pesado
+        return Math.round(1.25); // pesado
       }
     } else if (set.intensityType === 'DROP_SET') {
       // DROP_SET: sets equivalentes = 1 × FI
       if (blocksCount === 1) {
-        return 1.25; // simples
+        return Math.round(1.25); // simples
       } else if (blocksCount === 2) {
-        return 1.40; // duplo
+        return Math.round(1.40); // duplo
       } else if (blocksCount >= 3) {
-        return 1.50; // triplo
+        return Math.round(1.50); // triplo
       }
     }
 
     // Fallback: set normal
-    return 1.0;
+    return 1;
   }
 
   /** Busca estatísticas do usuário para dashboard */
@@ -283,10 +283,18 @@ export class StatisticsService {
 
     return {
       totalWorkouts,
-      monthlyVolume,
+      monthlyVolume: Math.round(monthlyVolume),
       recentPRs: recentPRs.slice(0, 5), // Máximo 5 para mobile
-      volumeHistory,
-      lastWorkout: lastWorkoutData,
+      volumeHistory: volumeHistory.map((item) => ({
+        ...item,
+        volume: Math.round(item.volume),
+      })),
+      lastWorkout: lastWorkoutData
+        ? {
+            ...lastWorkoutData,
+            volume: Math.round(lastWorkoutData.volume),
+          }
+        : null,
     };
   }
 
@@ -538,12 +546,12 @@ export class StatisticsService {
     const weeklyStats = Array.from(weeklyStatsMap.entries())
       .map(([week, stats]) => ({
         week,
-        volume: stats.volume,
-        sets: stats.sets,
+        volume: Math.round(stats.volume),
+        sets: Math.round(stats.sets),
         byMuscleGroup: Object.fromEntries(
           Array.from(stats.byMuscleGroup.entries()).map(([mg, data]) => [
             mg,
-            { volume: data.volume, sets: data.sets },
+            { volume: Math.round(data.volume), sets: Math.round(data.sets) },
           ])
         ),
       }))
@@ -682,9 +690,9 @@ export class StatisticsService {
       .map(([week, data]) => ({
         week,
         avgLoad: data.loads.length > 0 ? data.loads.reduce((a, b) => a + b, 0) / data.loads.length : 0,
-        totalVolume: data.volumes.reduce((a, b) => a + b, 0),
+        totalVolume: Math.round(data.volumes.reduce((a, b) => a + b, 0)),
         avgReps: data.reps.length > 0 ? data.reps.reduce((a, b) => a + b, 0) / data.reps.length : 0,
-        setsCount: data.setsCount,
+        setsCount: Math.round(data.setsCount),
       }))
       .sort((a, b) => a.week.localeCompare(b.week));
 
@@ -699,7 +707,9 @@ export class StatisticsService {
         ? {
             avgLoad:
               last4Weeks.reduce((sum, w) => sum + w.avgLoad, 0) / last4Weeks.length,
-            totalVolume: last4Weeks.reduce((sum, w) => sum + w.totalVolume, 0),
+            totalVolume: Math.round(
+              last4Weeks.reduce((sum, w) => sum + w.totalVolume, 0)
+            ),
             avgReps:
               last4Weeks.reduce((sum, w) => sum + w.avgReps, 0) / last4Weeks.length,
           }
@@ -712,7 +722,9 @@ export class StatisticsService {
         ? {
             avgLoad:
               previous4Weeks.reduce((sum, w) => sum + w.avgLoad, 0) / previous4Weeks.length,
-            totalVolume: previous4Weeks.reduce((sum, w) => sum + w.totalVolume, 0),
+            totalVolume: Math.round(
+              previous4Weeks.reduce((sum, w) => sum + w.totalVolume, 0)
+            ),
             avgReps:
               previous4Weeks.reduce((sum, w) => sum + w.avgReps, 0) / previous4Weeks.length,
           }
