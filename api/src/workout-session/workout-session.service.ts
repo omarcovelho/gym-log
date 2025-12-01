@@ -286,7 +286,7 @@ export class WorkoutSessionService {
             !set.intensityBlocks ||
             set.intensityBlocks.length === 0
         ) {
-            return set.actualLoad * set.actualReps;
+            return Math.round(set.actualLoad * set.actualReps);
         }
 
         const blocks = set.intensityBlocks;
@@ -308,7 +308,7 @@ export class WorkoutSessionService {
                 fi = 1.25; // pesado
             }
 
-            return volumeBase * fi;
+            return Math.round(volumeBase * fi);
         } else if (set.intensityType === 'DROP_SET') {
             // DROP_SET: volume_base = Σ (carga_i × reps_i)
             // Set principal
@@ -330,11 +330,11 @@ export class WorkoutSessionService {
                 fi = 1.50; // triplo
             }
 
-            return volumeBase * fi;
+            return Math.round(volumeBase * fi);
         }
 
         // Fallback: volume normal se tipo não reconhecido
-        return set.actualLoad * set.actualReps;
+        return Math.round(set.actualLoad * set.actualReps);
     }
 
     /**
@@ -364,25 +364,25 @@ export class WorkoutSessionService {
         if (set.intensityType === 'REST_PAUSE') {
             // REST_PAUSE: sets equivalentes = 1 × FI
             if (blocksCount === 1) {
-                return 1.10; // leve
+                return Math.round(1.10); // leve
             } else if (blocksCount === 2) {
-                return 1.15; // médio
+                return Math.round(1.15); // médio
             } else if (blocksCount >= 3) {
-                return 1.25; // pesado
+                return Math.round(1.25); // pesado
             }
         } else if (set.intensityType === 'DROP_SET') {
             // DROP_SET: sets equivalentes = 1 × FI
             if (blocksCount === 1) {
-                return 1.25; // simples
+                return Math.round(1.25); // simples
             } else if (blocksCount === 2) {
-                return 1.40; // duplo
+                return Math.round(1.40); // duplo
             } else if (blocksCount >= 3) {
-                return 1.50; // triplo
+                return Math.round(1.50); // triplo
             }
         }
 
         // Fallback: set normal
-        return 1.0;
+        return 1;
     }
 
     /** Busca sessão específica */
@@ -457,8 +457,8 @@ export class WorkoutSessionService {
                 
                 return {
                     muscleGroup,
-                    volume: groupVolume,
-                    sets: totalSets,
+                    volume: Math.round(groupVolume),
+                    sets: Math.round(totalSets),
                     exerciseCount,
                     firstOrder: firstAppearanceOrder.get(muscleGroup) ?? 999,
                 };
@@ -467,7 +467,7 @@ export class WorkoutSessionService {
 
         return {
             ...session,
-            totalVolume,
+            totalVolume: Math.round(totalVolume),
             volumeByGroup,
         };
     }
