@@ -30,7 +30,9 @@ import ProgressOverview from './pages/ProgressOverview'
 import ProgressExercise from './pages/ProgressExercise'
 import ProgressBodyWeight from './pages/ProgressBodyWeight'
 import About from './pages/About'
-import BodyMeasurementsList from './pages/BodyMeasurementsList'
+import DiaryOverview from './pages/DiaryOverview'
+import SleepList from './pages/SleepList'
+import SleepForm from './pages/SleepForm'
 import BodyMeasurementForm from './pages/BodyMeasurementForm'
 
 const qc = new QueryClient({
@@ -255,7 +257,37 @@ const router = createBrowserRouter([
         element: (
             <ProtectedRouteWithStats>
                 <AppLayout>
-                    <BodyMeasurementsList />
+                    <DiaryOverview />
+                </AppLayout>
+            </ProtectedRouteWithStats>
+        ),
+    },
+    {
+        path: '/app/measurements/sleep',
+        element: (
+            <ProtectedRouteWithStats>
+                <AppLayout>
+                    <SleepList />
+                </AppLayout>
+            </ProtectedRouteWithStats>
+        ),
+    },
+    {
+        path: '/app/measurements/sleep/new',
+        element: (
+            <ProtectedRouteWithStats>
+                <AppLayout>
+                    <SleepForm />
+                </AppLayout>
+            </ProtectedRouteWithStats>
+        ),
+    },
+    {
+        path: '/app/measurements/sleep/:id/edit',
+        element: (
+            <ProtectedRouteWithStats>
+                <AppLayout>
+                    <SleepForm />
                 </AppLayout>
             </ProtectedRouteWithStats>
         ),

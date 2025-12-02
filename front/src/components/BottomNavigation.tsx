@@ -4,7 +4,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import i18n from '@/i18n'
-import { History, Plus, X, Zap, AlertCircle, TrendingUp, FileText, Home, Ruler } from 'lucide-react'
+import { History, Plus, X, Zap, AlertCircle, TrendingUp, FileText, Home, BookOpen } from 'lucide-react'
 import { startManualWorkout, startWorkout, getActiveWorkout } from '@/api/workoutSession'
 import { listWorkoutTemplates } from '@/api/workoutTemplates'
 import { useToast } from './ToastProvider'
@@ -192,8 +192,8 @@ export function BottomNavigation() {
             `}
             aria-label="Measurements"
           >
-            <Ruler className={`w-6 h-6 ${isActive('/app/measurements') ? 'stroke-[2.5]' : ''}`} />
-            <span className="text-[10px] font-medium">{t('navigation.measurements')}</span>
+            <BookOpen className={`w-6 h-6 ${isActive('/app/measurements') ? 'stroke-[2.5]' : ''}`} />
+            <span className="text-[10px] font-medium">{t('navigation.diary')}</span>
           </Link>
         </div>
       </nav>

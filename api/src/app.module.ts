@@ -13,6 +13,7 @@ import { EmailModule } from './email/email.module';
 import { AppConfigModule } from './config/config.module';
 import { StatisticsModule } from './statistics/statistics.module';
 import { BodyMeasurementModule } from './body-measurement/body-measurement.module';
+import { SleepModule } from './sleep/sleep.module';
 import { ThrottlerModule } from '@nestjs/throttler';
 
 @Module({
@@ -36,6 +37,7 @@ import { ThrottlerModule } from '@nestjs/throttler';
     AppConfigModule,
     StatisticsModule,
     BodyMeasurementModule,
+    SleepModule,
   ],
   controllers: [AppController],
   providers: [AppService],
