@@ -46,7 +46,6 @@ export default function SleepForm() {
     handleSubmit,
     reset,
     formState: { errors, isSubmitting },
-    setFocus,
   } = useForm<Form>({
     resolver: zodResolver(schema) as any,
     defaultValues: {
