@@ -8,7 +8,6 @@ import { useAuth } from '@/auth/AuthContext'
 import { useToast } from '@/components/ToastProvider'
 import { ConfirmDialog } from '@/components/ConfirmDialog'
 import { Pagination } from '@/components/Pagination'
-import { MeasurementsCharts } from '@/components/MeasurementsCharts'
 
 export default function BodyMeasurementsList() {
   const { t, i18n } = useTranslation()
@@ -117,9 +116,6 @@ export default function BodyMeasurementsList() {
           <span>{t('measurements.addMeasurement')}</span>
         </Link>
       </div>
-
-      {/* Charts Section */}
-      <MeasurementsCharts />
 
       {measurements.length === 0 ? (
         <div className="text-center py-12 space-y-4">

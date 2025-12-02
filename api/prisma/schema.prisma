@@ -68,6 +68,7 @@ model User {
   timers            RestTimer[]
   resetTokens       PasswordResetToken[]
   measurements      BodyMeasurement[]
+  sleeps            Sleep[]
 }
 
 model Exercise {
@@ -235,6 +236,22 @@ model BodyMeasurement {
   notes     String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  
+  @@index([userId, date])
+}
+
+model Sleep {
+  id            String   @id @default(uuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date          DateTime @default(now())
+  sleepHours    Float
+  sleepQuality  Int?
+  sleepBedtime  DateTime?
+  sleepWakeTime DateTime?
+  notes         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
   
   @@index([userId, date])
 }

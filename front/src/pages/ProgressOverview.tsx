@@ -13,7 +13,7 @@ import {
   ResponsiveContainer,
   Legend,
 } from 'recharts'
-import { Trophy, TrendingUp } from 'lucide-react'
+import { TrendingUp } from 'lucide-react'
 import { ProgressRangeFilter } from '@/components/ProgressRangeFilter'
 import type { RangePreset } from '@/utils/dateRange'
 import { calculateDateRange } from '@/utils/dateRange'
@@ -34,13 +34,6 @@ export default function ProgressOverview() {
     staleTime: 5 * 60 * 1000, // 5 minutes
   })
 
-  const formatDate = (dateString: string): string => {
-    const date = new Date(dateString)
-    return date.toLocaleDateString(i18n.language === 'pt' ? 'pt-BR' : 'en-US', {
-      day: '2-digit',
-      month: 'short',
-    })
-  }
 
   const formatWeek = (weekKey: string): string => {
     // weekKey format: "2024-11-24" (data da segunda-feira da semana)
@@ -148,7 +141,7 @@ export default function ProgressOverview() {
               : 'text-gray-400 hover:text-gray-200'
           }`}
         >
-          {t('progress.overview', 'Visão Geral')}
+          {t('progress.general', 'Geral')}
         </Link>
         <Link
           to="/app/progress/exercise"
@@ -158,7 +151,17 @@ export default function ProgressOverview() {
               : 'text-gray-400 hover:text-gray-200'
           }`}
         >
-          {t('progress.exerciseProgression', 'Evolução por Exercício')}
+          {t('progress.exerciseProgression', 'Por Exercício')}
+        </Link>
+        <Link
+          to="/app/progress/body-weight"
+          className={`flex-1 px-4 py-2 rounded-md text-sm font-medium transition text-center ${
+            location.pathname === '/app/progress/body-weight'
+              ? 'bg-primary text-black'
+              : 'text-gray-400 hover:text-gray-200'
+          }`}
+        >
+          {t('progress.bodyWeight', 'Peso Corporal')}
         </Link>
       </div>
 
@@ -302,55 +305,6 @@ export default function ProgressOverview() {
         )}
       </div>
 
-      {/* Seção PRs */}
-      <div className="rounded-xl border border-gray-800 bg-[#101010] p-4 md:p-6">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="p-2 bg-primary/10 rounded-lg">
-            <Trophy className="w-5 h-5 text-primary" />
-          </div>
-          <h2 className="text-lg font-semibold text-gray-200">{t('progress.recentPRs')}</h2>
-        </div>
-
-        {stats?.recentPRs && stats.recentPRs.length > 0 ? (
-          <div className="space-y-3">
-            {stats.recentPRs.map((pr, idx) => (
-              <Link
-                key={idx}
-                to={`/app/workouts/${pr.workoutId}/view`}
-                className="block rounded-lg border border-gray-800 bg-[#151515] p-4 hover:border-primary/50 transition"
-              >
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex-1">
-                    <div className="text-lg font-semibold text-gray-100 mb-1">
-                      {pr.exerciseName}
-                    </div>
-                    <div className="text-sm text-gray-400">
-                      {t('progress.load')}:{' '}
-                      <span className="text-primary font-semibold">
-                        {pr.value.toLocaleString(i18n.language === 'pt' ? 'pt-BR' : 'en-US')}{' '}
-                        {pr.unit}
-                      </span>
-                    </div>
-                    {pr.previousValue !== pr.value && (
-                      <div className="text-xs text-gray-500 mt-1">
-                        {t('progress.previous')}: {pr.previousValue.toLocaleString(i18n.language === 'pt' ? 'pt-BR' : 'en-US')} {pr.unit}
-                      </div>
-                    )}
-                  </div>
-                  <div className="text-xs text-gray-500 whitespace-nowrap">
-                    {formatDate(pr.date)}
-                  </div>
-                </div>
-              </Link>
-            ))}
-          </div>
-        ) : (
-          <div className="text-center py-8">
-            <Trophy className="w-12 h-12 text-gray-600 mx-auto mb-3" />
-            <p className="text-gray-400 text-sm">{t('progress.noPRs')}</p>
-          </div>
-        )}
-      </div>
     </div>
   )
 }

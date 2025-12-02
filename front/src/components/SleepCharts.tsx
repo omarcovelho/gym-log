@@ -1,7 +1,6 @@
-import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
-import { getMeasurementsStats, type MeasurementsStats } from '@/api/bodyMeasurement'
+import { getSleepStats, type SleepStats } from '@/api/sleep'
 import {
   LineChart,
   Line,
@@ -14,20 +13,17 @@ import {
 } from 'recharts'
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react'
 
-type MeasurementType = 'weight' | 'waist' | 'arm'
-
-type MeasurementsChartsProps = {
+type SleepChartsProps = {
   startDate?: string | null
   endDate?: string | null
 }
 
-export function MeasurementsCharts({ startDate = null, endDate = null }: MeasurementsChartsProps = {}) {
+export function SleepCharts({ startDate = null, endDate = null }: SleepChartsProps = {}) {
   const { t, i18n } = useTranslation()
-  const [activeTab, setActiveTab] = useState<MeasurementType>('weight')
 
-  const { data: stats, isLoading, error } = useQuery<MeasurementsStats>({
-    queryKey: ['measurements-stats', startDate, endDate],
-    queryFn: () => getMeasurementsStats(undefined, startDate || undefined, endDate || undefined),
+  const { data: stats, isLoading, error } = useQuery<SleepStats>({
+    queryKey: ['sleep-stats', startDate, endDate],
+    queryFn: () => getSleepStats(undefined, startDate || undefined, endDate || undefined),
     staleTime: 5 * 60 * 1000, // 5 minutes
   })
 
@@ -63,47 +59,27 @@ export function MeasurementsCharts({ startDate = null, endDate = null }: Measure
 
   const getCurrentValue = () => {
     if (!stats) return null
-    return stats.current[activeTab]
+    return stats.current.sleepHours
   }
 
   const getAverage = () => {
     if (!stats) return null
-    return stats.averages[activeTab]
+    return stats.average
   }
 
   const getTrend = () => {
     if (!stats) return null
-    return stats.trends[activeTab]
+    return stats.trend
   }
 
   const getWeeklyData = () => {
     if (!stats) return []
-    return stats.weeklyData[activeTab]
-  }
-
-  const getUnit = () => {
-    return activeTab === 'weight' ? t('measurements.kg') : 'cm'
-  }
-
-  const getLabel = () => {
-    switch (activeTab) {
-      case 'weight':
-        return t('measurements.weight')
-      case 'waist':
-        return t('measurements.waist')
-      case 'arm':
-        return t('measurements.arm')
-    }
+    return stats.weeklyData
   }
 
   const getTrendColor = (direction: 'up' | 'down' | 'stable') => {
-    // Para peso: verde = perda (down), vermelho = ganho (up)
-    // Para cintura/braço: verde = redução (down), vermelho = aumento (up)
-    if (activeTab === 'weight') {
-      return direction === 'down' ? 'text-green-500' : direction === 'up' ? 'text-red-500' : 'text-gray-400'
-    } else {
-      return direction === 'down' ? 'text-green-500' : direction === 'up' ? 'text-red-500' : 'text-gray-400'
-    }
+    // Para sono: verde = mais horas (up), vermelho = menos horas (down)
+    return direction === 'up' ? 'text-green-500' : direction === 'down' ? 'text-red-500' : 'text-gray-400'
   }
 
   const getTrendIcon = (direction: 'up' | 'down' | 'stable') => {
@@ -131,7 +107,7 @@ export function MeasurementsCharts({ startDate = null, endDate = null }: Measure
   if (weeklyData.length === 0) {
     return (
       <div className="bg-[#181818] rounded-xl p-6 border border-gray-800">
-        <p className="text-gray-400 text-center py-8">{t('measurements.noData')}</p>
+        <p className="text-gray-400 text-center py-8">{t('sleep.noData')}</p>
       </div>
     )
   }
@@ -182,37 +158,15 @@ export function MeasurementsCharts({ startDate = null, endDate = null }: Measure
 
   return (
     <div className="bg-[#181818] rounded-xl p-6 border border-gray-800 space-y-6">
-      {/* Tabs */}
-      <div className="flex gap-2 border-b border-gray-800">
-        {(['weight', 'waist', 'arm'] as MeasurementType[]).map((tab) => (
-          <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
-            className={`
-              px-4 py-2 font-medium text-sm transition
-              ${
-                activeTab === tab
-                  ? 'text-primary border-b-2 border-primary'
-                  : 'text-gray-400 hover:text-gray-200'
-              }
-            `}
-          >
-            {tab === 'weight' && t('measurements.weight')}
-            {tab === 'waist' && t('measurements.waist')}
-            {tab === 'arm' && t('measurements.arm')}
-          </button>
-        ))}
-      </div>
-
       {/* Stats Card */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Current Value */}
         <div className="bg-[#101010] rounded-lg p-4 border border-gray-800">
-          <div className="text-sm text-gray-400 mb-1">{t('measurements.currentValue')}</div>
+          <div className="text-sm text-gray-400 mb-1">{t('sleep.currentValue')}</div>
           {currentValue !== null ? (
             <>
               <div className="text-2xl font-bold text-gray-100">
-                {currentValue} {getUnit()}
+                {currentValue} {t('sleep.hours')}
               </div>
               {stats.current.date && (
                 <div className="text-xs text-gray-500 mt-1">
@@ -221,19 +175,19 @@ export function MeasurementsCharts({ startDate = null, endDate = null }: Measure
               )}
             </>
           ) : (
-            <div className="text-gray-500 text-sm">{t('measurements.noData')}</div>
+            <div className="text-gray-500 text-sm">{t('sleep.noData')}</div>
           )}
         </div>
 
         {/* Trend with Average */}
         {trend && weeklyData.length >= 2 && (
           <div className="bg-[#101010] rounded-lg p-4 border border-gray-800">
-            <div className="text-sm text-gray-400 mb-1">{t('measurements.lastWeekChange')}</div>
+            <div className="text-sm text-gray-400 mb-1">{t('sleep.lastWeekChange')}</div>
             <div className={`flex items-center gap-2 ${getTrendColor(trend.direction)}`}>
               {getTrendIcon(trend.direction)}
               <div className="text-xl font-bold">
                 {trend.change > 0 ? '+' : ''}
-                {trend.change} {getUnit()}
+                {trend.change} {t('sleep.hours')}
               </div>
             </div>
             <div className={`text-sm mt-1 ${getTrendColor(trend.direction)}`}>
@@ -241,7 +195,7 @@ export function MeasurementsCharts({ startDate = null, endDate = null }: Measure
               {trend.changePercent}%
             </div>
             <div className="text-xs text-gray-500 mt-1">
-              {t('measurements.weeks')}
+              {t('sleep.weeks')}
             </div>
             
             {/* Average */}
@@ -250,12 +204,12 @@ export function MeasurementsCharts({ startDate = null, endDate = null }: Measure
               if (average !== null) {
                 return (
                   <div className="mt-3 pt-3 border-t border-gray-800">
-                    <div className="text-xs text-gray-400 mb-1">{t('measurements.average')}</div>
+                    <div className="text-xs text-gray-400 mb-1">{t('sleep.average')}</div>
                     <div className="text-lg font-semibold text-gray-100">
-                      {average} {getUnit()}
+                      {average} {t('sleep.hours')}
                     </div>
                     <div className="text-xs text-gray-500 mt-1">
-                      {t('measurements.weeksAverage')}
+                      {t('sleep.weeksAverage')}
                     </div>
                   </div>
                 )
@@ -279,7 +233,7 @@ export function MeasurementsCharts({ startDate = null, endDate = null }: Measure
             <YAxis
               stroke="#9CA3AF"
               style={{ fontSize: '12px' }}
-              label={{ value: getUnit(), angle: -90, position: 'insideLeft', style: { fill: '#9CA3AF' } }}
+              label={{ value: t('sleep.hours'), angle: -90, position: 'insideLeft', style: { fill: '#9CA3AF' } }}
             />
             <Tooltip
               contentStyle={{
@@ -304,7 +258,7 @@ export function MeasurementsCharts({ startDate = null, endDate = null }: Measure
                 strokeDasharray="5 5"
                 dot={false}
                 activeDot={false}
-                name={t('measurements.trendLine')}
+                name={t('sleep.trendLine')}
                 strokeOpacity={0.6}
               />
             )}
@@ -316,7 +270,7 @@ export function MeasurementsCharts({ startDate = null, endDate = null }: Measure
               strokeWidth={2}
               dot={{ fill: '#00E676', r: 4 }}
               activeDot={{ r: 6 }}
-              name={getLabel()}
+              name={t('sleep.sleepHours')}
             />
           </LineChart>
         </ResponsiveContainer>
