@@ -92,6 +92,49 @@ export function ExerciseHistoryBottomSheet({ open, onClose, exerciseId, exercise
     }
   }
 
+  const fmtIntensityBlocks = (set: ExerciseHistorySession['sets'][0]) => {
+    if (!set.intensityType || set.intensityType === 'NONE' || !set.intensityBlocks || set.intensityBlocks.length === 0) {
+      return null
+    }
+
+    const sortedBlocks = [...set.intensityBlocks].sort((a, b) => a.blockIndex - b.blockIndex)
+    const intensityTypeLabel = set.intensityType === 'REST_PAUSE' 
+      ? t('workout.intensityRestPause', 'Rest-pause')
+      : set.intensityType === 'DROP_SET'
+      ? t('workout.intensityDropSet', 'Drop Set')
+      : set.intensityType === 'CLUSTER_SET'
+      ? t('workout.intensityClusterSet', 'Cluster Set')
+      : ''
+
+    const blocksFormatted = sortedBlocks.map((block) => {
+      if (set.intensityType === 'REST_PAUSE') {
+        const parts: string[] = []
+        if (block.reps != null) parts.push(`${block.reps} ${t('workout.repsLabel', 'reps')}`)
+        if (block.restSeconds != null) parts.push(`${block.restSeconds} ${t('workout.seconds', 'seg')}`)
+        return parts.length > 0 ? parts.join(' · ') : null
+      } else if (set.intensityType === 'DROP_SET') {
+        const parts: string[] = []
+        if (block.load != null) parts.push(`${block.load} ${t('workout.kg', 'kg')}`)
+        if (block.reps != null) parts.push(`${block.reps} ${t('workout.repsLabel', 'reps')}`)
+        return parts.length > 0 ? parts.join(' · ') : null
+      } else if (set.intensityType === 'CLUSTER_SET') {
+        const parts: string[] = []
+        if (block.reps != null) parts.push(`${block.reps} ${t('workout.repsLabel', 'reps')}`)
+        if (block.restSeconds != null) parts.push(`${block.restSeconds} ${t('workout.seconds', 'seg')}`)
+        return parts.length > 0 ? parts.join(' · ') : null
+      }
+      return null
+    }).filter((formatted): formatted is string => formatted !== null)
+
+    if (blocksFormatted.length === 0) return null
+
+    return {
+      type: set.intensityType,
+      typeLabel: intensityTypeLabel,
+      blocks: blocksFormatted,
+    }
+  }
+
   const formatSet = (set: ExerciseHistorySession['sets'][0]): string => {
     const parts: string[] = []
     if (set.actualLoad != null) {
@@ -189,20 +232,39 @@ export function ExerciseHistoryBottomSheet({ open, onClose, exerciseId, exercise
                   {/* Sets */}
                   {session.sets.length > 0 ? (
                     <div className="space-y-2">
-                      {session.sets.map((set, idx) => (
-                        <div
-                          key={`${session.sessionId}-${set.setIndex}-${idx}`}
-                          className="rounded-lg border border-gray-800 bg-[#101010] px-3 py-2"
-                          style={{ minHeight: '44px' }}
-                        >
-                          <div className="text-sm text-gray-200">
-                            <span className="text-gray-400">
-                              {t('workout.setNumber', `Série #${set.setIndex + 1}`, { number: set.setIndex + 1 })}:
-                            </span>{' '}
-                            {formatSet(set)}
+                      {session.sets.map((set, idx) => {
+                        const intensityInfo = fmtIntensityBlocks(set)
+                        const hasIntensityBlocks = intensityInfo !== null
+                        
+                        return (
+                          <div
+                            key={`${session.sessionId}-${set.setIndex}-${idx}`}
+                            className="rounded-lg border border-gray-800 bg-[#101010] px-3 py-2"
+                            style={{ minHeight: '44px' }}
+                          >
+                            <div className="flex flex-col gap-1">
+                              <div className="text-sm text-gray-200">
+                                <span className="text-gray-400">
+                                  {t('workout.setNumber', `Série #${set.setIndex + 1}`, { number: set.setIndex + 1 })}:
+                                </span>{' '}
+                                {formatSet(set)}
+                              </div>
+                              {hasIntensityBlocks && (
+                                <div className="text-xs text-gray-500 mt-1">
+                                  <div className="text-gray-600 font-medium mb-0.5">{intensityInfo.typeLabel}:</div>
+                                  <div className="flex flex-col gap-0.5">
+                                    {intensityInfo.blocks.map((block, blockIdx) => (
+                                      <div key={blockIdx} className="pl-2">
+                                        {block}
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
                           </div>
-                        </div>
-                      ))}
+                        )
+                      })}
                     </div>
                   ) : (
                     <div className="text-xs text-gray-500 py-2">

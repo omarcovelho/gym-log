@@ -878,6 +878,13 @@ export class StatisticsService {
               orderBy: {
                 setIndex: 'asc',
               },
+              include: {
+                intensityBlocks: {
+                  orderBy: {
+                    blockIndex: 'asc',
+                  },
+                },
+              },
             },
           },
         },
@@ -901,6 +908,13 @@ export class StatisticsService {
           actualReps: set.actualReps,
           actualRir: set.actualRir,
           completed: set.completed,
+          intensityType: set.intensityType,
+          intensityBlocks: set.intensityBlocks.map((block) => ({
+            blockIndex: block.blockIndex,
+            reps: block.reps,
+            restSeconds: block.restSeconds,
+            load: block.load,
+          })),
         })),
     }));
   }
