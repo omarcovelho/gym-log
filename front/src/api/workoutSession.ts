@@ -333,6 +333,13 @@ export type ExerciseHistorySet = {
   actualReps: number | null
   actualRir: number | null
   completed: boolean
+  intensityType?: SetIntensityType | null
+  intensityBlocks?: Array<{
+    blockIndex: number
+    reps: number
+    restSeconds: number | null
+    load: number | null
+  }>
 }
 
 export type ExerciseHistorySession = {
