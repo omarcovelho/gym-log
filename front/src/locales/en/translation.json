@@ -329,6 +329,7 @@
     "removeSet": "Remove Set",
     "removeSetMessage": "Are you sure you want to remove this set?",
     "finishWorkout": "Finish Workout",
+    "finishedAt": "Date and time you finished",
     "howWasWorkout": "How was your workout?",
     "fatigueLevel": "Effort level (1–10)",
     "notes": "Notes",

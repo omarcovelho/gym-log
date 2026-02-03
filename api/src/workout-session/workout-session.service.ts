@@ -191,7 +191,7 @@ export class WorkoutSessionService {
 
     /** Finaliza o treino */
     async finishSession(sessionId: string, dto: FinishWorkoutDto) {
-        const now = new Date()
+        const endDate = dto.endAt ? new Date(dto.endAt) : new Date()
 
         const session = await this.prisma.workoutSession.findUnique({
             where: { id: sessionId },
@@ -200,13 +200,13 @@ export class WorkoutSessionService {
         if (!session) throw new NotFoundException('Session not found')
 
         const durationM = session.startAt
-            ? Math.round((now.getTime() - session.startAt.getTime()) / 60000)
+            ? Math.round((endDate.getTime() - session.startAt.getTime()) / 60000)
             : null
 
         return this.prisma.workoutSession.update({
             where: { id: sessionId },
             data: {
-                endAt: now,
+                endAt: endDate,
                 durationM,
                 feeling: dto.feeling ?? null,
                 fatigue: dto.fatigue ?? null,
