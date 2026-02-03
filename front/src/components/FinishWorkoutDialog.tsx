@@ -1,10 +1,11 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 
 export type FinishWorkoutData = {
   feeling?: 'GREAT' | 'GOOD' | 'OKAY' | 'BAD' | 'TERRIBLE'
   fatigue?: number
   notes?: string
+  endAt?: string
 }
 
 type Props = {
@@ -20,13 +21,25 @@ export function FinishWorkoutDialog({ open, onClose, onConfirm }: Props) {
   const [feeling, setFeeling] = useState<FinishWorkoutData['feeling']>()
   const [fatigue, setFatigue] = useState<number>(5)
   const [notes, setNotes] = useState('')
+  const [endAt, setEndAt] = useState('')
   const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    if (open) {
+      setEndAt(new Date().toISOString().slice(0, 16))
+    }
+  }, [open])
 
   if (!open) return null
 
   const handleConfirm = async () => {
     setLoading(true)
-    await onConfirm({ feeling, fatigue, notes })
+    await onConfirm({
+      feeling,
+      fatigue,
+      notes,
+      endAt: endAt ? new Date(endAt).toISOString() : undefined,
+    })
     setLoading(false)
     onClose()
   }
@@ -37,6 +50,19 @@ export function FinishWorkoutDialog({ open, onClose, onConfirm }: Props) {
         <h2 className="text-xl font-semibold text-gray-100 mb-4">{t('dialog.finishWorkout')}</h2>
 
         <div className="space-y-4">
+          <div>
+            <label htmlFor="finishedAt" className="block text-sm font-medium text-gray-300 mb-1">
+              {t('dialog.finishedAt')}
+            </label>
+            <input
+              id="finishedAt"
+              type="datetime-local"
+              value={endAt}
+              onChange={(e) => setEndAt(e.target.value)}
+              className="w-full rounded-md border border-gray-700 bg-[#0f0f0f] px-3 py-2 text-base text-gray-100 focus:border-primary outline-none"
+            />
+          </div>
+
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-1">
               {t('dialog.howWasWorkout')}

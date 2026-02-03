@@ -197,6 +197,7 @@ export async function finishWorkoutSession(
     feeling?: 'GREAT' | 'GOOD' | 'OKAY' | 'BAD' | 'TERRIBLE'
     fatigue?: number
     notes?: string
+    endAt?: string
   },
 ): Promise<WorkoutSession> {
   const { data } = await api.post(`/workouts/${sessionId}/finish`, payload ?? {})
