@@ -379,3 +379,60 @@ export async function pinExercise(exerciseId: string): Promise<void> {
 export async function unpinExercise(exerciseId: string): Promise<void> {
   await api.delete(`/statistics/pinned-exercises/${exerciseId}`)
 }
+
+/* ---------- Export workout history ---------- */
+export type WorkoutExportResponse = {
+  sessions: Array<{
+    id: string
+    title: string | null
+    startAt: string
+    endAt: string | null
+    durationM: number | null
+    fatigue: number | null
+    feeling: 'GREAT' | 'GOOD' | 'OKAY' | 'BAD' | 'TERRIBLE' | null
+    notes: string | null
+    exercises: Array<{
+      exerciseName: string
+      muscleGroup: string | null
+      order: number
+      notes: string | null
+      sets: Array<{
+        setIndex: number
+        plannedLoad: number | null
+        plannedReps: number | null
+        plannedRir: number | null
+        actualLoad: number | null
+        actualReps: number | null
+        actualRir: number | null
+        unit: 'KG' | 'LB' | null
+        completed: boolean
+        intensityType: SetIntensityType
+        notes: string | null
+        intensityBlocks: Array<{
+          blockIndex: number
+          reps: number
+          restSeconds: number | null
+          load: number | null
+        }>
+      }>
+    }>
+  }>
+  total: number
+  exportedAt: string
+  filters: {
+    startDate: string | null
+    endDate: string | null
+  }
+}
+
+export async function exportWorkoutHistory(
+  startDate?: string | null,
+  endDate?: string | null
+): Promise<WorkoutExportResponse> {
+  const params: Record<string, string> = {}
+  if (startDate) params.startDate = startDate
+  if (endDate) params.endDate = endDate
+  
+  const { data } = await api.get<WorkoutExportResponse>('/statistics/workouts/export', { params })
+  return data
+}

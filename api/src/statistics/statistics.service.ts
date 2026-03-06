@@ -918,5 +918,98 @@ export class StatisticsService {
         })),
     }));
   }
+
+  /** Exporta histórico completo de treinos finalizados para análise */
+  async exportWorkoutHistory(userId: string, startDate: Date | null = null, endDate: Date | null = null) {
+    // Construir filtros de data
+    const dateFilters: { gte?: Date; lte?: Date } = {};
+    if (startDate) {
+      dateFilters.gte = startDate;
+    }
+    if (endDate) {
+      dateFilters.lte = endDate;
+    }
+
+    // Buscar todas as sessões finalizadas do usuário
+    const sessions = await this.prisma.workoutSession.findMany({
+      where: {
+        userId,
+        endAt: { not: null }, // Apenas sessões finalizadas
+        ...(Object.keys(dateFilters).length > 0 && { startAt: dateFilters }),
+      },
+      include: {
+        exercises: {
+          include: {
+            exercise: true, // Para obter nome e grupo muscular
+            sets: {
+              include: {
+                intensityBlocks: {
+                  orderBy: {
+                    blockIndex: 'asc',
+                  },
+                },
+              },
+              orderBy: {
+                setIndex: 'asc',
+              },
+            },
+          },
+          orderBy: {
+            order: 'asc',
+          },
+        },
+      },
+      orderBy: {
+        startAt: 'desc', // Mais recente primeiro
+      },
+    });
+
+    // Formatar resposta
+    const formattedSessions = sessions.map((session) => ({
+      id: session.id,
+      title: session.title,
+      startAt: session.startAt.toISOString(),
+      endAt: session.endAt?.toISOString() || null,
+      durationM: session.durationM,
+      fatigue: session.fatigue,
+      feeling: session.feeling,
+      notes: session.notes,
+      exercises: session.exercises.map((exercise) => ({
+        exerciseName: exercise.exercise.name,
+        muscleGroup: exercise.exercise.muscleGroup,
+        order: exercise.order,
+        notes: exercise.notes,
+        sets: exercise.sets.map((set) => ({
+          setIndex: set.setIndex,
+          plannedLoad: set.plannedLoad,
+          plannedReps: set.plannedReps,
+          plannedRir: set.plannedRir,
+          actualLoad: set.actualLoad,
+          actualReps: set.actualReps,
+          actualRir: set.actualRir,
+          unit: set.unit,
+          completed: set.completed,
+          intensityType: set.intensityType,
+          notes: set.notes,
+          intensityBlocks: set.intensityBlocks.map((block) => ({
+            blockIndex: block.blockIndex,
+            reps: block.reps,
+            restSeconds: block.restSeconds,
+            load: block.load,
+          })),
+        })),
+      })),
+    }));
+
+    return {
+      sessions: formattedSessions,
+      total: formattedSessions.length,
+      exportedAt: new Date().toISOString(),
+      filters: {
+        startDate: startDate?.toISOString() || null,
+        endDate: endDate?.toISOString() || null,
+      },
+    };
+  }
 }
 
