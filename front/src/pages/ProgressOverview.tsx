@@ -13,8 +13,9 @@ import {
   ResponsiveContainer,
   Legend,
 } from 'recharts'
-import { TrendingUp } from 'lucide-react'
+import { TrendingUp, Download } from 'lucide-react'
 import { ProgressRangeFilter } from '@/components/ProgressRangeFilter'
+import { ExportWorkoutHistoryModal } from '@/components/ExportWorkoutHistoryModal'
 import type { RangePreset } from '@/utils/dateRange'
 import { calculateDateRange } from '@/utils/dateRange'
 
@@ -95,6 +96,7 @@ export default function ProgressOverview() {
 
   const isOverviewActive = location.pathname === '/app/progress'
   const isExerciseActive = location.pathname === '/app/progress/exercise'
+  const [showExportModal, setShowExportModal] = useState(false)
 
   if (isLoading) {
     return (
@@ -126,9 +128,20 @@ export default function ProgressOverview() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="space-y-2">
-        <h1 className="text-2xl md:text-3xl font-bold">{t('progress.title')}</h1>
-        <p className="text-gray-400 text-sm md:text-base">{t('progress.subtitle')}</p>
+      <div className="flex justify-between items-start">
+        <div className="space-y-2">
+          <h1 className="text-2xl md:text-3xl font-bold">{t('progress.title')}</h1>
+          <p className="text-gray-400 text-sm md:text-base">{t('progress.subtitle')}</p>
+        </div>
+        
+        <button
+          onClick={() => setShowExportModal(true)}
+          className="flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-800 bg-[#101010] text-gray-300 hover:text-white hover:border-primary transition"
+          title={t('progress.exportHistory')}
+        >
+          <Download className="w-4 h-4" />
+          <span className="text-sm font-medium">{t('progress.export')}</span>
+        </button>
       </div>
 
       {/* Tabs de Navegação */}
@@ -305,6 +318,11 @@ export default function ProgressOverview() {
         )}
       </div>
 
+      {/* Modal de Exportação */}
+      <ExportWorkoutHistoryModal
+        open={showExportModal}
+        onClose={() => setShowExportModal(false)}
+      />
     </div>
   )
 }

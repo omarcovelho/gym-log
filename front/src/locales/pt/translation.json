@@ -20,7 +20,8 @@
     "loadingExercises": "Carregando exercícios...",
     "loadingTemplates": "Carregando templates...",
     "loadingSessions": "Carregando sessões...",
-    "close": "Fechar"
+    "close": "Fechar",
+    "exporting": "Exportando..."
   },
   "auth": {
     "login": "Login",
@@ -401,6 +402,8 @@
     "allHistory": "Todo o histórico",
     "exerciseProgression": "Por Exercício",
     "selectExercise": "Selecione um exercício",
+    "export": "Exportar",
+    "exportHistory": "Exportar histórico",
     "avgLoad": "Carga Média",
     "avgReps": "Reps Média",
     "thisWeek": "Esta semana",
@@ -510,5 +513,16 @@
     "weeks": "vs semana anterior",
     "weeksAverage": "Média das semanas anteriores",
     "trendLine": "Linha de Tendência"
+  },
+  "export": {
+    "title": "Exportar Histórico de Treinos",
+    "startDate": "Data Início",
+    "endDate": "Data Fim",
+    "exportAll": "Exportar tudo",
+    "exportAllDescription": "Exportar todo o histórico sem filtros de data",
+    "exportButton": "Exportar",
+    "exportSuccess": "Histórico exportado com sucesso!",
+    "exportError": "Erro ao exportar histórico",
+    "invalidDateRange": "Data início deve ser anterior ou igual à data fim"
   }
 }

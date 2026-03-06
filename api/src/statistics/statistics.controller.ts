@@ -134,5 +134,44 @@ export class StatisticsController {
     }
     return this.statisticsService.getExerciseHistory(user.id, exerciseId, limitNumber);
   }
+
+  @Get('workouts/export')
+  @ApiOperation({ summary: 'Export complete workout history for analysis (only finished sessions)' })
+  @ApiQuery({ name: 'startDate', required: false, type: String, description: 'Start date filter (ISO 8601 string)' })
+  @ApiQuery({ name: 'endDate', required: false, type: String, description: 'End date filter (ISO 8601 string)' })
+  @ApiResponse({ status: 200, description: 'Workout history exported successfully.' })
+  @ApiResponse({ status: 401, description: 'Unauthorized.' })
+  @ApiResponse({ status: 400, description: 'Bad request (invalid date format or range).' })
+  async exportWorkoutHistory(
+    @CurrentUser() user,
+    @Query('startDate') startDateStr?: string,
+    @Query('endDate') endDateStr?: string,
+  ) {
+    let startDate: Date | null = null;
+    let endDate: Date | null = null;
+
+    // Validar e parsear startDate se fornecido
+    if (startDateStr) {
+      startDate = new Date(startDateStr);
+      if (isNaN(startDate.getTime())) {
+        throw new BadRequestException('Invalid startDate format. Use ISO date strings.');
+      }
+    }
+
+    // Validar e parsear endDate se fornecido
+    if (endDateStr) {
+      endDate = new Date(endDateStr);
+      if (isNaN(endDate.getTime())) {
+        throw new BadRequestException('Invalid endDate format. Use ISO date strings.');
+      }
+    }
+
+    // Validar que startDate <= endDate quando ambos fornecidos
+    if (startDate && endDate && startDate > endDate) {
+      throw new BadRequestException('startDate must be less than or equal to endDate.');
+    }
+
+    return this.statisticsService.exportWorkoutHistory(user.id, startDate, endDate);
+  }
 }
 

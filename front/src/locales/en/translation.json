@@ -20,7 +20,8 @@
     "loadingExercises": "Loading exercises...",
     "loadingTemplates": "Loading templates...",
     "loadingSessions": "Loading sessions...",
-    "close": "Close"
+    "close": "Close",
+    "exporting": "Exporting..."
   },
   "auth": {
     "login": "Login",
@@ -401,6 +402,8 @@
     "allHistory": "All history",
     "exerciseProgression": "By Exercise",
     "selectExercise": "Select an exercise",
+    "export": "Export",
+    "exportHistory": "Export history",
     "avgLoad": "Average Load",
     "avgReps": "Average Reps",
     "thisWeek": "This week",
@@ -510,5 +513,16 @@
     "weeks": "vs previous week",
     "weeksAverage": "Average of previous weeks",
     "trendLine": "Trend Line"
+  },
+  "export": {
+    "title": "Export Workout History",
+    "startDate": "Start Date",
+    "endDate": "End Date",
+    "exportAll": "Export all",
+    "exportAllDescription": "Export all history without date filters",
+    "exportButton": "Export",
+    "exportSuccess": "History exported successfully!",
+    "exportError": "Error exporting history",
+    "invalidDateRange": "Start date must be before or equal to end date"
   }
 }
