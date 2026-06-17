@@ -25,11 +25,11 @@ Pull requests e pushes para `develop` e `master` disparam GitHub Actions:
 
 **Pre-commit:** após `npm install` na raiz, Husky roda lint nos arquivos staged (`api/**/*.ts`, `front/**/*.{ts,tsx}`).
 
-Node.js **22** (ver [`.nvmrc`](.nvmrc)).
+Node.js **24** (ver [`.nvmrc`](.nvmrc)).
 
 ## Desenvolvimento local
 
-Pré-requisitos: Node.js 22, Docker (para o Postgres), e `api/.env.local` configurado (copie de `api/.env.example`).
+Pré-requisitos: Node.js 24, Docker (para o Postgres), e `api/.env.local` configurado (copie de `api/.env.example`).
 
 ```bash
 # Na raiz do repositório — instala o runner (apenas na primeira vez)

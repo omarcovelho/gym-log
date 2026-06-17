@@ -2,6 +2,9 @@
   "name": "gym-log",
   "private": true,
   "version": "0.13.0",
+  "engines": {
+    "node": ">=24"
+  },
   "scripts": {
     "dev": "concurrently -k -n api,front -c cyan,magenta \"npm run start:dev --prefix api\" \"npm run dev --prefix front\"",
     "dev:db": "docker compose up -d db",
