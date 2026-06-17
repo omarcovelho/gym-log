@@ -22,8 +22,8 @@ jobs:
       front: ${{ steps.filter.outputs.front }}
       workflows: ${{ steps.filter.outputs.workflows }}
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630cea3296fbb84b0592936f83 # v4.2.2
-      - uses: dorny/paths-filter@451258466ab91ebf0efe02645f4128fcb0f285d5 # v3.0.2
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
         id: filter
         with:
           filters: |
@@ -71,8 +71,8 @@ jobs:
       ADMIN_EMAIL: admin@example.com
       ADMIN_PASSWORD: ci-admin-password
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630cea3296fbb84b0592936f83 # v4.2.2
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version-file: .nvmrc
           cache: npm
@@ -98,8 +98,8 @@ jobs:
       run:
         working-directory: front
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630cea3296fbb84b0592936f83 # v4.2.2
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version-file: .nvmrc
           cache: npm
@@ -118,8 +118,8 @@ jobs:
       run:
         working-directory: ${{ matrix.package }}
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630cea3296fbb84b0592936f83 # v4.2.2
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version-file: .nvmrc
           cache: npm
