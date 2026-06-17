@@ -16,7 +16,11 @@ jobs:
     name: dependency-review
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/dependency-review-action@v4
+      - uses: actions/checkout@v6
+      - uses: actions/dependency-review-action@v5
         with:
           fail-on-severity: high
+          # Skip (don't fail) when Dependency graph is disabled in repo settings.
+          # Enable it for full PR dependency diff scanning:
+          # https://github.com/omarcovelho/gym-log/settings/security_analysis
+          fail-on-unsupported-repos: false

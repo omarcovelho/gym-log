@@ -21,7 +21,7 @@ Pull requests e pushes para `develop` e `master` disparam GitHub Actions:
 
 **Branch protection (recomendado):** em `develop` e `master`, exija os checks acima antes do merge. No GitHub: Settings → Branches → Add rule.
 
-**Segurança no repositório (one-time):** ative Secret scanning e Push protection em Settings → Code security.
+**Segurança no repositório (one-time):** ative Secret scanning e Push protection em Settings → Code security. Para ativar `dependency-review` com diff de dependências no PR, ative também **Dependency graph** em [Security analysis](https://github.com/omarcovelho/gym-log/settings/security_analysis).
 
 **Pre-commit:** após `npm install` na raiz, Husky roda lint nos arquivos staged (`api/**/*.ts`, `front/**/*.{ts,tsx}`).
 
