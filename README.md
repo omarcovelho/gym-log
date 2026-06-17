@@ -1,6 +1,6 @@
 # gym-log
 
-![CI](https://github.com/omarcovelho/gym-log/actions/workflows/ci.yml/badge.svg?branch=develop)
+![CI](https://github.com/omarcovelho/gym-log/actions/workflows/ci.yml/badge.svg?branch=master)
 
 Aplicação de tracking de treinos e medidas corporais.
 
