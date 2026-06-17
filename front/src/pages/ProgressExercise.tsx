@@ -26,10 +26,10 @@ export default function ProgressExercise() {
       </div>
 
       {/* Tabs de Navegação */}
-      <div className="flex rounded-lg border border-gray-800 bg-[#151515] p-1">
+      <div className="flex w-full sm:w-fit rounded-lg border border-gray-800 bg-[#151515] p-1">
         <Link
           to="/app/progress"
-          className={`flex-1 px-4 py-2 rounded-md text-sm font-medium transition text-center ${
+          className={`flex-1 sm:flex-none px-4 py-2 rounded-md text-sm font-medium transition text-center ${
             isOverviewActive
               ? 'bg-primary text-black'
               : 'text-gray-400 hover:text-gray-200'
@@ -39,7 +39,7 @@ export default function ProgressExercise() {
         </Link>
         <Link
           to="/app/progress/exercise"
-          className={`flex-1 px-4 py-2 rounded-md text-sm font-medium transition text-center ${
+          className={`flex-1 sm:flex-none px-4 py-2 rounded-md text-sm font-medium transition text-center ${
             isExerciseActive
               ? 'bg-primary text-black'
               : 'text-gray-400 hover:text-gray-200'
@@ -49,7 +49,7 @@ export default function ProgressExercise() {
         </Link>
         <Link
           to="/app/progress/body-weight"
-          className={`flex-1 px-4 py-2 rounded-md text-sm font-medium transition text-center ${
+          className={`flex-1 sm:flex-none px-4 py-2 rounded-md text-sm font-medium transition text-center ${
             location.pathname === '/app/progress/body-weight'
               ? 'bg-primary text-black'
               : 'text-gray-400 hover:text-gray-200'

@@ -120,7 +120,7 @@ export default function SleepForm() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6 pb-24 px-4 sm:px-0">
+    <div className="max-w-2xl lg:max-w-none mx-auto space-y-6 pb-24 md:pb-0 px-4 sm:px-0">
       <header className="space-y-1">
         <h1 className="text-2xl sm:text-3xl font-bold">
           {isEditing ? t('sleep.editSleep') : t('sleep.addSleep')}

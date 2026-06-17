@@ -3,13 +3,14 @@ import { Navigate, useLocation } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { useAuth } from './AuthContext'
 import { getUserStats } from '@/api/user'
+import { hasCompletedProfile } from '@/utils/profile'
 
 export default function ProtectedRouteWithStats({ children }: { children: React.ReactNode }) {
   const { user, loading: authLoading } = useAuth()
   const location = useLocation()
 
   // Check if user has stats filled - must be called before any conditional returns
-  const { data: stats, isLoading: statsLoading } = useQuery({
+  const { data: stats, isLoading: statsLoading, isError: statsError, refetch } = useQuery({
     queryKey: ['user-stats'],
     queryFn: getUserStats,
     enabled: !!user && !authLoading,
@@ -45,8 +46,23 @@ export default function ProtectedRouteWithStats({ children }: { children: React.
     )
   }
 
-  // Check if stats are filled (height and weight must be present)
-  const hasStats = stats && stats.height !== null && stats.weight !== null
+  if (statsError) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-dark px-4">
+        <div className="text-center space-y-4">
+          <p className="text-gray-400 text-sm">Could not load your profile data.</p>
+          <button
+            onClick={() => refetch()}
+            className="px-4 py-2 bg-primary text-dark font-semibold rounded-lg hover:brightness-110 transition"
+          >
+            Try again
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  const hasStats = hasCompletedProfile(stats)
 
   // If on stats page, allow access
   if (location.pathname === '/app/stats') {

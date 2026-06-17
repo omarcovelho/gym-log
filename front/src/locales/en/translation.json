@@ -405,6 +405,8 @@
     "export": "Export",
     "exportHistory": "Export history",
     "avgLoad": "Average Load",
+    "estimated1RM": "Est. 1RM",
+    "no1RMData": "No sets in the 1–12 rep range for this period",
     "avgReps": "Average Reps",
     "thisWeek": "This week",
     "lastWeek": "Last week",

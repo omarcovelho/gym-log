@@ -21,7 +21,7 @@ export function ProgressRangeFilter({ value, onChange }: Props) {
   ]
 
   return (
-    <div className="rounded-xl border border-gray-800 bg-[#101010] p-4 md:p-6">
+    <div className="rounded-xl border border-gray-800 bg-[#101010] p-4 md:p-6 w-full sm:max-w-md">
       <div className="flex items-center gap-3 mb-3">
         <div className="p-2 bg-primary/10 rounded-lg">
           <Calendar className="w-5 h-5 text-primary" />

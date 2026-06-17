@@ -1,5 +1,6 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { estimateOneRepMaxEpley } from './one-rep-max.util';
 
 @Injectable()
 export class StatisticsService {
@@ -649,6 +650,7 @@ export class StatisticsService {
         loads: number[];
         volumes: number[];
         reps: number[];
+        e1rms: number[];
         setsCount: number;
       }
     >();
@@ -661,6 +663,7 @@ export class StatisticsService {
           loads: [],
           volumes: [],
           reps: [],
+          e1rms: [],
           setsCount: 0,
         });
       }
@@ -678,6 +681,12 @@ export class StatisticsService {
             weekData.volumes.push(volume);
             if (set.actualReps != null) {
               weekData.reps.push(set.actualReps);
+              if (set.actualLoad != null) {
+                const e1rm = estimateOneRepMaxEpley(set.actualLoad, set.actualReps);
+                if (e1rm != null) {
+                  weekData.e1rms.push(e1rm);
+                }
+              }
             }
             weekData.setsCount += equivalentSets;
           }
@@ -692,6 +701,7 @@ export class StatisticsService {
         avgLoad: data.loads.length > 0 ? data.loads.reduce((a, b) => a + b, 0) / data.loads.length : 0,
         totalVolume: Math.round(data.volumes.reduce((a, b) => a + b, 0)),
         avgReps: data.reps.length > 0 ? data.reps.reduce((a, b) => a + b, 0) / data.reps.length : 0,
+        bestEstimated1RM: data.e1rms.length > 0 ? Math.max(...data.e1rms) : 0,
         setsCount: Math.round(data.setsCount),
       }))
       .sort((a, b) => a.week.localeCompare(b.week));
@@ -712,6 +722,7 @@ export class StatisticsService {
             ),
             avgReps:
               last4Weeks.reduce((sum, w) => sum + w.avgReps, 0) / last4Weeks.length,
+            bestEstimated1RM: Math.max(...last4Weeks.map((w) => w.bestEstimated1RM)),
           }
         : null;
 
@@ -727,6 +738,7 @@ export class StatisticsService {
             ),
             avgReps:
               previous4Weeks.reduce((sum, w) => sum + w.avgReps, 0) / previous4Weeks.length,
+            bestEstimated1RM: Math.max(...previous4Weeks.map((w) => w.bestEstimated1RM)),
           }
         : null;
 

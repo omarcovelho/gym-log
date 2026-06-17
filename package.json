@@ -1,0 +1,14 @@
+{
+  "name": "gym-log",
+  "private": true,
+  "version": "0.12.0",
+  "scripts": {
+    "dev": "concurrently -k -n api,front -c cyan,magenta \"npm run start:dev --prefix api\" \"npm run dev --prefix front\"",
+    "dev:db": "docker compose up -d db",
+    "dev:migrate": "npm run migrate:deploy --prefix api",
+    "dev:all": "npm run dev:db && npm run dev:migrate && npm run dev"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  }
+}

@@ -9,6 +9,7 @@ import { getUserStats, updateUserStats } from '@/api/user'
 import { useToast } from '@/components/ToastProvider'
 import { LanguageSelector } from '@/components/LanguageSelector'
 import { User, Settings } from 'lucide-react'
+import { hasCompletedProfile } from '@/utils/profile'
 
 export default function UserStats() {
   const { t } = useTranslation()
@@ -24,7 +25,7 @@ export default function UserStats() {
 
   type Form = z.infer<ReturnType<typeof getSchema>>
 
-  const { data: stats, isLoading, refetch: refetchStats } = useQuery({
+  const { data: stats, isLoading } = useQuery({
     queryKey: ['user-stats'],
     queryFn: getUserStats,
   })
@@ -51,17 +52,14 @@ export default function UserStats() {
 
   const mutation = useMutation({
     mutationFn: updateUserStats,
-    onSuccess: async () => {
-      // Invalidate and refetch stats before navigating
-      await queryClient.invalidateQueries({ queryKey: ['user-stats'] })
-      await refetchStats()
+    onSuccess: async (updatedStats) => {
+      queryClient.setQueryData(['user-stats'], updatedStats)
       toast({
         title: t('user.dataSaved'),
         description: t('user.dataUpdated'),
         variant: 'success',
       })
-      // Navigate after stats are updated
-      navigate('/app')
+      navigate('/app', { replace: true })
     },
     onError: (error: Error) => {
       toast({
@@ -92,8 +90,7 @@ export default function UserStats() {
   }
 
   return (
-    <div className="min-h-screen bg-dark text-gray-100 p-4 pb-24">
-      <div className="max-w-2xl mx-auto">
+    <div className="space-y-6 max-w-2xl mx-auto">
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-2">
@@ -103,7 +100,7 @@ export default function UserStats() {
             <h1 className="text-2xl font-bold text-gray-100">{t('user.yourData')}</h1>
           </div>
           <p className="text-gray-400 text-sm">
-            {stats && stats.height !== null && stats.weight !== null
+            {hasCompletedProfile(stats)
               ? t('user.updateInfo')
               : t('user.fillInfo')}
           </p>
@@ -196,7 +193,6 @@ export default function UserStats() {
             </div>
           </div>
         </div>
-      </div>
     </div>
   )
 }

@@ -108,7 +108,7 @@ export default function SleepList() {
   const pagination = data?.meta
 
   return (
-    <div className="max-w-3xl mx-auto space-y-6 pb-24">
+    <div className="max-w-3xl lg:max-w-none mx-auto space-y-6 pb-24 md:pb-0">
       {/* Header */}
       <div className="space-y-2">
         <h1 className="text-2xl md:text-3xl font-bold">{t('diary.title', 'Diário')}</h1>

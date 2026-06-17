@@ -296,6 +296,7 @@ export type ExerciseProgressionWeek = {
   avgLoad: number
   totalVolume: number
   avgReps: number
+  bestEstimated1RM: number
   setsCount: number
 }
 
@@ -307,11 +308,13 @@ export type ExerciseProgression = {
     avgLoad: number
     totalVolume: number
     avgReps: number
+    bestEstimated1RM: number
   } | null
   avgPrevious4Weeks: {
     avgLoad: number
     totalVolume: number
     avgReps: number
+    bestEstimated1RM: number
   } | null
   trend: 'up' | 'down' | 'stable'
 }

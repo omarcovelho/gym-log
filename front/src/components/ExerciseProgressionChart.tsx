@@ -41,7 +41,7 @@ function ExerciseChartCard({
   isPinned,
 }: ExerciseChartCardProps) {
   const { t, i18n } = useTranslation()
-  const [metricMode, setMetricMode] = useState<'load' | 'volume'>('load')
+  const [metricMode, setMetricMode] = useState<'load' | 'volume' | 'e1rm'>('load')
 
   const { data: progression, isLoading, error } = useQuery<ExerciseProgression>({
     queryKey: ['exercise-progression', exerciseId, startDate, endDate],
@@ -72,7 +72,10 @@ function ExerciseChartCard({
     weekKey: week.week,
     avgLoad: week.avgLoad,
     totalVolume: week.totalVolume,
+    bestEstimated1RM: week.bestEstimated1RM ?? 0,
   })) || []
+
+  const has1RMData = progression?.weeks.some((week) => (week.bestEstimated1RM ?? 0) > 0) ?? false
 
   return (
     <div className="rounded-xl border border-gray-800 bg-[#101010] p-4 md:p-6 space-y-4">
@@ -115,7 +118,7 @@ function ExerciseChartCard({
       {!isLoading && !error && progression && progression.weeks.length > 0 && (
         <>
           {/* Toggle de métrica */}
-          <div className="flex rounded-lg border border-gray-800 bg-[#151515] p-1 w-fit">
+          <div className="flex flex-wrap rounded-lg border border-gray-800 bg-[#151515] p-1 w-fit gap-1">
             <button
               onClick={() => setMetricMode('load')}
               className={`px-3 py-2 rounded-md text-sm font-medium transition ${
@@ -136,10 +139,28 @@ function ExerciseChartCard({
             >
               {t('progress.totalVolume', 'Volume Total')}
             </button>
+            <button
+              onClick={() => setMetricMode('e1rm')}
+              disabled={!has1RMData}
+              className={`px-3 py-2 rounded-md text-sm font-medium transition ${
+                metricMode === 'e1rm'
+                  ? 'bg-primary text-black'
+                  : !has1RMData
+                    ? 'text-gray-600 cursor-not-allowed'
+                    : 'text-gray-400 hover:text-gray-200'
+              }`}
+              title={!has1RMData ? t('progress.no1RMData') : undefined}
+            >
+              {t('progress.estimated1RM', 'Est. 1RM')}
+            </button>
           </div>
 
+          {metricMode === 'e1rm' && !has1RMData && (
+            <p className="text-sm text-gray-500">{t('progress.no1RMData')}</p>
+          )}
+
           {/* Gráfico */}
-          {chartData.length > 0 && (
+          {chartData.length > 0 && (metricMode !== 'e1rm' || has1RMData) && (
             <div className="w-full h-64 md:h-80 min-h-[256px]">
               <ResponsiveContainer width="100%" height="100%" minHeight={256}>
                 <LineChart data={chartData}>
@@ -182,12 +203,24 @@ function ExerciseChartCard({
                   />
                   <Line
                     type="monotone"
-                    dataKey={metricMode === 'volume' ? 'totalVolume' : 'avgLoad'}
+                    dataKey={
+                      metricMode === 'volume'
+                        ? 'totalVolume'
+                        : metricMode === 'e1rm'
+                          ? 'bestEstimated1RM'
+                          : 'avgLoad'
+                    }
                     stroke="#00E676"
                     strokeWidth={2}
                     dot={{ fill: '#00E676', r: 3 }}
                     activeDot={{ r: 5 }}
-                    name={metricMode === 'volume' ? t('progress.totalVolume', 'Volume Total') : t('progress.avgLoad', 'Carga Média')}
+                    name={
+                      metricMode === 'volume'
+                        ? t('progress.totalVolume', 'Volume Total')
+                        : metricMode === 'e1rm'
+                          ? t('progress.estimated1RM', 'Est. 1RM')
+                          : t('progress.avgLoad', 'Carga Média')
+                    }
                   />
                 </LineChart>
               </ResponsiveContainer>
@@ -233,6 +266,23 @@ function ExerciseChartCard({
                       )}
                     </div>
                   </div>
+                  {has1RMData && (
+                    <div className="flex justify-between items-center text-sm">
+                      <span className="text-gray-400">{t('progress.estimated1RM', 'Est. 1RM')}:</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-gray-200">
+                          {progression.currentWeek.bestEstimated1RM.toFixed(1)} → {progression.previousWeek.bestEstimated1RM.toFixed(1)} {t('workout.kg', 'kg')}
+                        </span>
+                        {progression.currentWeek.bestEstimated1RM > progression.previousWeek.bestEstimated1RM ? (
+                          <TrendingUp className="w-4 h-4 text-green-500" />
+                        ) : progression.currentWeek.bestEstimated1RM < progression.previousWeek.bestEstimated1RM ? (
+                          <TrendingDown className="w-4 h-4 text-red-500" />
+                        ) : (
+                          <Minus className="w-4 h-4 text-gray-500" />
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
@@ -274,6 +324,23 @@ function ExerciseChartCard({
                       )}
                     </div>
                   </div>
+                  {has1RMData && (
+                    <div className="flex justify-between items-center text-sm">
+                      <span className="text-gray-400">{t('progress.estimated1RM', 'Est. 1RM')}:</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-gray-200">
+                          {progression.avgLast4Weeks.bestEstimated1RM.toFixed(1)} → {progression.avgPrevious4Weeks.bestEstimated1RM.toFixed(1)} {t('workout.kg', 'kg')}
+                        </span>
+                        {progression.avgLast4Weeks.bestEstimated1RM > progression.avgPrevious4Weeks.bestEstimated1RM ? (
+                          <TrendingUp className="w-4 h-4 text-green-500" />
+                        ) : progression.avgLast4Weeks.bestEstimated1RM < progression.avgPrevious4Weeks.bestEstimated1RM ? (
+                          <TrendingDown className="w-4 h-4 text-red-500" />
+                        ) : (
+                          <Minus className="w-4 h-4 text-gray-500" />
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             )}

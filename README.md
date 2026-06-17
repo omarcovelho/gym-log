@@ -2,6 +2,28 @@
 
 Aplicação de tracking de treinos e medidas corporais.
 
+## Desenvolvimento local
+
+Pré-requisitos: Node.js, Docker (para o Postgres), e `api/.env.local` configurado (copie de `api/.env.example`).
+
+```bash
+# Na raiz do repositório — instala o runner (apenas na primeira vez)
+npm install
+
+# Sobe Postgres, aplica migrations e inicia API + frontend
+npm run dev:all
+
+# Ou, se o banco já estiver rodando e migrado:
+npm run dev
+```
+
+Na primeira vez (ou com banco novo), `dev:all` roda `prisma migrate deploy` automaticamente. Se preferir migrar manualmente: `npm run dev:migrate` na raiz ou `npm run migrate:deploy` em `api/`.
+
+- **API:** http://localhost:3000/api — Swagger em http://localhost:3000/docs (ambiente local)
+- **Frontend:** http://localhost:5173 — proxy `/api` → API local
+
+Para smoke tests com dados de exemplo, rode os seeds em `api/` (ver seção abaixo) e use `test@evolution.com` / `test123`.
+
 ## Seeds
 
 O projeto possui scripts de seed para popular o banco de dados com dados de teste. Todos os seeds estão localizados em `api/prisma/`.
