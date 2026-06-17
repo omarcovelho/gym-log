@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateBodyMeasurementDto } from './dto/create-body-measurement.dto';
 import { UpdateBodyMeasurementDto } from './dto/update-body-measurement.dto';
@@ -130,7 +134,7 @@ export class BodyMeasurementService {
   ) {
     const now = new Date();
     now.setHours(23, 59, 59, 999);
-    
+
     // Determinar data de início e fim
     let dateStart: Date;
     let dateEnd: Date;
@@ -146,14 +150,14 @@ export class BodyMeasurementService {
       dateEnd = new Date(now);
       dateEnd.setHours(23, 59, 59, 999);
       dateStart = new Date(now);
-      dateStart.setDate(dateStart.getDate() - (weeks * 7));
+      dateStart.setDate(dateStart.getDate() - weeks * 7);
       dateStart.setHours(0, 0, 0, 0);
     } else {
       // Default: 8 semanas
       dateEnd = new Date(now);
       dateEnd.setHours(23, 59, 59, 999);
       dateStart = new Date(now);
-      dateStart.setDate(dateStart.getDate() - (8 * 7));
+      dateStart.setDate(dateStart.getDate() - 8 * 7);
       dateStart.setHours(0, 0, 0, 0);
     }
 
@@ -178,11 +182,11 @@ export class BodyMeasurementService {
       const diff = d.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1);
       const monday = new Date(d);
       monday.setDate(diff);
-      
+
       const year = monday.getFullYear();
       const month = String(monday.getMonth() + 1).padStart(2, '0');
       const day = String(monday.getDate()).padStart(2, '0');
-      
+
       return `${year}-${month}-${day}`;
     };
 
@@ -213,7 +217,7 @@ export class BodyMeasurementService {
       // Apenas incluir se for de uma semana completa (antes do início da semana atual)
       if (measurementDate <= lastCompleteWeekEnd) {
         const weekKey = getWeekKey(measurementDate);
-        
+
         if (!weeklyDataMap.has(weekKey)) {
           weeklyDataMap.set(weekKey, {
             weight: [],
@@ -248,8 +252,8 @@ export class BodyMeasurementService {
     };
 
     // Ordenar semanas por data
-    const sortedWeeks = Array.from(weeklyDataMap.entries()).sort((a, b) => 
-      a[0].localeCompare(b[0])
+    const sortedWeeks = Array.from(weeklyDataMap.entries()).sort((a, b) =>
+      a[0].localeCompare(b[0]),
     );
 
     sortedWeeks.forEach(([weekKey, weekData]) => {
@@ -331,7 +335,7 @@ export class BodyMeasurementService {
       // Excluir a última semana (mais recente) para comparar com histórico
       const weeksForAverage = weeklyValues.slice(0, -1);
       if (weeksForAverage.length === 0) return null;
-      
+
       const sum = weeksForAverage.reduce((acc, week) => acc + week.value, 0);
       return Math.round((sum / weeksForAverage.length) * 10) / 10;
     };
@@ -350,4 +354,3 @@ export class BodyMeasurementService {
     };
   }
 }
-

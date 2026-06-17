@@ -1,7 +1,7 @@
-import { IsNotEmpty, IsOptional, IsString } from 'class-validator'
+import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
 export class StartWorkoutDto {
   @IsString()
   @IsNotEmpty()
-  templateId: string
+  templateId: string;
 }

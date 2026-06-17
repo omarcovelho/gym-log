@@ -1,0 +1,24 @@
+{
+  "name": "gym-log",
+  "private": true,
+  "version": "0.13.0",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "dev": "concurrently -k -n api,front -c cyan,magenta \"npm run start:dev --prefix api\" \"npm run dev --prefix front\"",
+    "dev:db": "docker compose up -d db",
+    "dev:migrate": "npm run migrate:deploy --prefix api",
+    "dev:all": "npm run dev:db && npm run dev:migrate && npm run dev",
+    "prepare": "husky"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1",
+    "husky": "^9.1.7",
+    "lint-staged": "^15.5.2"
+  },
+  "lint-staged": {
+    "api/**/*.ts": "./api/node_modules/.bin/eslint --fix --config api/eslint.config.mjs",
+    "front/**/*.{ts,tsx}": "./front/node_modules/.bin/eslint --fix --config front/eslint.config.js"
+  }
+}

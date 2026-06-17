@@ -129,7 +129,7 @@ export default function WorkoutSessionDetails() {
   }
 
   return (
-    <div className="max-w-3xl mx-auto space-y-6">
+    <div className="max-w-3xl lg:max-w-none mx-auto space-y-6">
       {/* Componente de export (oculto, sempre renderizado quando sessão existe) */}
       {session && <WorkoutExportView session={session} />}
 

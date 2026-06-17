@@ -87,7 +87,7 @@ export default function BodyMeasurementsList() {
   const pagination = data?.meta
 
   return (
-    <div className="max-w-3xl mx-auto space-y-6 pb-24">
+    <div className="max-w-3xl lg:max-w-none mx-auto space-y-6 pb-24 md:pb-0">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>

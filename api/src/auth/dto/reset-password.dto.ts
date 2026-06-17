@@ -11,4 +11,3 @@ export class ResetPasswordDto {
   @ApiProperty({ example: 'newSecurePassword123', minLength: 6 })
   newPassword: string;
 }
-

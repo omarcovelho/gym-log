@@ -208,7 +208,7 @@ export default function ExercisesList() {
     return <p className="text-center text-red-500 mt-12">{error}</p>
 
   return (
-    <div className="max-w-3xl mx-auto space-y-8">
+    <div className="max-w-3xl lg:max-w-none mx-auto space-y-8">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>

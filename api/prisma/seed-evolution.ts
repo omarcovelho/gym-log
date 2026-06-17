@@ -53,6 +53,19 @@ async function main() {
 
   console.log(`✅ Created ${exercises.length} exercises`)
 
+  const pinnedIds = [
+    createdExercises['Supino Reto Barra'],
+    createdExercises['Agachamento Livre'],
+  ].filter(Boolean)
+
+  if (pinnedIds.length > 0) {
+    await prisma.user.update({
+      where: { id: testUser.id },
+      data: { pinnedExerciseIds: pinnedIds },
+    })
+    console.log(`✅ Pinned ${pinnedIds.length} exercises for progression charts`)
+  }
+
   // Função para obter data de uma semana específica (0 = atual, 1 = semana passada, etc.)
   // dayOfWeek: 0 = domingo, 1 = segunda, 2 = terça, etc.
   const getWeekDate = (weeksAgo: number, dayOfWeek: number = 1): Date => {

@@ -1,15 +1,30 @@
-import { IsNumber, IsOptional, IsString, IsDateString, Min, Max } from 'class-validator';
+import {
+  IsNumber,
+  IsOptional,
+  IsString,
+  IsDateString,
+  Min,
+  Max,
+} from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 
 export class UpdateSleepDto {
-  @ApiPropertyOptional({ description: 'Hours of sleep (e.g. 7.5)', minimum: 0, maximum: 24 })
+  @ApiPropertyOptional({
+    description: 'Hours of sleep (e.g. 7.5)',
+    minimum: 0,
+    maximum: 24,
+  })
   @IsOptional()
   @IsNumber()
   @Min(0)
   @Max(24)
   sleepHours?: number;
 
-  @ApiPropertyOptional({ description: 'Sleep quality from 1 to 10', minimum: 1, maximum: 10 })
+  @ApiPropertyOptional({
+    description: 'Sleep quality from 1 to 10',
+    minimum: 1,
+    maximum: 10,
+  })
   @IsOptional()
   @IsNumber()
   @Min(1)
@@ -36,4 +51,3 @@ export class UpdateSleepDto {
   @IsDateString()
   date?: string;
 }
-
