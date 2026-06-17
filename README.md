@@ -15,13 +15,14 @@ Pull requests e pushes para `develop` e `master` disparam GitHub Actions:
 | `security-audit` | `npm audit` (high/critical) em api e front |
 | `secrets-scan` | Gitleaks — secrets commitados |
 | `CodeQL` | Análise estática de segurança no código |
-| `dependency-review` | Dependências vulneráveis introduzidas no PR |
 
 **Deploy:** Railway faz auto-deploy apenas na branch `master` (configurado no Railway).
 
 **Branch protection (recomendado):** em `develop` e `master`, exija os checks acima antes do merge. No GitHub: Settings → Branches → Add rule.
 
-**Segurança no repositório (one-time):** ative Secret scanning e Push protection em Settings → Code security. Para ativar `dependency-review` com diff de dependências no PR, ative também **Dependency graph** em [Security analysis](https://github.com/omarcovelho/gym-log/settings/security_analysis).
+**Segurança no repositório (one-time):** ative Secret scanning e Push protection em Settings → Code security.
+
+**Dependency review (opcional):** o `security-audit` já roda `npm audit`. Para diff de dependências por PR, ative **Dependency graph** em [Security analysis](https://github.com/omarcovelho/gym-log/settings/security_analysis) e adicione de volta `.github/workflows/dependency-review.yml` (ver [GitHub docs](https://docs.github.com/en/code-security/supply-chain-security/understanding-your-software-supply-chain/about-dependency-review)).
 
 **Pre-commit:** após `npm install` na raiz, Husky roda lint nos arquivos staged (`api/**/*.ts`, `front/**/*.{ts,tsx}`).
 
