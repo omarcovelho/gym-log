@@ -51,4 +51,3 @@ export class UserService {
     return user !== null && user.height !== null && user.weight !== null;
   }
 }
-

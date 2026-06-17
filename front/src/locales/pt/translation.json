@@ -405,6 +405,8 @@
     "export": "Exportar",
     "exportHistory": "Exportar histórico",
     "avgLoad": "Carga Média",
+    "estimated1RM": "1RM est.",
+    "no1RMData": "Nenhuma série na faixa de 1–12 reps neste período",
     "avgReps": "Reps Média",
     "thisWeek": "Esta semana",
     "lastWeek": "Semana anterior",

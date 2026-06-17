@@ -9,4 +9,3 @@ import { PrismaService } from 'src/prisma/prisma.service';
   exports: [RestTimerService],
 })
 export class RestTimerModule {}
-

@@ -1,4 +1,5 @@
 import { api } from '@/lib/api'
+import { decodeJwtPayload } from '@/utils/jwt'
 
 export type User = {
   id: string
@@ -31,31 +32,23 @@ export async function refreshToken(): Promise<AuthResponse> {
 /* ---------- Check if token is expired or expiring soon ---------- */
 export function isTokenExpiringSoon(token: string | null): boolean {
   if (!token) return true
-  
-  try {
-    const payload = JSON.parse(atob(token.split('.')[1]))
-    const exp = payload.exp * 1000 // Convert to milliseconds
-    const now = Date.now()
-    const timeUntilExpiry = exp - now
-    const oneDayInMs = 24 * 60 * 60 * 1000
-    
-    // Consider expiring soon if less than 1 day remaining
-    return timeUntilExpiry < oneDayInMs
-  } catch {
-    return true
-  }
+
+  const payload = decodeJwtPayload<{ exp?: number }>(token)
+  if (!payload?.exp) return true
+
+  const timeUntilExpiry = payload.exp * 1000 - Date.now()
+  const oneDayInMs = 24 * 60 * 60 * 1000
+
+  return timeUntilExpiry < oneDayInMs
 }
 
 export function isTokenExpired(token: string | null): boolean {
   if (!token) return true
-  
-  try {
-    const payload = JSON.parse(atob(token.split('.')[1]))
-    const exp = payload.exp * 1000
-    return Date.now() >= exp
-  } catch {
-    return true
-  }
+
+  const payload = decodeJwtPayload<{ exp?: number }>(token)
+  if (!payload?.exp) return true
+
+  return Date.now() >= payload.exp * 1000
 }
 
 /* ---------- Forgot password ---------- */

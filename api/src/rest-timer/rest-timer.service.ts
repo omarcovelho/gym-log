@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException, ForbiddenException, ConflictException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+  ConflictException,
+} from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateRestTimerDto } from './dto/create-rest-timer.dto';
 import { UpdateRestTimerDto } from './dto/update-rest-timer.dto';
@@ -142,4 +147,3 @@ export class RestTimerService {
     });
   }
 }
-

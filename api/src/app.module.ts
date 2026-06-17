@@ -18,14 +18,16 @@ import { ThrottlerModule } from '@nestjs/throttler';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({ 
-        isGlobal: true,
-        envFilePath: ['.env.local', '.env'], // tenta .env.local primeiro, depois .env
+    ConfigModule.forRoot({
+      isGlobal: true,
+      envFilePath: ['.env.local', '.env'], // tenta .env.local primeiro, depois .env
     }),
-    ThrottlerModule.forRoot([{
-      ttl: 60000, // 1 minuto
-      limit: 200, // 10 requisições por minuto
-    }]),
+    ThrottlerModule.forRoot([
+      {
+        ttl: 60000, // 1 minuto
+        limit: 200, // 10 requisições por minuto
+      },
+    ]),
     PrismaModule,
     AuthModule,
     ExerciseModule,

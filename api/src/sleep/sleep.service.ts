@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateSleepDto } from './dto/create-sleep.dto';
 import { UpdateSleepDto } from './dto/update-sleep.dto';
@@ -14,7 +18,9 @@ export class SleepService {
     date.setHours(0, 0, 0, 0);
 
     const sleepBedtime = dto.sleepBedtime ? new Date(dto.sleepBedtime) : null;
-    const sleepWakeTime = dto.sleepWakeTime ? new Date(dto.sleepWakeTime) : null;
+    const sleepWakeTime = dto.sleepWakeTime
+      ? new Date(dto.sleepWakeTime)
+      : null;
 
     return this.prisma.sleep.create({
       data: {
@@ -76,12 +82,17 @@ export class SleepService {
 
     const updateData: any = {};
     if (dto.sleepHours !== undefined) updateData.sleepHours = dto.sleepHours;
-    if (dto.sleepQuality !== undefined) updateData.sleepQuality = dto.sleepQuality;
+    if (dto.sleepQuality !== undefined)
+      updateData.sleepQuality = dto.sleepQuality;
     if (dto.sleepBedtime !== undefined) {
-      updateData.sleepBedtime = dto.sleepBedtime ? new Date(dto.sleepBedtime) : null;
+      updateData.sleepBedtime = dto.sleepBedtime
+        ? new Date(dto.sleepBedtime)
+        : null;
     }
     if (dto.sleepWakeTime !== undefined) {
-      updateData.sleepWakeTime = dto.sleepWakeTime ? new Date(dto.sleepWakeTime) : null;
+      updateData.sleepWakeTime = dto.sleepWakeTime
+        ? new Date(dto.sleepWakeTime)
+        : null;
     }
     if (dto.notes !== undefined) updateData.notes = dto.notes;
     if (dto.date !== undefined) {
@@ -139,7 +150,7 @@ export class SleepService {
   ) {
     const now = new Date();
     now.setHours(23, 59, 59, 999);
-    
+
     // Determinar data de início e fim
     let dateStart: Date;
     let dateEnd: Date;
@@ -155,14 +166,14 @@ export class SleepService {
       dateEnd = new Date(now);
       dateEnd.setHours(23, 59, 59, 999);
       dateStart = new Date(now);
-      dateStart.setDate(dateStart.getDate() - (weeks * 7));
+      dateStart.setDate(dateStart.getDate() - weeks * 7);
       dateStart.setHours(0, 0, 0, 0);
     } else {
       // Default: 8 semanas
       dateEnd = new Date(now);
       dateEnd.setHours(23, 59, 59, 999);
       dateStart = new Date(now);
-      dateStart.setDate(dateStart.getDate() - (8 * 7));
+      dateStart.setDate(dateStart.getDate() - 8 * 7);
       dateStart.setHours(0, 0, 0, 0);
     }
 
@@ -187,11 +198,11 @@ export class SleepService {
       const diff = d.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1);
       const monday = new Date(d);
       monday.setDate(diff);
-      
+
       const year = monday.getFullYear();
       const month = String(monday.getMonth() + 1).padStart(2, '0');
       const day = String(monday.getDate()).padStart(2, '0');
-      
+
       return `${year}-${month}-${day}`;
     };
 
@@ -220,7 +231,7 @@ export class SleepService {
       // Apenas incluir se for de uma semana completa (antes do início da semana atual)
       if (sleepDate <= lastCompleteWeekEnd) {
         const weekKey = getWeekKey(sleepDate);
-        
+
         if (!weeklyDataMap.has(weekKey)) {
           weeklyDataMap.set(weekKey, {
             sleepHours: [],
@@ -240,11 +251,15 @@ export class SleepService {
       return sum / values.length;
     };
 
-    const weeklyData = [] as Array<{ week: string; date: string; value: number }>;
+    const weeklyData = [] as Array<{
+      week: string;
+      date: string;
+      value: number;
+    }>;
 
     // Ordenar semanas por data
-    const sortedWeeks = Array.from(weeklyDataMap.entries()).sort((a, b) => 
-      a[0].localeCompare(b[0])
+    const sortedWeeks = Array.from(weeklyDataMap.entries()).sort((a, b) =>
+      a[0].localeCompare(b[0]),
     );
 
     sortedWeeks.forEach(([weekKey, weekData]) => {
@@ -302,7 +317,7 @@ export class SleepService {
       // Excluir a última semana (mais recente) para comparar com histórico
       const weeksForAverage = weeklyValues.slice(0, -1);
       if (weeksForAverage.length === 0) return null;
-      
+
       const sum = weeksForAverage.reduce((acc, week) => acc + week.value, 0);
       return Math.round((sum / weeksForAverage.length) * 10) / 10;
     };
@@ -317,4 +332,3 @@ export class SleepService {
     };
   }
 }
-

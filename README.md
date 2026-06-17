@@ -1,6 +1,53 @@
 # gym-log
 
+![CI](https://github.com/omarcovelho/gym-log/actions/workflows/ci.yml/badge.svg?branch=develop)
+
 Aplicação de tracking de treinos e medidas corporais.
+
+## CI/CD
+
+Pull requests e pushes para `develop` e `master` disparam GitHub Actions:
+
+| Check | O que valida |
+|-------|----------------|
+| `api` | Prisma validate, lint, build, testes unitários, migrations, e2e (Postgres) |
+| `front` | lint, build |
+| `security-audit` | `npm audit` (high/critical) em api e front |
+| `secrets-scan` | Gitleaks — secrets commitados |
+| `CodeQL` | Análise estática de segurança no código |
+| `dependency-review` | Dependências vulneráveis introduzidas no PR |
+
+**Deploy:** Railway faz auto-deploy apenas na branch `master` (configurado no Railway).
+
+**Branch protection (recomendado):** em `develop` e `master`, exija os checks acima antes do merge. No GitHub: Settings → Branches → Add rule.
+
+**Segurança no repositório (one-time):** ative Secret scanning e Push protection em Settings → Code security.
+
+**Pre-commit:** após `npm install` na raiz, Husky roda lint nos arquivos staged (`api/**/*.ts`, `front/**/*.{ts,tsx}`).
+
+Node.js **24** (ver [`.nvmrc`](.nvmrc)).
+
+## Desenvolvimento local
+
+Pré-requisitos: Node.js 24, Docker (para o Postgres), e `api/.env.local` configurado (copie de `api/.env.example`).
+
+```bash
+# Na raiz do repositório — instala o runner (apenas na primeira vez)
+npm install
+
+# Sobe Postgres, aplica migrations e inicia API + frontend
+npm run dev:all
+
+# Ou, se o banco já estiver rodando e migrado:
+npm run dev
+```
+
+Na primeira vez (ou com banco novo), `dev:all` roda `prisma migrate deploy` automaticamente. Se preferir migrar manualmente: `npm run dev:migrate` na raiz ou `npm run migrate:deploy` em `api/`.
+
+- **API:** http://localhost:3000/api — Swagger em http://localhost:3000/docs (ambiente local)
+- **Frontend:** http://localhost:5173 — proxy `/api` → API local
+
+Para smoke tests com dados de exemplo, rode os seeds em `api/` (ver seção abaixo) e use `test@evolution.com` / `test123`.
 
 ## Seeds
 

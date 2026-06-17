@@ -7,59 +7,59 @@ import {
   IsString,
   IsArray,
   ValidateNested,
-} from 'class-validator'
-import { Type } from 'class-transformer'
-import { SetIntensityType } from '../../../generated/prisma'
+} from 'class-validator';
+import { Type } from 'class-transformer';
+import { SetIntensityType } from '../../../generated/prisma';
 
 export class UpdateSetIntensityBlockDto {
   @IsOptional()
   @IsString()
-  id?: string
+  id?: string;
 
   @IsInt()
-  blockIndex: number
-
-  @IsOptional()
-  @IsInt()
-  reps?: number | null
+  blockIndex: number;
 
   @IsOptional()
   @IsInt()
-  restSeconds?: number | null
+  reps?: number | null;
+
+  @IsOptional()
+  @IsInt()
+  restSeconds?: number | null;
 
   @IsOptional()
   @IsNumber()
-  load?: number | null
+  load?: number | null;
 }
 
 export class UpdateSetDto {
   @IsOptional()
   @IsNumber()
-  actualLoad?: number
+  actualLoad?: number;
 
   @IsOptional()
   @IsInt()
-  actualReps?: number
+  actualReps?: number;
 
   @IsOptional()
   @IsInt()
-  actualRir?: number
+  actualRir?: number;
 
   @IsOptional()
   @IsBoolean()
-  completed?: boolean
+  completed?: boolean;
 
   @IsOptional()
   @IsString()
-  notes?: string
+  notes?: string;
 
   @IsOptional()
   @IsEnum(SetIntensityType)
-  intensityType?: SetIntensityType
+  intensityType?: SetIntensityType;
 
   @IsOptional()
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => UpdateSetIntensityBlockDto)
-  intensityBlocks?: UpdateSetIntensityBlockDto[]
+  intensityBlocks?: UpdateSetIntensityBlockDto[];
 }

@@ -1,4 +1,10 @@
-import { IsNumber, IsOptional, IsString, IsDateString, Min } from 'class-validator';
+import {
+  IsNumber,
+  IsOptional,
+  IsString,
+  IsDateString,
+  Min,
+} from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreateBodyMeasurementDto {
@@ -24,9 +30,10 @@ export class CreateBodyMeasurementDto {
   @IsString()
   notes?: string;
 
-  @ApiPropertyOptional({ description: 'Date of the measurement (ISO string). Defaults to today.' })
+  @ApiPropertyOptional({
+    description: 'Date of the measurement (ISO string). Defaults to today.',
+  })
   @IsOptional()
   @IsDateString()
   date?: string;
 }
-

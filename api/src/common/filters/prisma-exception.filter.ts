@@ -17,4 +17,3 @@ export class PrismaExceptionFilter extends BaseExceptionFilter {
     super.catch(exception, host);
   }
 }
-

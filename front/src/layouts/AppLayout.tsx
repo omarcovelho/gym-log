@@ -20,7 +20,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           px-4 sm:px-6 lg:px-8
           pb-20       /* evita conteúdo colar no menu inferior no mobile */
           md:pb-8     /* no desktop não precisa tanto espaço */
-          max-w-5xl   /* limita largura centralizada */
+          max-w-6xl xl:max-w-7xl
           mx-auto
           w-full
         "

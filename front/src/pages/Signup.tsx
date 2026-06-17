@@ -6,6 +6,9 @@ import { useTranslation } from 'react-i18next'
 import { requestSignup } from '@/api/auth'
 import { useToast } from '@/components/ToastProvider'
 import { useAuth } from '@/auth/AuthContext'
+import { getApiOrigin, getGoogleAuthUrl } from '@/utils/apiOrigin'
+import { decodeJwtPayload } from '@/utils/jwt'
+import { getPostLoginPath } from '@/utils/oauthLogin'
 
 const schema = z.object({
   email: z.string().email(),
@@ -22,23 +25,7 @@ export default function Signup() {
     resolver: zodResolver(schema),
   })
 
-  // Get API URL with fallback
-  const API_URL = import.meta.env.VITE_API_URL || '/api'
-  
-  // Safely extract origin from API URL
-  let API_ORIGIN: string
-  try {
-    if (API_URL.startsWith('http://') || API_URL.startsWith('https://')) {
-      // Absolute URL - extract origin
-      API_ORIGIN = new URL(API_URL).origin
-    } else {
-      // Relative URL - use current origin
-      API_ORIGIN = window.location.origin
-    }
-  } catch {
-    // Fallback to current origin if URL parsing fails
-    API_ORIGIN = window.location.origin
-  }
+  const API_ORIGIN = getApiOrigin()
 
   const onSubmit = async (data: Form) => {
     try {
@@ -66,10 +53,7 @@ export default function Signup() {
     const left = window.screenX + (window.outerWidth - width) / 2
     const top = window.screenY + (window.outerHeight - height) / 2
 
-    // Construct full URL for Google OAuth
-    const googleAuthUrl = API_URL.startsWith('http')
-      ? `${API_URL}/auth/google`
-      : `${window.location.origin}${API_URL}/auth/google`
+    const googleAuthUrl = getGoogleAuthUrl()
 
     const popup = window.open(
       googleAuthUrl,
@@ -79,31 +63,30 @@ export default function Signup() {
 
     if (!popup) return
 
-    const listener = (event: MessageEvent) => {
+    const listener = async (event: MessageEvent) => {
       // segurança — só aceita do backend
       if (event.origin !== API_ORIGIN) return
 
       const { token, email, name } = event.data || {}
       if (!token) return
 
-      // Get user ID from token payload
-      try {
-        const payload = JSON.parse(atob(token.split('.')[1]))
-        const userId = payload.sub
-        
-        // Get role from token payload
-        const role = payload.role || 'USER'
-        
-        // salva no auth context
-        login(token, { sub: userId, email, name, role })
-      } catch {
-        // Fallback if token parsing fails
-        login(token, { sub: 'google', email, name, role: 'USER' })
-      }
+      const payload = decodeJwtPayload<{ sub?: string; role?: string }>(token)
+      const userId = payload?.sub
+
+      if (!userId) return
+
+      login(token, {
+        sub: userId,
+        email,
+        name,
+        role: payload?.role || 'USER',
+      })
 
       window.removeEventListener('message', listener)
       popup.close()
-      location.href = '/app'
+
+      const nextPath = await getPostLoginPath()
+      location.href = nextPath
     }
 
     window.addEventListener('message', listener)

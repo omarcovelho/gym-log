@@ -24,4 +24,3 @@ export class PaginationDto {
   @IsEnum(MuscleGroup)
   muscleGroup?: MuscleGroup;
 }
-

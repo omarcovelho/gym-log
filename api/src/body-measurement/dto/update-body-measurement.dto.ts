@@ -1,4 +1,10 @@
-import { IsNumber, IsOptional, IsString, IsDateString, Min } from 'class-validator';
+import {
+  IsNumber,
+  IsOptional,
+  IsString,
+  IsDateString,
+  Min,
+} from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 
 export class UpdateBodyMeasurementDto {
@@ -30,4 +36,3 @@ export class UpdateBodyMeasurementDto {
   @IsDateString()
   date?: string;
 }
-

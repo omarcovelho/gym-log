@@ -680,7 +680,7 @@ export default function WorkoutSessionView() {
 
   return (
     <WorkoutSessionContext.Provider value={contextValue}>
-      <div className="max-w-3xl mx-auto space-y-6">
+      <div className="max-w-3xl lg:max-w-none mx-auto space-y-6">
       {/* HEADER */}
       <header className="pb-4">
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3">

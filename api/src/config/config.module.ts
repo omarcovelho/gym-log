@@ -8,4 +8,3 @@ import { PrismaModule } from '../prisma/prisma.module';
   exports: [AppConfigService],
 })
 export class AppConfigModule {}
-

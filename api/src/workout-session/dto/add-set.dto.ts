@@ -1,20 +1,20 @@
-import { IsInt, IsOptional, IsString, Min } from 'class-validator'
+import { IsInt, IsOptional, IsString, Min } from 'class-validator';
 
 export class AddSetDto {
   @IsOptional()
   @IsInt()
   @Min(0)
-  setIndex?: number
+  setIndex?: number;
 
   @IsOptional()
   @IsInt()
-  plannedReps?: number
+  plannedReps?: number;
 
   @IsOptional()
   @IsInt()
-  plannedRir?: number
+  plannedRir?: number;
 
   @IsOptional()
   @IsString()
-  notes?: string
+  notes?: string;
 }

@@ -1,14 +1,14 @@
-import { IsInt, IsOptional, IsString } from 'class-validator'
+import { IsInt, IsOptional, IsString } from 'class-validator';
 
 export class AddExerciseDto {
   @IsString()
-  exerciseId: string
+  exerciseId: string;
 
   @IsOptional()
   @IsString()
-  notes?: string
+  notes?: string;
 
   @IsOptional()
   @IsInt()
-  order?: number
+  order?: number;
 }
