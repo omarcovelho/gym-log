@@ -74,6 +74,7 @@ export type WorkoutSession = {
   feeling?: 'GREAT' | 'GOOD' | 'OKAY' | 'BAD' | 'TERRIBLE' | null
   notes?: string | null
   exercises: SessionExercise[]
+  tags?: { id: string; name: string }[]
   createdAt: string
   totalVolume?: number
   volumeByGroup?: Array<{
@@ -122,21 +123,34 @@ export type UpdateSessionDto = Partial<{
   notes: string | null
   feeling: 'GREAT' | 'GOOD' | 'OKAY' | 'BAD' | 'TERRIBLE' | null
   fatigue: number | null
+  tagIds: string[]
+  newTagNames: string[]
 }>
 
 /* ============================================================
  * API CALLS
  * ============================================================ */
 
+export type SessionTagsPayload = {
+  tagIds?: string[]
+  newTagNames?: string[]
+}
+
 /* ---------- Start workout from template ---------- */
-export async function startWorkout(templateId: string): Promise<WorkoutSession> {
-  const { data } = await api.post(`/workouts/start/${templateId}`)
+export async function startWorkout(
+  templateId: string,
+  tags?: SessionTagsPayload,
+): Promise<WorkoutSession> {
+  const { data } = await api.post(`/workouts/start/${templateId}`, tags ?? {})
   return data
 }
 
 /* ---------- Start workout manually (no template) ---------- */
-export async function startManualWorkout(title: string): Promise<WorkoutSession> {
-  const { data } = await api.post(`/workouts/free/start`, { title })
+export async function startManualWorkout(
+  title: string,
+  tags?: SessionTagsPayload,
+): Promise<WorkoutSession> {
+  const { data } = await api.post(`/workouts/free/start`, { title, ...tags })
   return data
 }
 
@@ -150,10 +164,11 @@ export async function getWorkoutSession(id: string): Promise<WorkoutSession> {
 export async function listWorkoutSessions(
   page: number = 1,
   limit: number = 10,
+  tagIds?: string[],
 ): Promise<{ data: WorkoutSession[]; meta: { page: number; limit: number; total: number; totalPages: number } }> {
-  const { data } = await api.get(`/workouts`, {
-    params: { page, limit },
-  })
+  const params: Record<string, string | number> = { page, limit }
+  if (tagIds?.length) params.tagIds = tagIds.join(',')
+  const { data } = await api.get(`/workouts`, { params })
   return data
 }
 
@@ -198,6 +213,8 @@ export async function finishWorkoutSession(
     fatigue?: number
     notes?: string
     endAt?: string
+    tagIds?: string[]
+    newTagNames?: string[]
   },
 ): Promise<WorkoutSession> {
   const { data } = await api.post(`/workouts/${sessionId}/finish`, payload ?? {})

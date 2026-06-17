@@ -69,6 +69,7 @@ model User {
   resetTokens       PasswordResetToken[]
   measurements      BodyMeasurement[]
   sleeps            Sleep[]
+  workoutTags       WorkoutTag[]
 }
 
 model Exercise {
@@ -132,8 +133,32 @@ model WorkoutSession {
   feeling   Feeling?
   notes     String?
   exercises SessionExercise[]
+  tags      WorkoutSessionTag[]
   createdAt DateTime          @default(now())
   @@index([userId, startAt])
+}
+
+model WorkoutTag {
+  id        String              @id @default(uuid())
+  userId    String
+  user      User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name      String
+  nameNorm  String
+  createdAt DateTime            @default(now())
+  sessions  WorkoutSessionTag[]
+
+  @@unique([userId, nameNorm])
+  @@index([userId])
+}
+
+model WorkoutSessionTag {
+  sessionId String
+  session   WorkoutSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  tagId     String
+  tag       WorkoutTag     @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([sessionId, tagId])
+  @@index([tagId])
 }
 
 model SessionExercise {

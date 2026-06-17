@@ -9,8 +9,9 @@ import {
   IsISO8601,
 } from 'class-validator';
 import { Feeling } from '../../../generated/prisma';
+import { SessionTagsDto } from 'src/common/dto/session-tags.dto';
 
-export class FinishWorkoutDto {
+export class FinishWorkoutDto extends SessionTagsDto {
   @IsOptional()
   @IsEnum(Feeling)
   feeling?: Feeling;

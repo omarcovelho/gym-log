@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/auth/AuthContext'
-import { Menu, Dumbbell, FileText, Info, LogOut } from 'lucide-react'
+import { Menu, Dumbbell, FileText, Tag, Info, LogOut } from 'lucide-react'
 
 export function NavbarMenu() {
   const { t } = useTranslation()
@@ -14,6 +14,7 @@ export function NavbarMenu() {
   const menuItems = [
     { path: '/app/exercises', icon: Dumbbell, label: t('navigation.exercises'), type: 'link' },
     { path: '/app/templates', icon: FileText, label: t('navigation.templates'), type: 'link' },
+    { path: '/app/tags', icon: Tag, label: t('navigation.tags'), type: 'link' },
   ]
 
   const actionItems: Array<{

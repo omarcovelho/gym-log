@@ -138,6 +138,18 @@ export default function WorkoutSessionDetails() {
           <div className="flex-1">
             <h1 className="text-3xl font-bold">{session.title ?? t('workout.customWorkout')}</h1>
             <p className="text-sm text-gray-400">{humanDate}</p>
+            {(session.tags ?? []).length > 0 && (
+              <div className="flex flex-wrap gap-2 mt-2">
+                {(session.tags ?? []).map((tag) => (
+                  <span
+                    key={tag.id}
+                    className="text-xs px-2 py-1 rounded-full border border-gray-700 text-gray-300"
+                  >
+                    {tag.name}
+                  </span>
+                ))}
+              </div>
+            )}
             <p className="text-xs text-gray-500">
               {t('workout.setsCompleted', { completed: completedSets, total: totalSets })}
             </p>

@@ -23,6 +23,13 @@ import {
   type UpdateWorkoutExerciseDto,
   type SessionSetIntensityBlock,
 } from '@/api/workoutSession'
+import {
+  WorkoutTagPicker,
+  emptyTagPickerValue,
+  fromSessionTags,
+  toSessionTagsPayload,
+  type WorkoutTagPickerValue,
+} from '@/components/WorkoutTagPicker'
 import { ExercisePickerModal } from '@/components/ExercisePickerModal'
 import { FinishWorkoutDialog, type FinishWorkoutData } from '@/components/FinishWorkoutDialog'
 import { ConfirmDialog } from '@/components/ConfirmDialog'
@@ -335,6 +342,9 @@ export default function WorkoutSessionView() {
   const [countdownActive, setCountdownActive] = useState<{ seconds: number; startTime?: number } | null>(null)
   const [isSaving, setIsSaving] = useState(false)
   const [historyExerciseId, setHistoryExerciseId] = useState<string | null>(null)
+  const [tagPickerValue, setTagPickerValue] = useState<WorkoutTagPickerValue>(
+    emptyTagPickerValue(),
+  )
 
   const { data: exercisesData } = useExercises({ page: 1, limit: 100 })
   const exercises = exercisesData?.data ?? []
@@ -389,6 +399,7 @@ export default function WorkoutSessionView() {
         })),
       }
       setSession(sessionData)
+      setTagPickerValue(fromSessionTags(sessionData.tags))
 
       // Encontrar o primeiro exercício com séries não completadas
       const sortedExercises = [...sessionData.exercises].sort((a, b) => a.order - b.order)
@@ -429,6 +440,35 @@ export default function WorkoutSessionView() {
     },
     1500,
   )
+
+  const debouncedSaveTags = useDebouncedCallback(
+    async (value: WorkoutTagPickerValue) => {
+      if (!session) return
+      setIsSaving(true)
+      try {
+        const updated = await updateWorkoutSession(
+          session.id,
+          toSessionTagsPayload(value),
+        )
+        setSession((prev) =>
+          prev ? { ...prev, tags: updated.tags ?? [] } : prev,
+        )
+      } catch {
+        toast({
+          variant: 'error',
+          title: t('workout.errorSaving'),
+        })
+      } finally {
+        setIsSaving(false)
+      }
+    },
+    1500,
+  )
+
+  const handleTagsChange = (value: WorkoutTagPickerValue) => {
+    setTagPickerValue(value)
+    debouncedSaveTags(value)
+  }
 
   const handleSetChange = (exerciseId: string, setId: string, field: string, raw: any) => {
     if (!session) return
@@ -699,6 +739,11 @@ export default function WorkoutSessionView() {
                 </div>
               )}
             </div>
+            <WorkoutTagPicker
+              value={tagPickerValue}
+              onChange={handleTagsChange}
+              disabled={finishingWorkout}
+            />
           </div>
         </div>
       </header>

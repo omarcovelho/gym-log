@@ -1,11 +1,19 @@
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
+import {
+  WorkoutTagPicker,
+  emptyTagPickerValue,
+  toSessionTagsPayload,
+  type WorkoutTagPickerValue,
+} from './WorkoutTagPicker'
 
 export type FinishWorkoutData = {
   feeling?: 'GREAT' | 'GOOD' | 'OKAY' | 'BAD' | 'TERRIBLE'
   fatigue?: number
   notes?: string
   endAt?: string
+  tagIds?: string[]
+  newTagNames?: string[]
 }
 
 type Props = {
@@ -23,10 +31,12 @@ export function FinishWorkoutDialog({ open, onClose, onConfirm }: Props) {
   const [notes, setNotes] = useState('')
   const [endAt, setEndAt] = useState('')
   const [loading, setLoading] = useState(false)
+  const [tags, setTags] = useState<WorkoutTagPickerValue>(emptyTagPickerValue())
 
   useEffect(() => {
     if (open) {
       setEndAt(new Date().toISOString().slice(0, 16))
+      setTags(emptyTagPickerValue())
     }
   }, [open])
 
@@ -39,6 +49,7 @@ export function FinishWorkoutDialog({ open, onClose, onConfirm }: Props) {
       fatigue,
       notes,
       endAt: endAt ? new Date(endAt).toISOString() : undefined,
+      ...toSessionTagsPayload(tags),
     })
     setLoading(false)
     onClose()
@@ -99,6 +110,8 @@ export function FinishWorkoutDialog({ open, onClose, onConfirm }: Props) {
             />
             <p className="text-sm text-gray-400 text-center mt-1">{fatigue}/10</p>
           </div>
+
+          <WorkoutTagPicker value={tags} onChange={setTags} disabled={loading} />
 
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-1">{t('dialog.notes')}</label>
