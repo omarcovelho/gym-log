@@ -5,6 +5,9 @@
   "author": "",
   "private": true,
   "license": "UNLICENSED",
+  "engines": {
+    "node": ">=24"
+  },
   "prisma": {
     "seed": "ts-node --compiler-options {\"module\":\"CommonJS\"} ./prisma/seed.ts"
   },
