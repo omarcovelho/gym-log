@@ -1,12 +1,11 @@
-import { IsOptional, IsString } from 'class-validator'
+import { IsOptional, IsString } from 'class-validator';
 
 export class UpdateWorkoutSessionDto {
   @IsOptional()
   @IsString()
-  title?: string
+  title?: string;
 
   @IsOptional()
   @IsString()
-  notes?: string | null
+  notes?: string | null;
 }
-

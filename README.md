@@ -1,10 +1,35 @@
 # gym-log
 
+![CI](https://github.com/omarcovelho/gym-log/actions/workflows/ci.yml/badge.svg?branch=develop)
+
 Aplicação de tracking de treinos e medidas corporais.
+
+## CI/CD
+
+Pull requests e pushes para `develop` e `master` disparam GitHub Actions:
+
+| Check | O que valida |
+|-------|----------------|
+| `api` | Prisma validate, lint, build, testes unitários, migrations, e2e (Postgres) |
+| `front` | lint, build |
+| `security-audit` | `npm audit` (high/critical) em api e front |
+| `secrets-scan` | Gitleaks — secrets commitados |
+| `CodeQL` | Análise estática de segurança no código |
+| `dependency-review` | Dependências vulneráveis introduzidas no PR |
+
+**Deploy:** Railway faz auto-deploy apenas na branch `master` (configurado no Railway).
+
+**Branch protection (recomendado):** em `develop` e `master`, exija os checks acima antes do merge. No GitHub: Settings → Branches → Add rule.
+
+**Segurança no repositório (one-time):** ative Secret scanning e Push protection em Settings → Code security.
+
+**Pre-commit:** após `npm install` na raiz, Husky roda lint nos arquivos staged (`api/**/*.ts`, `front/**/*.{ts,tsx}`).
+
+Node.js **22** (ver [`.nvmrc`](.nvmrc)).
 
 ## Desenvolvimento local
 
-Pré-requisitos: Node.js, Docker (para o Postgres), e `api/.env.local` configurado (copie de `api/.env.example`).
+Pré-requisitos: Node.js 22, Docker (para o Postgres), e `api/.env.local` configurado (copie de `api/.env.example`).
 
 ```bash
 # Na raiz do repositório — instala o runner (apenas na primeira vez)

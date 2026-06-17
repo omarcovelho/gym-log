@@ -22,22 +22,22 @@ export class EmailService {
    */
   private detectLanguage(acceptLanguage?: string): 'pt' | 'en' {
     if (!acceptLanguage) return 'pt';
-    
+
     // Parse Accept-Language header (e.g., 'pt-BR,pt;q=0.9,en;q=0.8')
     const languages = acceptLanguage
       .split(',')
-      .map(lang => lang.split(';')[0].trim().toLowerCase());
-    
+      .map((lang) => lang.split(';')[0].trim().toLowerCase());
+
     // Check if Portuguese is preferred
-    if (languages.some(lang => lang.startsWith('pt'))) {
+    if (languages.some((lang) => lang.startsWith('pt'))) {
       return 'pt';
     }
-    
+
     // Check if English is preferred
-    if (languages.some(lang => lang.startsWith('en'))) {
+    if (languages.some((lang) => lang.startsWith('en'))) {
       return 'en';
     }
-    
+
     return 'pt'; // Default to Portuguese
   }
 
@@ -50,9 +50,9 @@ export class EmailService {
     let templatePath = path.join(
       __dirname,
       'templates',
-      `${templateName}.${language}.html`
+      `${templateName}.${language}.html`,
     );
-    
+
     // If not found, try alternative dist path (dist/email/templates/)
     if (!fs.existsSync(templatePath)) {
       templatePath = path.join(
@@ -61,10 +61,10 @@ export class EmailService {
         '..',
         'email',
         'templates',
-        `${templateName}.${language}.html`
+        `${templateName}.${language}.html`,
       );
     }
-    
+
     // If not found in dist, try src path (development)
     if (!fs.existsSync(templatePath)) {
       templatePath = path.join(
@@ -74,30 +74,52 @@ export class EmailService {
         'src',
         'email',
         'templates',
-        `${templateName}.${language}.html`
+        `${templateName}.${language}.html`,
       );
     }
-    
+
     try {
       if (!fs.existsSync(templatePath)) {
         throw new Error(`Template file does not exist: ${templatePath}`);
       }
       return fs.readFileSync(templatePath, 'utf-8');
     } catch (error) {
-      console.error(`Failed to load template: ${templateName}.${language}.html`);
+      console.error(
+        `Failed to load template: ${templateName}.${language}.html`,
+      );
       console.error(`Tried paths:`, [
         path.join(__dirname, 'templates', `${templateName}.${language}.html`),
-        path.join(__dirname, '..', '..', 'email', 'templates', `${templateName}.${language}.html`),
-        path.join(__dirname, '..', '..', 'src', 'email', 'templates', `${templateName}.${language}.html`),
+        path.join(
+          __dirname,
+          '..',
+          '..',
+          'email',
+          'templates',
+          `${templateName}.${language}.html`,
+        ),
+        path.join(
+          __dirname,
+          '..',
+          '..',
+          'src',
+          'email',
+          'templates',
+          `${templateName}.${language}.html`,
+        ),
       ]);
-      throw new Error(`Template not found: ${templateName}.${language}.html. Error: ${error instanceof Error ? error.message : String(error)}`);
+      throw new Error(
+        `Template not found: ${templateName}.${language}.html. Error: ${error instanceof Error ? error.message : String(error)}`,
+      );
     }
   }
 
   /**
    * Replace placeholders in template
    */
-  private replacePlaceholders(template: string, replacements: Record<string, string>): string {
+  private replacePlaceholders(
+    template: string,
+    replacements: Record<string, string>,
+  ): string {
     let result = template;
     for (const [key, value] of Object.entries(replacements)) {
       result = result.replace(new RegExp(`{{${key}}}`, 'g'), value);
@@ -111,11 +133,11 @@ export class EmailService {
   async sendPasswordResetEmail(
     email: string,
     resetLink: string,
-    acceptLanguage?: string
+    acceptLanguage?: string,
   ): Promise<void> {
     const language = this.detectLanguage(acceptLanguage);
     const template = this.loadTemplate('password-reset', language);
-    
+
     const html = this.replacePlaceholders(template, {
       resetLink,
       appName: 'GymLog',
@@ -124,9 +146,10 @@ export class EmailService {
     await this.resend.emails.send({
       from: this.fromEmail,
       to: email,
-      subject: language === 'pt' 
-        ? 'Recuperação de Senha - GymLog'
-        : 'Password Recovery - GymLog',
+      subject:
+        language === 'pt'
+          ? 'Recuperação de Senha - GymLog'
+          : 'Password Recovery - GymLog',
       html,
     });
   }
@@ -136,14 +159,14 @@ export class EmailService {
    */
   async sendOAuthAccountInfo(
     email: string,
-    acceptLanguage?: string
+    acceptLanguage?: string,
   ): Promise<void> {
     const language = this.detectLanguage(acceptLanguage);
     const template = this.loadTemplate('oauth-info', language);
-    
+
     const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
     const loginUrl = `${frontendUrl}/login`;
-    
+
     const html = this.replacePlaceholders(template, {
       loginUrl,
       appName: 'GymLog',
@@ -152,9 +175,10 @@ export class EmailService {
     await this.resend.emails.send({
       from: this.fromEmail,
       to: email,
-      subject: language === 'pt'
-        ? 'Informações da sua conta - GymLog'
-        : 'Your Account Information - GymLog',
+      subject:
+        language === 'pt'
+          ? 'Informações da sua conta - GymLog'
+          : 'Your Account Information - GymLog',
       html,
     });
   }
@@ -164,7 +188,7 @@ export class EmailService {
    */
   async sendNewUserNotification(
     userEmail: string,
-    userName?: string | null
+    userName?: string | null,
   ): Promise<void> {
     // Verificar se a variável de ambiente está definida
     const adminEmail = process.env.ADMIN_NOTIFICATION_EMAIL;
@@ -176,12 +200,12 @@ export class EmailService {
     try {
       // Usar português como padrão para notificações administrativas
       const template = this.loadTemplate('new-user-notification', 'pt');
-      
+
       const registrationDate = new Date().toLocaleString('pt-BR', {
         dateStyle: 'long',
         timeStyle: 'short',
       });
-      
+
       const html = this.replacePlaceholders(template, {
         appName: 'GymLog',
         userEmail,
@@ -207,12 +231,12 @@ export class EmailService {
   async sendSignupConfirmationEmail(
     email: string,
     confirmationLink: string,
-    acceptLanguage?: string
+    acceptLanguage?: string,
   ): Promise<void> {
     try {
       const language = this.detectLanguage(acceptLanguage);
       const template = this.loadTemplate('signup-confirmation', language);
-      
+
       const html = this.replacePlaceholders(template, {
         confirmationLink,
         appName: 'GymLog',
@@ -225,38 +249,48 @@ export class EmailService {
       const result = await this.resend.emails.send({
         from: this.fromEmail,
         to: email,
-        subject: language === 'pt'
-          ? 'Confirme seu cadastro - GymLog'
-          : 'Confirm your registration - GymLog',
+        subject:
+          language === 'pt'
+            ? 'Confirme seu cadastro - GymLog'
+            : 'Confirm your registration - GymLog',
         html,
       });
 
       console.log('Email sent successfully:', result);
     } catch (error: any) {
       console.error('Error in sendSignupConfirmationEmail:', error);
-      
+
       // Check if it's a Resend validation error (test mode restriction)
       if (error?.statusCode === 403 && error?.name === 'validation_error') {
         const errorMessage = error?.message || '';
-        if (errorMessage.includes('You can only send testing emails to your own email')) {
-          console.error('Resend is in test mode. Only emails to the account owner are allowed.');
-          console.error('To send to other recipients, verify a domain at resend.com/domains');
+        if (
+          errorMessage.includes(
+            'You can only send testing emails to your own email',
+          )
+        ) {
+          console.error(
+            'Resend is in test mode. Only emails to the account owner are allowed.',
+          );
+          console.error(
+            'To send to other recipients, verify a domain at resend.com/domains',
+          );
           throw new Error(
-            'Email service is in test mode. Please verify your domain at resend.com/domains to send emails to other recipients.'
+            'Email service is in test mode. Please verify your domain at resend.com/domains to send emails to other recipients.',
           );
         }
       }
-      
+
       // Log full error details for debugging
       if (error?.response) {
-        console.error('Resend API error response:', JSON.stringify(error.response, null, 2));
+        console.error(
+          'Resend API error response:',
+          JSON.stringify(error.response, null, 2),
+        );
       } else {
         console.error('Error details:', JSON.stringify(error, null, 2));
       }
-      
+
       throw error; // Re-throw to let caller handle it
     }
   }
 }
-
-

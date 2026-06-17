@@ -6,89 +6,89 @@ import {
   IsArray,
   ValidateNested,
   IsNumber,
-} from 'class-validator'
-import { Type } from 'class-transformer'
-import { SetIntensityType } from '../../../generated/prisma'
+} from 'class-validator';
+import { Type } from 'class-transformer';
+import { SetIntensityType } from '../../../generated/prisma';
 
 export class UpdateSetIntensityBlockDto {
   @IsOptional()
   @IsString()
-  id?: string
+  id?: string;
 
   @IsInt()
-  blockIndex: number
-
-  @IsOptional()
-  @IsInt()
-  reps?: number | null
+  blockIndex: number;
 
   @IsOptional()
   @IsInt()
-  restSeconds?: number | null
+  reps?: number | null;
+
+  @IsOptional()
+  @IsInt()
+  restSeconds?: number | null;
 
   @IsOptional()
   @IsNumber()
-  load?: number | null
+  load?: number | null;
 }
 
 export class UpdateSetDto {
   @IsString()
-  id: string
+  id: string;
 
   @IsInt()
-  setIndex: number
-
-  @IsOptional()
-  @IsInt()
-  plannedReps?: number | null
+  setIndex: number;
 
   @IsOptional()
   @IsInt()
-  plannedRir?: number | null
+  plannedReps?: number | null;
+
+  @IsOptional()
+  @IsInt()
+  plannedRir?: number | null;
 
   @IsOptional()
   @IsNumber()
-  actualLoad?: number | null
+  actualLoad?: number | null;
 
   @IsOptional()
   @IsInt()
-  actualReps?: number | null
+  actualReps?: number | null;
 
   @IsOptional()
   @IsInt()
-  actualRir?: number | null
+  actualRir?: number | null;
 
   @IsOptional()
   @IsBoolean()
-  completed?: boolean
+  completed?: boolean;
 
   @IsOptional()
   @IsString()
-  notes?: string | null
+  notes?: string | null;
 
   @IsOptional()
   @IsString()
-  intensityType?: SetIntensityType
+  intensityType?: SetIntensityType;
 
   @IsOptional()
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => UpdateSetIntensityBlockDto)
-  intensityBlocks?: UpdateSetIntensityBlockDto[]
+  intensityBlocks?: UpdateSetIntensityBlockDto[];
 }
 
 export class UpdateWorkoutExerciseDto {
   @IsOptional()
   @IsInt()
-  order?: number
+  order?: number;
 
   @IsOptional()
   @IsString()
-  notes?: string | null
+  notes?: string | null;
 
   @IsOptional()
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => UpdateSetDto)
-  sets?: UpdateSetDto[]
+  sets?: UpdateSetDto[];
 }

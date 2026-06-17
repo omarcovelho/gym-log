@@ -23,6 +23,6 @@ import { AppConfigModule } from '../config/config.module';
     AppConfigModule,
   ],
   providers: [AuthService, JwtStrategy, GoogleStrategy],
-  controllers: [AuthController]
+  controllers: [AuthController],
 })
 export class AuthModule {}

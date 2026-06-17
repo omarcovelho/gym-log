@@ -19,4 +19,3 @@ export class UpdateStatsDto {
   @Min(0)
   weight?: number;
 }
-

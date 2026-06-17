@@ -16,4 +16,3 @@ export class ConfirmSignupDto {
   @ApiProperty({ example: 'John Doe', required: false })
   name?: string;
 }
-

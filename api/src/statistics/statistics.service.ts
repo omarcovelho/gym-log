@@ -40,14 +40,17 @@ export class StatisticsService {
 
     if (set.intensityType === 'REST_PAUSE') {
       // REST_PAUSE: total_reps = actualReps + sum(reps dos blocks)
-      const totalRepsBlocks = blocks.reduce((sum, block) => sum + (block.reps || 0), 0);
+      const totalRepsBlocks = blocks.reduce(
+        (sum, block) => sum + (block.reps || 0),
+        0,
+      );
       const totalReps = set.actualReps + totalRepsBlocks;
       const volumeBase = set.actualLoad * totalReps;
 
       // Calcular FI baseado no número de blocks
       let fi = 1.0;
       if (blocksCount === 1) {
-        fi = 1.10; // leve
+        fi = 1.1; // leve
       } else if (blocksCount === 2) {
         fi = 1.15; // médio
       } else if (blocksCount >= 3) {
@@ -61,7 +64,7 @@ export class StatisticsService {
       const mainVolume = set.actualLoad * set.actualReps;
       // Volume dos blocks
       const blocksVolume = blocks.reduce(
-        (sum, block) => sum + ((block.load || 0) * (block.reps || 0)),
+        (sum, block) => sum + (block.load || 0) * (block.reps || 0),
         0,
       );
       const volumeBase = mainVolume + blocksVolume;
@@ -71,9 +74,9 @@ export class StatisticsService {
       if (blocksCount === 1) {
         fi = 1.25; // simples
       } else if (blocksCount === 2) {
-        fi = 1.40; // duplo
+        fi = 1.4; // duplo
       } else if (blocksCount >= 3) {
-        fi = 1.50; // triplo
+        fi = 1.5; // triplo
       }
 
       return Math.round(volumeBase * fi);
@@ -111,7 +114,7 @@ export class StatisticsService {
     if (set.intensityType === 'REST_PAUSE') {
       // REST_PAUSE: sets equivalentes = 1 × FI
       if (blocksCount === 1) {
-        return Math.round(1.10); // leve
+        return Math.round(1.1); // leve
       } else if (blocksCount === 2) {
         return Math.round(1.15); // médio
       } else if (blocksCount >= 3) {
@@ -122,9 +125,9 @@ export class StatisticsService {
       if (blocksCount === 1) {
         return Math.round(1.25); // simples
       } else if (blocksCount === 2) {
-        return Math.round(1.40); // duplo
+        return Math.round(1.4); // duplo
       } else if (blocksCount >= 3) {
-        return Math.round(1.50); // triplo
+        return Math.round(1.5); // triplo
       }
     }
 
@@ -307,11 +310,11 @@ export class StatisticsService {
     weeks?: number, // Deprecated: manter apenas para compatibilidade
   ) {
     const now = new Date();
-    
+
     // Se startDate e endDate não forem fornecidos, usar default de 4 semanas
     let dateStart: Date | null = null;
     let dateEnd: Date | null = null;
-    
+
     if (startDate && endDate) {
       dateStart = new Date(startDate);
       dateStart.setHours(0, 0, 0, 0);
@@ -326,7 +329,9 @@ export class StatisticsService {
       const startOfCurrentWeek = new Date(today);
       startOfCurrentWeek.setDate(diff);
       startOfCurrentWeek.setHours(0, 0, 0, 0);
-      dateStart = new Date(startOfCurrentWeek.getTime() - (weeks - 1) * 7 * 24 * 60 * 60 * 1000);
+      dateStart = new Date(
+        startOfCurrentWeek.getTime() - (weeks - 1) * 7 * 24 * 60 * 60 * 1000,
+      );
       dateStart.setHours(0, 0, 0, 0);
       dateEnd = new Date(now);
       dateEnd.setHours(23, 59, 59, 999);
@@ -339,7 +344,9 @@ export class StatisticsService {
       const startOfCurrentWeek = new Date(today);
       startOfCurrentWeek.setDate(diff);
       startOfCurrentWeek.setHours(0, 0, 0, 0);
-      dateStart = new Date(startOfCurrentWeek.getTime() - 3 * 7 * 24 * 60 * 60 * 1000);
+      dateStart = new Date(
+        startOfCurrentWeek.getTime() - 3 * 7 * 24 * 60 * 60 * 1000,
+      );
       dateStart.setHours(0, 0, 0, 0);
       dateEnd = new Date(now);
       dateEnd.setHours(23, 59, 59, 999);
@@ -483,12 +490,12 @@ export class StatisticsService {
       const diff = d.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1);
       const monday = new Date(d);
       monday.setDate(diff);
-      
+
       // Retornar data da segunda-feira no formato YYYY-MM-DD
       const year = monday.getFullYear();
       const month = String(monday.getMonth() + 1).padStart(2, '0');
       const day = String(monday.getDate()).padStart(2, '0');
-      
+
       return `${year}-${month}-${day}`;
     };
 
@@ -496,7 +503,10 @@ export class StatisticsService {
     const sessionsInRange = allFinishedSessions.filter((session) => {
       const sessionDate = new Date(session.startAt);
       if (dateStart && dateEnd) {
-        return sessionDate.getTime() >= dateStart.getTime() && sessionDate.getTime() <= dateEnd.getTime();
+        return (
+          sessionDate.getTime() >= dateStart.getTime() &&
+          sessionDate.getTime() <= dateEnd.getTime()
+        );
       }
       // Se ambos forem null, incluir todos os treinos
       return true;
@@ -553,7 +563,7 @@ export class StatisticsService {
           Array.from(stats.byMuscleGroup.entries()).map(([mg, data]) => [
             mg,
             { volume: Math.round(data.volume), sets: Math.round(data.sets) },
-          ])
+          ]),
         ),
       }))
       .sort((a, b) => a.week.localeCompare(b.week));
@@ -682,7 +692,10 @@ export class StatisticsService {
             if (set.actualReps != null) {
               weekData.reps.push(set.actualReps);
               if (set.actualLoad != null) {
-                const e1rm = estimateOneRepMaxEpley(set.actualLoad, set.actualReps);
+                const e1rm = estimateOneRepMaxEpley(
+                  set.actualLoad,
+                  set.actualReps,
+                );
                 if (e1rm != null) {
                   weekData.e1rms.push(e1rm);
                 }
@@ -698,9 +711,15 @@ export class StatisticsService {
     const weeks = Array.from(weeklyDataMap.entries())
       .map(([week, data]) => ({
         week,
-        avgLoad: data.loads.length > 0 ? data.loads.reduce((a, b) => a + b, 0) / data.loads.length : 0,
+        avgLoad:
+          data.loads.length > 0
+            ? data.loads.reduce((a, b) => a + b, 0) / data.loads.length
+            : 0,
         totalVolume: Math.round(data.volumes.reduce((a, b) => a + b, 0)),
-        avgReps: data.reps.length > 0 ? data.reps.reduce((a, b) => a + b, 0) / data.reps.length : 0,
+        avgReps:
+          data.reps.length > 0
+            ? data.reps.reduce((a, b) => a + b, 0) / data.reps.length
+            : 0,
         bestEstimated1RM: data.e1rms.length > 0 ? Math.max(...data.e1rms) : 0,
         setsCount: Math.round(data.setsCount),
       }))
@@ -716,13 +735,17 @@ export class StatisticsService {
       last4Weeks.length > 0
         ? {
             avgLoad:
-              last4Weeks.reduce((sum, w) => sum + w.avgLoad, 0) / last4Weeks.length,
+              last4Weeks.reduce((sum, w) => sum + w.avgLoad, 0) /
+              last4Weeks.length,
             totalVolume: Math.round(
-              last4Weeks.reduce((sum, w) => sum + w.totalVolume, 0)
+              last4Weeks.reduce((sum, w) => sum + w.totalVolume, 0),
             ),
             avgReps:
-              last4Weeks.reduce((sum, w) => sum + w.avgReps, 0) / last4Weeks.length,
-            bestEstimated1RM: Math.max(...last4Weeks.map((w) => w.bestEstimated1RM)),
+              last4Weeks.reduce((sum, w) => sum + w.avgReps, 0) /
+              last4Weeks.length,
+            bestEstimated1RM: Math.max(
+              ...last4Weeks.map((w) => w.bestEstimated1RM),
+            ),
           }
         : null;
 
@@ -732,13 +755,17 @@ export class StatisticsService {
       previous4Weeks.length > 0
         ? {
             avgLoad:
-              previous4Weeks.reduce((sum, w) => sum + w.avgLoad, 0) / previous4Weeks.length,
+              previous4Weeks.reduce((sum, w) => sum + w.avgLoad, 0) /
+              previous4Weeks.length,
             totalVolume: Math.round(
-              previous4Weeks.reduce((sum, w) => sum + w.totalVolume, 0)
+              previous4Weeks.reduce((sum, w) => sum + w.totalVolume, 0),
             ),
             avgReps:
-              previous4Weeks.reduce((sum, w) => sum + w.avgReps, 0) / previous4Weeks.length,
-            bestEstimated1RM: Math.max(...previous4Weeks.map((w) => w.bestEstimated1RM)),
+              previous4Weeks.reduce((sum, w) => sum + w.avgReps, 0) /
+              previous4Weeks.length,
+            bestEstimated1RM: Math.max(
+              ...previous4Weeks.map((w) => w.bestEstimated1RM),
+            ),
           }
         : null;
 
@@ -746,7 +773,8 @@ export class StatisticsService {
     let trend: 'up' | 'down' | 'stable' = 'stable';
     if (avgLast4Weeks && avgPrevious4Weeks) {
       const loadDiff = avgLast4Weeks.avgLoad - avgPrevious4Weeks.avgLoad;
-      const volumeDiff = avgLast4Weeks.totalVolume - avgPrevious4Weeks.totalVolume;
+      const volumeDiff =
+        avgLast4Weeks.totalVolume - avgPrevious4Weeks.totalVolume;
       if (loadDiff > 0 || volumeDiff > 0) {
         trend = 'up';
       } else if (loadDiff < 0 || volumeDiff < 0) {
@@ -806,7 +834,9 @@ export class StatisticsService {
 
     // Check limit
     if (currentPinned.length >= MAX_PINNED) {
-      throw new BadRequestException(`Maximum of ${MAX_PINNED} pinned exercises allowed`);
+      throw new BadRequestException(
+        `Maximum of ${MAX_PINNED} pinned exercises allowed`,
+      );
     }
 
     // Add to pinned list
@@ -865,7 +895,11 @@ export class StatisticsService {
   }
 
   /** Busca histórico de séries de um exercício específico */
-  async getExerciseHistory(userId: string, exerciseId: string, limit: number = 5) {
+  async getExerciseHistory(
+    userId: string,
+    exerciseId: string,
+    limit: number = 5,
+  ) {
     // Buscar últimas N sessões finalizadas que contêm o exercício
     const sessions = await this.prisma.workoutSession.findMany({
       where: {
@@ -932,7 +966,11 @@ export class StatisticsService {
   }
 
   /** Exporta histórico completo de treinos finalizados para análise */
-  async exportWorkoutHistory(userId: string, startDate: Date | null = null, endDate: Date | null = null) {
+  async exportWorkoutHistory(
+    userId: string,
+    startDate: Date | null = null,
+    endDate: Date | null = null,
+  ) {
     // Construir filtros de data
     const dateFilters: { gte?: Date; lte?: Date } = {};
     if (startDate) {
@@ -1024,4 +1062,3 @@ export class StatisticsService {
     };
   }
 }
-

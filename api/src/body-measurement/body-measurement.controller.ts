@@ -9,7 +9,13 @@ import {
   UseGuards,
   Query,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBearerAuth,
+  ApiQuery,
+} from '@nestjs/swagger';
 import { BodyMeasurementService } from './body-measurement.service';
 import { CreateBodyMeasurementDto } from './dto/create-body-measurement.dto';
 import { UpdateBodyMeasurementDto } from './dto/update-body-measurement.dto';
@@ -26,7 +32,10 @@ export class BodyMeasurementController {
 
   @Post()
   @ApiOperation({ summary: 'Create a new body measurement' })
-  @ApiResponse({ status: 201, description: 'Measurement created successfully.' })
+  @ApiResponse({
+    status: 201,
+    description: 'Measurement created successfully.',
+  })
   @ApiResponse({ status: 401, description: 'Unauthorized.' })
   create(@CurrentUser() user, @Body() dto: CreateBodyMeasurementDto) {
     return this.service.create(user.id, dto);
@@ -34,7 +43,10 @@ export class BodyMeasurementController {
 
   @Get()
   @ApiOperation({ summary: 'Get all body measurements with pagination' })
-  @ApiResponse({ status: 200, description: 'Measurements retrieved successfully.' })
+  @ApiResponse({
+    status: 200,
+    description: 'Measurements retrieved successfully.',
+  })
   @ApiResponse({ status: 401, description: 'Unauthorized.' })
   findAll(@CurrentUser() user, @Query() pagination: PaginationDto) {
     return this.service.findAll(user.id, pagination);
@@ -42,7 +54,10 @@ export class BodyMeasurementController {
 
   @Get('latest')
   @ApiOperation({ summary: 'Get the latest body measurement' })
-  @ApiResponse({ status: 200, description: 'Latest measurement retrieved successfully.' })
+  @ApiResponse({
+    status: 200,
+    description: 'Latest measurement retrieved successfully.',
+  })
   @ApiResponse({ status: 401, description: 'Unauthorized.' })
   getLatest(@CurrentUser() user) {
     return this.service.getLatest(user.id);
@@ -50,7 +65,10 @@ export class BodyMeasurementController {
 
   @Get('check-today')
   @ApiOperation({ summary: 'Check if user has measured today' })
-  @ApiResponse({ status: 200, description: 'Check result retrieved successfully.' })
+  @ApiResponse({
+    status: 200,
+    description: 'Check result retrieved successfully.',
+  })
   @ApiResponse({ status: 401, description: 'Unauthorized.' })
   async checkToday(@CurrentUser() user) {
     const hasMeasurement = await this.service.hasMeasurementToday(user.id);
@@ -58,11 +76,31 @@ export class BodyMeasurementController {
   }
 
   @Get('stats')
-  @ApiOperation({ summary: 'Get body measurements statistics with weekly trends' })
-  @ApiQuery({ name: 'weeks', required: false, type: Number, description: 'Number of weeks to analyze (default: 8)' })
-  @ApiQuery({ name: 'startDate', required: false, type: String, description: 'Start date (ISO string)' })
-  @ApiQuery({ name: 'endDate', required: false, type: String, description: 'End date (ISO string)' })
-  @ApiResponse({ status: 200, description: 'Statistics retrieved successfully.' })
+  @ApiOperation({
+    summary: 'Get body measurements statistics with weekly trends',
+  })
+  @ApiQuery({
+    name: 'weeks',
+    required: false,
+    type: Number,
+    description: 'Number of weeks to analyze (default: 8)',
+  })
+  @ApiQuery({
+    name: 'startDate',
+    required: false,
+    type: String,
+    description: 'Start date (ISO string)',
+  })
+  @ApiQuery({
+    name: 'endDate',
+    required: false,
+    type: String,
+    description: 'End date (ISO string)',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Statistics retrieved successfully.',
+  })
   @ApiResponse({ status: 401, description: 'Unauthorized.' })
   async getStats(
     @CurrentUser() user,
@@ -73,12 +111,20 @@ export class BodyMeasurementController {
     const weeksNumber = weeks ? parseInt(weeks, 10) : undefined;
     const startDateObj = startDate ? new Date(startDate) : null;
     const endDateObj = endDate ? new Date(endDate) : null;
-    return this.service.getMeasurementsStats(user.id, weeksNumber, startDateObj, endDateObj);
+    return this.service.getMeasurementsStats(
+      user.id,
+      weeksNumber,
+      startDateObj,
+      endDateObj,
+    );
   }
 
   @Get(':id')
   @ApiOperation({ summary: 'Get a specific body measurement by ID' })
-  @ApiResponse({ status: 200, description: 'Measurement retrieved successfully.' })
+  @ApiResponse({
+    status: 200,
+    description: 'Measurement retrieved successfully.',
+  })
   @ApiResponse({ status: 404, description: 'Measurement not found.' })
   @ApiResponse({ status: 401, description: 'Unauthorized.' })
   findOne(@CurrentUser() user, @Param('id') id: string) {
@@ -87,20 +133,29 @@ export class BodyMeasurementController {
 
   @Patch(':id')
   @ApiOperation({ summary: 'Update a body measurement' })
-  @ApiResponse({ status: 200, description: 'Measurement updated successfully.' })
+  @ApiResponse({
+    status: 200,
+    description: 'Measurement updated successfully.',
+  })
   @ApiResponse({ status: 404, description: 'Measurement not found.' })
   @ApiResponse({ status: 401, description: 'Unauthorized.' })
-  update(@CurrentUser() user, @Param('id') id: string, @Body() dto: UpdateBodyMeasurementDto) {
+  update(
+    @CurrentUser() user,
+    @Param('id') id: string,
+    @Body() dto: UpdateBodyMeasurementDto,
+  ) {
     return this.service.update(user.id, id, dto);
   }
 
   @Delete(':id')
   @ApiOperation({ summary: 'Delete a body measurement' })
-  @ApiResponse({ status: 200, description: 'Measurement deleted successfully.' })
+  @ApiResponse({
+    status: 200,
+    description: 'Measurement deleted successfully.',
+  })
   @ApiResponse({ status: 404, description: 'Measurement not found.' })
   @ApiResponse({ status: 401, description: 'Unauthorized.' })
   remove(@CurrentUser() user, @Param('id') id: string) {
     return this.service.delete(user.id, id);
   }
 }
-

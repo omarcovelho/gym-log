@@ -6,4 +6,3 @@ export class RequestSignupDto {
   @IsEmail()
   email: string;
 }
-

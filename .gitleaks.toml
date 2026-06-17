@@ -1,0 +1,20 @@
+title = "gym-log gitleaks config"
+
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "CI and local dev placeholder values"
+paths = [
+  '''\.github/workflows/.*''',
+  '''docker-compose\.yaml''',
+  '''api/\.env\.example''',
+]
+
+[[allowlists]]
+description = "Docker compose dev database credentials"
+regexTarget = "match"
+regexes = [
+  '''POSTGRES_PASSWORD:\s*gym''',
+  '''POSTGRES_USER:\s*gym''',
+]

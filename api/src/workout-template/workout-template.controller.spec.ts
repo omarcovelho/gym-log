@@ -8,10 +8,12 @@ describe('WorkoutTemplateController', () => {
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [WorkoutTemplateController],
-      providers: [WorkoutTemplateService],
+      providers: [{ provide: WorkoutTemplateService, useValue: {} }],
     }).compile();
 
-    controller = module.get<WorkoutTemplateController>(WorkoutTemplateController);
+    controller = module.get<WorkoutTemplateController>(
+      WorkoutTemplateController,
+    );
   });
 
   it('should be defined', () => {

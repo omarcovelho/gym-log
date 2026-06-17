@@ -8,7 +8,7 @@ describe('WorkoutSessionController', () => {
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [WorkoutSessionController],
-      providers: [WorkoutSessionService],
+      providers: [{ provide: WorkoutSessionService, useValue: {} }],
     }).compile();
 
     controller = module.get<WorkoutSessionController>(WorkoutSessionController);
