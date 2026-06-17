@@ -8,6 +8,9 @@
   "engines": {
     "node": ">=24"
   },
+  "overrides": {
+    "multer": "2.2.0"
+  },
   "prisma": {
     "seed": "ts-node --compiler-options {\"module\":\"CommonJS\"} ./prisma/seed.ts"
   },
