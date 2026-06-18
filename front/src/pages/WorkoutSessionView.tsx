@@ -1080,6 +1080,7 @@ export default function WorkoutSessionView() {
         open={finishOpen}
         onClose={() => setFinishOpen(false)}
         onConfirm={handleFinishWorkout}
+        initialTags={tagPickerValue}
       />
 
       <ExercisePickerModal
