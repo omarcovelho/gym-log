@@ -1,5 +1,8 @@
 import { api } from '@/lib/api'
-import { decodeJwtPayload } from '@/utils/jwt'
+import { refreshAccessToken } from '@/lib/refreshClient'
+import { isTokenExpired, isTokenExpiringSoon } from '@/utils/jwt'
+
+export { isTokenExpired, isTokenExpiringSoon }
 
 export type User = {
   id: string
@@ -25,30 +28,7 @@ export async function validateToken(): Promise<ValidateResponse> {
 
 /* ---------- Refresh token ---------- */
 export async function refreshToken(): Promise<AuthResponse> {
-  const { data } = await api.post<AuthResponse>('/auth/refresh')
-  return data
-}
-
-/* ---------- Check if token is expired or expiring soon ---------- */
-export function isTokenExpiringSoon(token: string | null): boolean {
-  if (!token) return true
-
-  const payload = decodeJwtPayload<{ exp?: number }>(token)
-  if (!payload?.exp) return true
-
-  const timeUntilExpiry = payload.exp * 1000 - Date.now()
-  const oneDayInMs = 24 * 60 * 60 * 1000
-
-  return timeUntilExpiry < oneDayInMs
-}
-
-export function isTokenExpired(token: string | null): boolean {
-  if (!token) return true
-
-  const payload = decodeJwtPayload<{ exp?: number }>(token)
-  if (!payload?.exp) return true
-
-  return Date.now() >= payload.exp * 1000
+  return refreshAccessToken()
 }
 
 /* ---------- Forgot password ---------- */

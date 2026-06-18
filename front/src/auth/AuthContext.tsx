@@ -1,5 +1,5 @@
 import { createContext, useContext, useMemo, useState, useEffect } from 'react'
-import { validateToken, refreshToken, isTokenExpiringSoon, isTokenExpired } from '@/api/auth'
+import { validateToken, isTokenExpired } from '@/api/auth'
 
 export type User = { sub: string; email: string; name?: string; height?: number; weight?: number; role?: string } | null
 type AuthCtx = {
@@ -11,11 +11,21 @@ type AuthCtx = {
 
 const Ctx = createContext<AuthCtx>({} as any)
 
+const AUTH_INIT_TIMEOUT_MS = 15000
+
+function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<T>((_, reject) => {
+      setTimeout(() => reject(new Error('Auth initialization timed out')), ms)
+    }),
+  ])
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User>(null)
   const [loading, setLoading] = useState(true)
 
-  // Initialize and validate token on mount
   useEffect(() => {
     async function initializeAuth() {
       const token = localStorage.getItem('access_token')
@@ -26,7 +36,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return
       }
 
-      // Check if token is expired
       if (isTokenExpired(token)) {
         localStorage.removeItem('access_token')
         localStorage.removeItem('user_payload')
@@ -35,36 +44,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       try {
-        // Try to validate token with backend
-        const response = await validateToken()
+        const response = await withTimeout(validateToken(), AUTH_INIT_TIMEOUT_MS)
         const parsedPayload = JSON.parse(payload)
-        
-        // Update user info from backend
+
         setUser({
           sub: response.user.id,
           email: response.user.email,
           name: response.user.name || parsedPayload.name,
           role: response.user.role || parsedPayload.role,
         })
-
-        // Refresh token if expiring soon
-        if (isTokenExpiringSoon(token)) {
-          try {
-            const refreshed = await refreshToken()
-            localStorage.setItem('access_token', refreshed.access_token)
-            localStorage.setItem('user_payload', JSON.stringify({
-              sub: refreshed.user.id,
-              email: refreshed.user.email,
-              name: refreshed.user.name,
-              role: refreshed.user.role,
-            }))
-          } catch (err) {
-            // If refresh fails, continue with current token
-            console.warn('Failed to refresh token:', err)
-          }
-        }
-      } catch (error) {
-        // Token is invalid, clear it
+      } catch {
         localStorage.removeItem('access_token')
         localStorage.removeItem('user_payload')
       } finally {

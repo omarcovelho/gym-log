@@ -4,6 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { useTranslation } from 'react-i18next'
 import { api } from '@/lib/api'
 import { useAuth } from '@/auth/AuthContext'
+import { useToast } from '@/components/ToastProvider'
 import { getApiOrigin, getGoogleAuthUrl } from '@/utils/apiOrigin'
 import { decodeJwtPayload } from '@/utils/jwt'
 import { getPostLoginPath } from '@/utils/oauthLogin'
@@ -17,26 +18,38 @@ type Form = z.infer<typeof schema>
 export default function Login() {
   const { t } = useTranslation()
   const { login } = useAuth()
+  const { toast } = useToast()
   const { register, handleSubmit, formState } = useForm<Form>({
     resolver: zodResolver(schema),
   })
 
-  // Get API URL with fallback
   const API_ORIGIN = getApiOrigin()
 
   async function onSubmit(data: Form) {
-    const res = await api.post('/auth/login', data)
-    const token = res.data.access_token
-    const userData = res.data.user
+    try {
+      const res = await api.post('/auth/login', data)
+      const token = res.data.access_token
+      const userData = res.data.user
 
-    login(token, { 
-      sub: userData.id, 
-      email: userData.email,
-      name: userData.name,
-      role: userData.role,
-    })
-    const nextPath = await getPostLoginPath()
-    location.href = nextPath
+      login(token, {
+        sub: userData.id,
+        email: userData.email,
+        name: userData.name,
+        role: userData.role,
+      })
+      const nextPath = await getPostLoginPath()
+      location.href = nextPath
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : t('auth.loginFailed', 'Invalid credentials')
+      toast({
+        variant: 'error',
+        title: t('auth.error', 'Erro'),
+        description: message,
+      })
+    }
   }
 
   function handleGoogleLogin() {
