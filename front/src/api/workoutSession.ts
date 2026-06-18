@@ -154,6 +154,12 @@ export async function startManualWorkout(
   return data
 }
 
+/* ---------- Copy workout from a past session ---------- */
+export async function copyWorkout(sourceSessionId: string): Promise<WorkoutSession> {
+  const { data } = await api.post(`/workouts/copy/${sourceSessionId}`)
+  return data
+}
+
 /* ---------- Retrieve single session ---------- */
 export async function getWorkoutSession(id: string): Promise<WorkoutSession> {
   const { data } = await api.get(`/workouts/${id}`)

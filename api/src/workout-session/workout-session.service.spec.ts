@@ -254,4 +254,120 @@ describe('WorkoutSessionService', () => {
       expect(result?.tags).toEqual([{ id: 'tag-1', name: 'Push' }]);
     });
   });
+
+  describe('copyFromSession', () => {
+    const sourceSession = {
+      id: 'source-1',
+      userId,
+      title: 'Push Day',
+      exercises: [
+        {
+          exerciseId: 'ex-1',
+          order: 0,
+          notes: 'Focus on form',
+          sets: [
+            {
+              setIndex: 0,
+              plannedLoad: 80,
+              plannedReps: 8,
+              plannedRir: 2,
+              notes: 'Warm up',
+              unit: 'KG',
+              actualLoad: 80,
+              actualReps: 8,
+              actualRir: 1,
+              completed: true,
+              intensityType: 'REST_PAUSE',
+            },
+          ],
+        },
+      ],
+      tags: [{ tagId: 'tag-1' }],
+    };
+
+    it('creates a new session with structure and planned fields only', async () => {
+      prisma.workoutSession.findUnique
+        .mockResolvedValueOnce(sourceSession)
+        .mockResolvedValueOnce({
+          id: 'new-session',
+          userId,
+          title: 'Push Day',
+          exercises: [],
+          tags: [{ tag: { id: 'tag-1', name: 'Push' } }],
+        });
+      prisma.workoutSession.create.mockResolvedValue({ id: 'new-session' });
+
+      const result = await service.copyFromSession(userId, 'source-1');
+
+      expect(prisma.workoutSession.create).toHaveBeenCalledWith({
+        data: {
+          title: 'Push Day',
+          userId,
+          exercises: {
+            create: [
+              {
+                exerciseId: 'ex-1',
+                order: 0,
+                notes: 'Focus on form',
+                sets: {
+                  create: [
+                    {
+                      setIndex: 0,
+                      plannedLoad: 80,
+                      plannedReps: 8,
+                      plannedRir: 2,
+                      notes: 'Warm up',
+                      unit: 'KG',
+                    },
+                  ],
+                },
+              },
+            ],
+          },
+        },
+      });
+      expect(tagService.syncSessionTags).toHaveBeenCalledWith(
+        userId,
+        'new-session',
+        { tagIds: ['tag-1'] },
+      );
+      expect(result.tags).toEqual([{ id: 'tag-1', name: 'Push' }]);
+    });
+
+    it('skips tag sync when source has no tags', async () => {
+      prisma.workoutSession.findUnique
+        .mockResolvedValueOnce({ ...sourceSession, tags: [] })
+        .mockResolvedValueOnce({
+          id: 'new-session',
+          userId,
+          title: 'Push Day',
+          exercises: [],
+          tags: [],
+        });
+      prisma.workoutSession.create.mockResolvedValue({ id: 'new-session' });
+
+      await service.copyFromSession(userId, 'source-1');
+
+      expect(tagService.syncSessionTags).not.toHaveBeenCalled();
+    });
+
+    it('throws when source session not found', async () => {
+      prisma.workoutSession.findUnique.mockResolvedValue(null);
+
+      await expect(service.copyFromSession(userId, 'missing')).rejects.toThrow(
+        NotFoundException,
+      );
+    });
+
+    it('throws when source belongs to another user', async () => {
+      prisma.workoutSession.findUnique.mockResolvedValue({
+        ...sourceSession,
+        userId: 'other-user',
+      });
+
+      await expect(service.copyFromSession(userId, 'source-1')).rejects.toThrow(
+        ForbiddenException,
+      );
+    });
+  });
 });

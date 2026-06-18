@@ -74,6 +74,63 @@ export class WorkoutSessionService {
     });
   }
 
+  /** Cria um treino copiando a estrutura de uma sessão anterior (sem dados preenchidos) */
+  async copyFromSession(userId: string, sourceSessionId: string) {
+    const source = await this.prisma.workoutSession.findUnique({
+      where: { id: sourceSessionId },
+      include: {
+        exercises: {
+          include: { sets: { orderBy: { setIndex: 'asc' } } },
+          orderBy: { order: 'asc' },
+        },
+        tags: true,
+      },
+    });
+
+    if (!source) throw new NotFoundException('Session not found');
+    if (source.userId !== userId) throw new ForbiddenException('Access denied');
+
+    const session = await this.prisma.workoutSession.create({
+      data: {
+        title: source.title,
+        userId,
+        exercises: {
+          create: source.exercises.map((ex) => ({
+            exerciseId: ex.exerciseId,
+            order: ex.order,
+            notes: ex.notes ?? null,
+            sets: {
+              create: ex.sets.map((s) => ({
+                setIndex: s.setIndex,
+                plannedLoad: s.plannedLoad ?? null,
+                plannedReps: s.plannedReps ?? null,
+                plannedRir: s.plannedRir ?? null,
+                notes: s.notes ?? null,
+                unit: s.unit ?? undefined,
+              })),
+            },
+          })),
+        },
+      },
+    });
+
+    const sourceTagIds = source.tags.map((t) => t.tagId);
+    if (sourceTagIds.length > 0) {
+      await this.tagService.syncSessionTags(userId, session.id, {
+        tagIds: sourceTagIds,
+      });
+    }
+
+    return this.loadSessionWithTags(session.id, {
+      exercises: {
+        include: {
+          sets: { include: { intensityBlocks: true } },
+          exercise: true,
+        },
+      },
+    });
+  }
+
   /** Adiciona exercício manualmente ao treino */
   async addExercise(userId: string, sessionId: string, dto: any) {
     const session = await this.prisma.workoutSession.findUnique({

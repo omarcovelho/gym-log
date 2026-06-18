@@ -63,6 +63,21 @@ export class WorkoutSessionController {
     return this.service.startFromTemplate(user.id, templateId, dto);
   }
 
+  @Post('copy/:sessionId')
+  @ApiOperation({
+    summary: 'Copy a workout session structure into a new session',
+  })
+  @ApiResponse({
+    status: 201,
+    description: 'Workout session copied successfully.',
+  })
+  @ApiResponse({ status: 404, description: 'Session not found.' })
+  @ApiResponse({ status: 403, description: 'Access denied.' })
+  @ApiResponse({ status: 401, description: 'Unauthorized.' })
+  async copy(@CurrentUser() user, @Param('sessionId') sessionId: string) {
+    return this.service.copyFromSession(user.id, sessionId);
+  }
+
   @Post(':sessionId/exercises')
   @ApiOperation({ summary: 'Add an exercise to a workout session' })
   @ApiResponse({
