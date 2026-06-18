@@ -14,6 +14,7 @@ import { AppConfigModule } from './config/config.module';
 import { StatisticsModule } from './statistics/statistics.module';
 import { BodyMeasurementModule } from './body-measurement/body-measurement.module';
 import { SleepModule } from './sleep/sleep.module';
+import { WorkoutTagModule } from './workout-tag/workout-tag.module';
 import { ThrottlerModule } from '@nestjs/throttler';
 
 @Module({
@@ -40,6 +41,7 @@ import { ThrottlerModule } from '@nestjs/throttler';
     StatisticsModule,
     BodyMeasurementModule,
     SleepModule,
+    WorkoutTagModule,
   ],
   controllers: [AppController],
   providers: [AppService],

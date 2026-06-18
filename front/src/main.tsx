@@ -24,6 +24,7 @@ import { checkScheduledNotification } from '@/utils/pwa'
 import './i18n'
 import './index.css'
 import WorkoutLogsList from './pages/WorkoutLogsList'
+import WorkoutTagsManage from './pages/WorkoutTagsManage'
 import WorkoutSessionView from './pages/WorkoutSessionView'
 import WorkoutSessionDetails from './pages/WorkoutSessionDetails'
 import ProgressOverview from './pages/ProgressOverview'
@@ -212,6 +213,19 @@ const router = createBrowserRouter([
             </ProtectedRouteWithStats>
         ),
     },
+    /* ------------------- TAGS ------------------- */
+    {
+        path: '/app/tags',
+        element: (
+            <ProtectedRouteWithStats>
+                <AppLayout>
+                    <WorkoutTagsManage />
+                </AppLayout>
+            </ProtectedRouteWithStats>
+        ),
+    },
+
+    /* ------------------- WORKOUTS ------------------- */
     {
         path: '/app/workouts',
         element: (

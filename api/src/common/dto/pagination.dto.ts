@@ -23,4 +23,8 @@ export class PaginationDto {
   @IsOptional()
   @IsEnum(MuscleGroup)
   muscleGroup?: MuscleGroup;
+
+  @IsOptional()
+  @IsString()
+  tagIds?: string;
 }

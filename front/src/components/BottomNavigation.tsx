@@ -8,6 +8,12 @@ import { History, Plus, X, Zap, AlertCircle, TrendingUp, FileText, Home, BookOpe
 import { startManualWorkout, startWorkout, getActiveWorkout } from '@/api/workoutSession'
 import { listWorkoutTemplates } from '@/api/workoutTemplates'
 import { useToast } from './ToastProvider'
+import {
+  WorkoutTagPicker,
+  emptyTagPickerValue,
+  toSessionTagsPayload,
+  type WorkoutTagPickerValue,
+} from './WorkoutTagPicker'
 
 export function BottomNavigation() {
   const { t } = useTranslation()
@@ -19,6 +25,7 @@ export function BottomNavigation() {
   const [loading, setLoading] = useState(false)
   const [selectedOption, setSelectedOption] = useState<'free' | 'template' | null>(null)
   const [workoutTitle, setWorkoutTitle] = useState('')
+  const [startTags, setStartTags] = useState<WorkoutTagPickerValue>(emptyTagPickerValue())
 
   // Buscar treino ativo
   const { data: activeWorkout, refetch: refetchActive } = useQuery({
@@ -36,7 +43,10 @@ export function BottomNavigation() {
   const handleStartFree = async () => {
     try {
       setLoading(true)
-      const session = await startManualWorkout(workoutTitle.trim())
+      const session = await startManualWorkout(
+        workoutTitle.trim(),
+        toSessionTagsPayload(startTags),
+      )
       toast({
         title: t('workout.workoutStarted'),
         description: t('workout.workoutStartedDescription'),
@@ -60,7 +70,7 @@ export function BottomNavigation() {
   const handleStartFromTemplate = async (templateId: string) => {
     try {
       setLoading(true)
-      const session = await startWorkout(templateId)
+      const session = await startWorkout(templateId, toSessionTagsPayload(startTags))
       toast({
         title: t('workout.workoutStarted'),
         description: t('workout.workoutStartedDescription'),
@@ -273,6 +283,7 @@ export function BottomNavigation() {
                     setOpen(false)
                     setSelectedOption(null)
                     setWorkoutTitle('')
+                    setStartTags(emptyTagPickerValue())
                   }}
                   className="text-gray-400 hover:text-gray-200 transition"
                 >
@@ -349,12 +360,14 @@ export function BottomNavigation() {
                           autoFocus
                         />
                       </div>
+                      <WorkoutTagPicker value={startTags} onChange={setStartTags} className="mt-4" />
                     </div>
                     <div className="flex gap-3">
                       <button
                         onClick={() => {
                           setSelectedOption(null)
                           setWorkoutTitle('')
+                          setStartTags(emptyTagPickerValue())
                         }}
                         className="flex-1 px-4 py-2 border border-gray-700 text-gray-300 rounded-lg hover:bg-gray-800 transition"
                       >
@@ -381,6 +394,8 @@ export function BottomNavigation() {
                       </button>
                       <div className="font-semibold text-gray-100">{t('workout.chooseTemplate')}</div>
                     </div>
+
+                    <WorkoutTagPicker value={startTags} onChange={setStartTags} className="mt-4" />
 
                     {loadingTemplates ? (
                       <div className="text-center py-8">

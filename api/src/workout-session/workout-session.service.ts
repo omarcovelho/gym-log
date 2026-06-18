@@ -9,13 +9,28 @@ import { FinishWorkoutDto } from './dto/finish-workout.dto';
 import { UpdateWorkoutExerciseDto } from './dto/update-session.dto';
 import { UpdateWorkoutSessionDto } from './dto/update-workout-session.dto';
 import { PaginationDto } from 'src/common/dto/pagination.dto';
+import { WorkoutTagService } from 'src/workout-tag/workout-tag.service';
+import { SessionTagsDto } from 'src/common/dto/session-tags.dto';
+
+const sessionTagsInclude = {
+  tags: {
+    include: { tag: true },
+  },
+};
 
 @Injectable()
 export class WorkoutSessionService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private tagService: WorkoutTagService,
+  ) {}
 
   /** Cria um treino com base em um template (snapshot completo) */
-  async startFromTemplate(userId: string, templateId: string) {
+  async startFromTemplate(
+    userId: string,
+    templateId: string,
+    tags?: SessionTagsDto,
+  ) {
     const template = await this.prisma.workoutTemplate.findUnique({
       where: { id: templateId },
       include: { items: { include: { sets: true } } },
@@ -44,10 +59,19 @@ export class WorkoutSessionService {
           })),
         },
       },
-      include: { exercises: { include: { sets: true, exercise: true } } },
+      include: {
+        exercises: { include: { sets: true, exercise: true } },
+        ...sessionTagsInclude,
+      },
     });
 
-    return session;
+    if (tags) {
+      await this.tagService.syncSessionTags(userId, session.id, tags);
+    }
+
+    return this.loadSessionWithTags(session.id, {
+      exercises: { include: { sets: true, exercise: true } },
+    });
   }
 
   /** Adiciona exercício manualmente ao treino */
@@ -191,20 +215,27 @@ export class WorkoutSessionService {
   }
 
   /** Finaliza o treino */
-  async finishSession(sessionId: string, dto: FinishWorkoutDto) {
+  async finishSession(
+    sessionId: string,
+    userId: string,
+    dto: FinishWorkoutDto,
+  ) {
     const endDate = dto.endAt ? new Date(dto.endAt) : new Date();
 
     const session = await this.prisma.workoutSession.findUnique({
       where: { id: sessionId },
-      select: { startAt: true },
+      select: { startAt: true, userId: true },
     });
     if (!session) throw new NotFoundException('Session not found');
+    if (session.userId !== userId) {
+      throw new ForbiddenException('Access denied');
+    }
 
     const durationM = session.startAt
       ? Math.round((endDate.getTime() - session.startAt.getTime()) / 60000)
       : null;
 
-    return this.prisma.workoutSession.update({
+    await this.prisma.workoutSession.update({
       where: { id: sessionId },
       data: {
         endAt: endDate,
@@ -213,11 +244,14 @@ export class WorkoutSessionService {
         fatigue: dto.fatigue ?? null,
         notes: dto.notes ?? null,
       },
-      include: {
-        exercises: {
-          include: { sets: true },
-        },
-      },
+    });
+
+    if (dto.tagIds !== undefined || dto.newTagNames !== undefined) {
+      await this.tagService.syncSessionTags(userId, sessionId, dto);
+    }
+
+    return this.loadSessionWithTags(sessionId, {
+      exercises: { include: { sets: true } },
     });
   }
 
@@ -225,34 +259,32 @@ export class WorkoutSessionService {
   async findAllForUser(userId: string, pagination: PaginationDto) {
     const { page = 1, limit = 10 } = pagination;
     const skip = (page - 1) * limit;
+    const tagIdList =
+      pagination.tagIds
+        ?.split(',')
+        .map((id) => id.trim())
+        .filter(Boolean) ?? [];
+
+    const where = {
+      userId,
+      ...(tagIdList.length > 0 && {
+        tags: { some: { tagId: { in: tagIdList } } },
+      }),
+    };
 
     const [data, total] = await Promise.all([
       this.prisma.workoutSession.findMany({
-        where: { userId },
-        include: {
-          exercises: {
-            include: {
-              sets: {
-                include: {
-                  intensityBlocks: true,
-                },
-              },
-              exercise: true,
-            },
-            orderBy: {
-              order: 'asc',
-            },
-          },
-        },
+        where,
+        include: sessionTagsInclude,
         orderBy: { startAt: 'desc' },
         skip,
         take: limit,
       }),
-      this.prisma.workoutSession.count({ where: { userId } }),
+      this.prisma.workoutSession.count({ where }),
     ]);
 
     return {
-      data,
+      data: data.map((session) => this.mapSessionWithTags(session)),
       meta: {
         page,
         limit,
@@ -407,6 +439,7 @@ export class WorkoutSessionService {
             order: 'asc',
           },
         },
+        ...sessionTagsInclude,
       },
     });
     if (!session || session.userId !== userId)
@@ -473,7 +506,7 @@ export class WorkoutSessionService {
       .sort((a, b) => a.firstOrder - b.firstOrder);
 
     return {
-      ...session,
+      ...this.mapSessionWithTags(session),
       totalVolume: Math.round(totalVolume),
       volumeByGroup,
     };
@@ -500,10 +533,11 @@ export class WorkoutSessionService {
             order: 'asc',
           },
         },
+        ...sessionTagsInclude,
       },
       orderBy: { startAt: 'desc' },
     });
-    return session;
+    return session ? this.mapSessionWithTags(session) : null;
   }
 
   async deleteSession(userId: string, sessionId: string) {
@@ -522,23 +556,28 @@ export class WorkoutSessionService {
     });
   }
 
-  async startFreeWorkout(userId: string, title: string) {
-    return this.prisma.workoutSession.create({
+  async startFreeWorkout(userId: string, title: string, tags?: SessionTagsDto) {
+    const session = await this.prisma.workoutSession.create({
       data: {
         userId,
         title,
         exercises: { create: [] },
       },
-      include: {
-        exercises: {
-          include: {
-            sets: {
-              include: {
-                intensityBlocks: true,
-              },
+    });
+
+    if (tags) {
+      await this.tagService.syncSessionTags(userId, session.id, tags);
+    }
+
+    return this.loadSessionWithTags(session.id, {
+      exercises: {
+        include: {
+          sets: {
+            include: {
+              intensityBlocks: true,
             },
-            exercise: true,
           },
+          exercise: true,
         },
       },
     });
@@ -709,20 +748,50 @@ export class WorkoutSessionService {
       throw new ForbiddenException('Access denied');
     }
 
-    return this.prisma.workoutSession.update({
+    await this.prisma.workoutSession.update({
       where: { id },
       data: {
         title: dto.title,
         notes: dto.notes,
       },
-      include: {
-        exercises: {
-          include: {
-            sets: true,
-            exercise: true,
-          },
+    });
+
+    if (dto.tagIds !== undefined || dto.newTagNames !== undefined) {
+      await this.tagService.syncSessionTags(userId, id, dto);
+    }
+
+    return this.loadSessionWithTags(id, {
+      exercises: {
+        include: {
+          sets: true,
+          exercise: true,
         },
       },
     });
+  }
+
+  private mapSessionWithTags<
+    T extends { tags?: Array<{ tag: { id: string; name: string } }> },
+  >(session: T) {
+    const { tags, ...rest } = session;
+    return {
+      ...rest,
+      tags: tags ? this.tagService.mapSessionTags(tags) : [],
+    };
+  }
+
+  private async loadSessionWithTags(
+    sessionId: string,
+    include: Record<string, unknown>,
+  ) {
+    const session = await this.prisma.workoutSession.findUnique({
+      where: { id: sessionId },
+      include: {
+        ...include,
+        ...sessionTagsInclude,
+      },
+    });
+    if (!session) throw new NotFoundException('Session not found');
+    return this.mapSessionWithTags(session);
   }
 }

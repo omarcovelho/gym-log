@@ -27,6 +27,7 @@ import { UpdateWorkoutExerciseDto } from './dto/update-session.dto';
 import { UpdateWorkoutSessionDto } from './dto/update-workout-session.dto';
 import { PaginationDto } from 'src/common/dto/pagination.dto';
 import { StartFreeWorkoutDto } from './dto/start-free-workout.dto';
+import { StartTemplateWorkoutDto } from './dto/start-template-workout.dto';
 
 @ApiTags('Workout Sessions')
 @ApiBearerAuth()
@@ -43,7 +44,7 @@ export class WorkoutSessionController {
   })
   @ApiResponse({ status: 401, description: 'Unauthorized.' })
   async startFree(@CurrentUser() user, @Body() dto: StartFreeWorkoutDto) {
-    return this.service.startFreeWorkout(user.id, dto.title);
+    return this.service.startFreeWorkout(user.id, dto.title, dto);
   }
 
   @Post('start/:templateId')
@@ -54,8 +55,12 @@ export class WorkoutSessionController {
   })
   @ApiResponse({ status: 404, description: 'Template not found.' })
   @ApiResponse({ status: 401, description: 'Unauthorized.' })
-  async start(@CurrentUser() user, @Param('templateId') templateId: string) {
-    return this.service.startFromTemplate(user.id, templateId);
+  async start(
+    @CurrentUser() user,
+    @Param('templateId') templateId: string,
+    @Body() dto: StartTemplateWorkoutDto,
+  ) {
+    return this.service.startFromTemplate(user.id, templateId, dto);
   }
 
   @Post(':sessionId/exercises')
@@ -108,10 +113,11 @@ export class WorkoutSessionController {
   @ApiResponse({ status: 404, description: 'Session not found.' })
   @ApiResponse({ status: 401, description: 'Unauthorized.' })
   async finish(
+    @CurrentUser() user,
     @Param('sessionId') sessionId: string,
     @Body() dto: FinishWorkoutDto,
   ) {
-    return this.service.finishSession(sessionId, dto);
+    return this.service.finishSession(sessionId, user.id, dto);
   }
 
   @Get()
