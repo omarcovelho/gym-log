@@ -4,6 +4,11 @@
 
 Aplicação de tracking de treinos e medidas corporais.
 
+## Documentation
+
+- [docs/PROJECT_DEFINITION.md](docs/PROJECT_DEFINITION.md) — product scope, domain model, locked decisions
+- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — technical architecture, repo layout, API modules
+
 ## CI/CD
 
 Pull requests e pushes para `develop` e `master` disparam GitHub Actions:
