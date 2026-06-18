@@ -1,0 +1,34 @@
+---
+description: Gym-log quality gates and strict TDD workflow
+alwaysApply: true
+---
+
+# Quality Gate
+
+## Strict TDD
+
+1. **Red** — write a failing test for the behavior (not implementation detail)
+2. **Green** — minimal code to pass
+3. **Refactor** — clean up; tests stay green
+
+- Mandatory for every behavior change. No production logic without a preceding failing test.
+- **E2E tests:** out of scope unless explicitly requested by the user.
+- **api/:** test services and non-trivial controller logic (unit + HTTP integration). Follow patterns in `workout-session.service.spec.ts` and `workout-tag.service.spec.ts`.
+- **front/:** no test infra yet — when Vitest is added, test non-trivial hooks/utils; until then, manual demo + lint/build must pass.
+- Mock external I/O (Prisma in unit tests, Resend email, Google OAuth). No real cloud or DB calls in unit tests.
+
+## Definition of Done
+
+- [ ] Failing test first (api); full api test suite passes (`npm test` in `api/`)
+- [ ] Demoable: `npm run dev` — api + front run together
+- [ ] Traces to `docs/PROJECT_DEFINITION.md` / `docs/ARCHITECTURE.md`; deviations documented
+- [ ] API owns domain rules; front does not duplicate business logic
+- [ ] No `api/` ↔ `front/` cross-imports; no secrets in front bundle
+- [ ] New user-facing strings in **en** and **pt** (`front/src/locales/`)
+- [ ] Husky lint passes on staged files
+
+## Skip testing
+
+Trivial pass-throughs, config-only changes, third-party internals.
+
+Product source: `docs/PROJECT_DEFINITION.md`

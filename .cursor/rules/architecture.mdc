@@ -1,0 +1,36 @@
+---
+description: Gym-log architecture boundaries and repo structure
+alwaysApply: true
+---
+
+# Architecture
+
+**Hierarchy:** PROJECT_DEFINITION (§7, §10) → ARCHITECTURE → current task. Document deviations explicitly.
+
+## Structure
+
+```
+gym-log/
+  api/       NestJS — auth, workouts, statistics, diary, Prisma, secrets
+  front/     React + Vite PWA — routes, UI, API client, i18n
+  docs/      Product and architecture specs
+```
+
+## Principles
+
+- **State:** NestJS + PostgreSQL is sole owner of persisted data. Front renders API responses and sends commands.
+- **Data fetching:** TanStack React Query + Axios clients in `front/src/api/`. No duplicated domain rules in front.
+- **Module borders:** One NestJS module per domain in `api/src/<domain>/`. Feature pages and components in `front/src/`.
+- **Boundary:** `api/` ↔ `front/` communicate via HTTP only (`/api` prefix). No shared packages, shared `types/`, or code imports across apps.
+- **Secrets:** JWT, Google OAuth, Resend, `DATABASE_URL` — `api/` only, never in front bundle.
+- **i18n:** User-facing copy in `front/src/locales/{en,pt}/`. Both locales required for new strings.
+- **Stack:** TypeScript in both apps (separate `package.json`). NestJS + Prisma + PostgreSQL; React + Vite + Tailwind.
+
+## Responsibilities
+
+| App | Owns |
+|-----|------|
+| api/ | Auth, workouts, templates, statistics, diary, tags, timers, persistence, email |
+| front/ | Routes, UI, PWA, API client, local UI state, i18n |
+
+Full details: `docs/ARCHITECTURE.md`
