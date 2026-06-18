@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
+import { toDatetimeLocalValue } from '@/utils/datetimeLocal'
 import {
   WorkoutTagPicker,
   emptyTagPickerValue,
@@ -20,11 +21,13 @@ type Props = {
   open: boolean
   onClose: () => void
   onConfirm: (data: FinishWorkoutData) => Promise<void>
+  initialTags: WorkoutTagPickerValue
 }
 
 const feelings = ['GREAT', 'GOOD', 'OKAY', 'BAD', 'TERRIBLE'] as const
+const effortLevels = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] as const
 
-export function FinishWorkoutDialog({ open, onClose, onConfirm }: Props) {
+export function FinishWorkoutDialog({ open, onClose, onConfirm, initialTags }: Props) {
   const { t } = useTranslation()
   const [feeling, setFeeling] = useState<FinishWorkoutData['feeling']>()
   const [fatigue, setFatigue] = useState<number>(5)
@@ -35,10 +38,10 @@ export function FinishWorkoutDialog({ open, onClose, onConfirm }: Props) {
 
   useEffect(() => {
     if (open) {
-      setEndAt(new Date().toISOString().slice(0, 16))
-      setTags(emptyTagPickerValue())
+      setEndAt(toDatetimeLocalValue(new Date()))
+      setTags(initialTags)
     }
-  }, [open])
+  }, [open, initialTags])
 
   if (!open) return null
 
@@ -100,15 +103,23 @@ export function FinishWorkoutDialog({ open, onClose, onConfirm }: Props) {
             <label className="block text-sm font-medium text-gray-300 mb-1">
               {t('dialog.fatigueLevel')}
             </label>
-            <input
-              type="range"
-              min={1}
-              max={10}
-              value={fatigue}
-              onChange={(e) => setFatigue(Number(e.target.value))}
-              className="w-full accent-primary"
-            />
-            <p className="text-sm text-gray-400 text-center mt-1">{fatigue}/10</p>
+            <div className="grid grid-cols-10 gap-1">
+              {effortLevels.map((level) => (
+                <button
+                  key={level}
+                  type="button"
+                  onClick={() => setFatigue(level)}
+                  className={`px-1 py-1 rounded-md text-xs font-medium transition border
+                    ${
+                      fatigue === level
+                        ? 'border-primary bg-primary/20 text-primary'
+                        : 'border-gray-700 text-gray-400 hover:border-primary hover:text-primary'
+                    }`}
+                >
+                  {level}
+                </button>
+              ))}
+            </div>
           </div>
 
           <WorkoutTagPicker value={tags} onChange={setTags} disabled={loading} />
