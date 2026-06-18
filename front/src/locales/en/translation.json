@@ -129,6 +129,12 @@
     "currentWorkoutLabel": "Current workout:",
     "freeWorkoutLabel": "Free Workout",
     "loadingTemplates": "Loading templates...",
+    "copyWorkout": "Copy Workout",
+    "copyWorkoutDescription": "Reuse a past workout's structure",
+    "chooseWorkout": "Choose Workout",
+    "noWorkouts": "No past workouts found",
+    "copying": "Copying...",
+    "loadingWorkouts": "Loading workouts...",
     "exercisesCount": "exercise",
     "exercisesCountPlural": "exercises",
     "back": "Back",
@@ -314,7 +320,9 @@
     "freeWorkout": "Free Workout",
     "finished": "Finished",
     "inProgress": "In progress",
-    "workoutDeleted": "Workout deleted"
+    "workoutDeleted": "Workout deleted",
+    "workoutCopied": "Workout copied",
+    "copyError": "Could not copy workout"
   },
   "tags": {
     "label": "Tags",
@@ -352,6 +360,8 @@
     "deleteTemplateMessage": "Delete \"{{title}}\"?",
     "deleteWorkout": "Delete workout",
     "deleteWorkoutMessage": "Delete this workout session?",
+    "copyWorkout": "Copy workout",
+    "copyWorkoutMessage": "Start a new workout with the same structure as \"{{title}}\"? Logged data will not be copied.",
     "deleteMeasurement": "Delete measurement",
     "deleteMeasurementMessage": "Are you sure you want to delete this measurement? This action cannot be undone.",
     "removeExercise": "Remove Exercise",

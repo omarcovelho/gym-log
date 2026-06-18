@@ -1,9 +1,10 @@
 import { useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { useQuery } from '@tanstack/react-query'
-import { X, Plus, FileText, Zap } from 'lucide-react'
-import { startManualWorkout, startWorkout } from '@/api/workoutSession'
+import { X, Plus, FileText, Zap, Copy } from 'lucide-react'
+import { startManualWorkout, startWorkout, listWorkoutSessions, copyWorkout } from '@/api/workoutSession'
 import { listWorkoutTemplates } from '@/api/workoutTemplates'
 import { useToast } from './ToastProvider'
 
@@ -13,18 +14,24 @@ type Props = {
 }
 
 export function StartWorkoutButton({ variant = 'default', className = '' }: Props) {
+  const { t, i18n } = useTranslation()
   const navigate = useNavigate()
   const { toast } = useToast()
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
-  const [selectedOption, setSelectedOption] = useState<'free' | 'template' | null>(null)
+  const [selectedOption, setSelectedOption] = useState<'free' | 'template' | 'copy' | null>(null)
   const [workoutTitle, setWorkoutTitle] = useState('')
 
-  // Buscar templates quando modal abrir
   const { data: templatesData, isLoading: loadingTemplates } = useQuery({
     queryKey: ['workout-templates'],
     queryFn: () => listWorkoutTemplates(1, 20),
     enabled: open && selectedOption === 'template',
+  })
+
+  const { data: sessionsData, isLoading: loadingSessions } = useQuery({
+    queryKey: ['workout-sessions-copy'],
+    queryFn: () => listWorkoutSessions(1, 20),
+    enabled: open && selectedOption === 'copy',
   })
 
   const handleStartFree = async () => {
@@ -32,8 +39,8 @@ export function StartWorkoutButton({ variant = 'default', className = '' }: Prop
       setLoading(true)
       const session = await startManualWorkout(workoutTitle.trim())
       toast({
-        title: 'Treino iniciado!',
-        description: 'Bom treino! 💪',
+        title: t('workout.workoutStarted'),
+        description: t('workout.workoutStartedDescription'),
         variant: 'success',
       })
       navigate(`/app/workouts/${session.id}`)
@@ -41,8 +48,8 @@ export function StartWorkoutButton({ variant = 'default', className = '' }: Prop
     } catch (error) {
       console.error('Error starting workout:', error)
       toast({
-        title: 'Erro',
-        description: 'Não foi possível iniciar o treino',
+        title: t('workout.errorStarting'),
+        description: t('workout.errorStartingDescription'),
         variant: 'error',
       })
     } finally {
@@ -55,8 +62,8 @@ export function StartWorkoutButton({ variant = 'default', className = '' }: Prop
       setLoading(true)
       const session = await startWorkout(templateId)
       toast({
-        title: 'Treino iniciado!',
-        description: 'Bom treino! 💪',
+        title: t('workout.workoutStarted'),
+        description: t('workout.workoutStartedDescription'),
         variant: 'success',
       })
       navigate(`/app/workouts/${session.id}`)
@@ -64,8 +71,30 @@ export function StartWorkoutButton({ variant = 'default', className = '' }: Prop
     } catch (error) {
       console.error('Error starting workout:', error)
       toast({
-        title: 'Erro',
-        description: 'Não foi possível iniciar o treino',
+        title: t('workout.errorStarting'),
+        description: t('workout.errorStartingDescription'),
+        variant: 'error',
+      })
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleCopyWorkout = async (sourceSessionId: string) => {
+    try {
+      setLoading(true)
+      const session = await copyWorkout(sourceSessionId)
+      toast({
+        title: t('workouts.workoutCopied'),
+        description: t('workout.workoutStartedDescription'),
+        variant: 'success',
+      })
+      navigate(`/app/workouts/${session.id}`)
+      setOpen(false)
+    } catch (error) {
+      console.error('Error copying workout:', error)
+      toast({
+        title: t('workouts.copyError'),
         variant: 'error',
       })
     } finally {
@@ -89,9 +118,8 @@ export function StartWorkoutButton({ variant = 'default', className = '' }: Prop
         createPortal(
           <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[99999] p-4">
             <div className="bg-[#181818] border border-gray-800 rounded-xl w-full max-w-md shadow-xl max-h-[90vh] flex flex-col">
-              {/* Header */}
               <div className="flex items-center justify-between p-6 border-b border-gray-800">
-                <h2 className="text-xl font-semibold text-gray-100">Iniciar Treino</h2>
+                <h2 className="text-xl font-semibold text-gray-100">{t('workout.start')}</h2>
                 <button
                   onClick={() => {
                     setOpen(false)
@@ -121,9 +149,9 @@ export function StartWorkoutButton({ variant = 'default', className = '' }: Prop
                           <Zap className="w-5 h-5 text-primary" />
                         </div>
                         <div className="flex-1">
-                          <div className="font-semibold text-gray-100">Treino Livre</div>
+                          <div className="font-semibold text-gray-100">{t('workout.freeWorkout')}</div>
                           <div className="text-sm text-gray-400">
-                            Comece do zero e adicione exercícios conforme treina
+                            {t('workout.freeWorkoutDescription')}
                           </div>
                         </div>
                       </div>
@@ -141,9 +169,28 @@ export function StartWorkoutButton({ variant = 'default', className = '' }: Prop
                           <FileText className="w-5 h-5 text-primary" />
                         </div>
                         <div className="flex-1">
-                          <div className="font-semibold text-gray-100">Usar Template</div>
+                          <div className="font-semibold text-gray-100">{t('workout.useTemplate')}</div>
                           <div className="text-sm text-gray-400">
-                            Escolha um template salvo para começar
+                            {t('workout.templateDescription')}
+                          </div>
+                        </div>
+                      </div>
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        setSelectedOption('copy')
+                      }}
+                      className="w-full p-4 rounded-lg border-2 border-gray-700 hover:border-primary bg-[#101010] text-left transition group"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 bg-primary/10 rounded-lg group-hover:bg-primary/20 transition">
+                          <Copy className="w-5 h-5 text-primary" />
+                        </div>
+                        <div className="flex-1">
+                          <div className="font-semibold text-gray-100">{t('workout.copyWorkout')}</div>
+                          <div className="text-sm text-gray-400">
+                            {t('workout.copyWorkoutDescription')}
                           </div>
                         </div>
                       </div>
@@ -155,21 +202,20 @@ export function StartWorkoutButton({ variant = 'default', className = '' }: Prop
                     <div className="p-4 rounded-lg border border-gray-800 bg-[#101010]">
                       <div className="flex items-center gap-3 mb-2">
                         <Zap className="w-5 h-5 text-primary" />
-                        <div className="font-semibold text-gray-100">Treino Livre</div>
+                        <div className="font-semibold text-gray-100">{t('workout.freeWorkout')}</div>
                       </div>
                       <p className="text-sm text-gray-400 mb-3">
-                        Você começará com um treino vazio e poderá adicionar exercícios conforme
-                        necessário.
+                        {t('workout.emptyWorkoutDescription')}
                       </p>
                       <div>
                         <label className="block text-xs text-gray-500 mb-1.5">
-                          Nome do treino
+                          {t('workout.workoutTitle')}
                         </label>
                         <input
                           type="text"
                           value={workoutTitle}
                           onChange={(e) => setWorkoutTitle(e.target.value)}
-                          placeholder="Digite o nome do treino"
+                          placeholder={t('workout.workoutNamePlaceholder')}
                           className="w-full rounded-md border border-gray-700 bg-[#0f0f0f] px-3 py-2 text-base text-gray-100 placeholder:text-gray-500 focus:border-primary focus:outline-none transition"
                           autoFocus
                         />
@@ -190,33 +236,32 @@ export function StartWorkoutButton({ variant = 'default', className = '' }: Prop
                         disabled={loading || workoutTitle.trim() === ''}
                         className="flex-1 px-4 py-2 bg-primary text-dark font-semibold rounded-lg hover:brightness-110 transition disabled:opacity-50 disabled:cursor-not-allowed"
                       >
-                        {loading ? 'Iniciando...' : 'Iniciar Treino Livre'}
+                        {loading ? t('workout.starting') : t('workout.startFreeWorkout')}
                       </button>
                     </div>
                   </div>
-                ) : (
-                  /* Escolher template */
+                ) : selectedOption === 'template' ? (
                   <div className="space-y-4">
                     <div className="flex items-center gap-3 mb-4">
                       <button
                         onClick={() => setSelectedOption(null)}
                         className="text-gray-400 hover:text-gray-200 transition"
                       >
-                        ← Voltar
+                        ← {t('workout.back')}
                       </button>
-                      <div className="font-semibold text-gray-100">Escolher Template</div>
+                      <div className="font-semibold text-gray-100">{t('workout.chooseTemplate')}</div>
                     </div>
 
                     {loadingTemplates ? (
                       <div className="text-center py-8">
-                        <div className="text-gray-400">Carregando templates...</div>
+                        <div className="text-gray-400">{t('workout.loadingTemplates')}</div>
                       </div>
                     ) : !templatesData?.data || templatesData.data.length === 0 ? (
                       <div className="text-center py-8 space-y-3">
                         <FileText className="w-12 h-12 text-gray-600 mx-auto" />
-                        <div className="text-gray-400">Nenhum template encontrado</div>
+                        <div className="text-gray-400">{t('workout.noTemplates')}</div>
                         <p className="text-sm text-gray-500">
-                          Crie um template primeiro para usar esta opção
+                          {t('workout.createTemplateFirst')}
                         </p>
                       </div>
                     ) : (
@@ -230,7 +275,53 @@ export function StartWorkoutButton({ variant = 'default', className = '' }: Prop
                           >
                             <div className="font-medium text-gray-100">{template.title}</div>
                             <div className="text-xs text-gray-400 mt-1">
-                              {template.items.length} exercício{template.items.length !== 1 ? 's' : ''}
+                              {template.items.length}{' '}
+                              {template.items.length !== 1
+                                ? t('workout.exercisesCountPlural')
+                                : t('workout.exercisesCount')}
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-3 mb-4">
+                      <button
+                        onClick={() => setSelectedOption(null)}
+                        className="text-gray-400 hover:text-gray-200 transition"
+                      >
+                        ← {t('workout.back')}
+                      </button>
+                      <div className="font-semibold text-gray-100">{t('workout.chooseWorkout')}</div>
+                    </div>
+
+                    {loadingSessions ? (
+                      <div className="text-center py-8">
+                        <div className="text-gray-400">{t('workout.loadingWorkouts')}</div>
+                      </div>
+                    ) : !sessionsData?.data || sessionsData.data.length === 0 ? (
+                      <div className="text-center py-8 space-y-3">
+                        <Copy className="w-12 h-12 text-gray-600 mx-auto" />
+                        <div className="text-gray-400">{t('workout.noWorkouts')}</div>
+                      </div>
+                    ) : (
+                      <div className="space-y-2 max-h-64 overflow-y-auto">
+                        {sessionsData.data.map((session) => (
+                          <button
+                            key={session.id}
+                            onClick={() => handleCopyWorkout(session.id)}
+                            disabled={loading}
+                            className="w-full p-3 rounded-lg border border-gray-800 hover:border-primary bg-[#101010] text-left transition disabled:opacity-50"
+                          >
+                            <div className="font-medium text-gray-100">
+                              {session.title ?? t('workouts.freeWorkout')}
+                            </div>
+                            <div className="text-xs text-gray-400 mt-1">
+                              {new Date(session.startAt).toLocaleString(
+                                i18n.language === 'pt' ? 'pt-BR' : 'en-US',
+                              )}
                             </div>
                           </button>
                         ))}

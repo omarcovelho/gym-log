@@ -3,8 +3,8 @@ import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useQuery } from '@tanstack/react-query'
-import { X, Plus, FileText, Zap, AlertCircle } from 'lucide-react'
-import { startManualWorkout, startWorkout, getActiveWorkout } from '@/api/workoutSession'
+import { X, Plus, FileText, Zap, AlertCircle, Copy } from 'lucide-react'
+import { startManualWorkout, startWorkout, getActiveWorkout, listWorkoutSessions, copyWorkout } from '@/api/workoutSession'
 import { listWorkoutTemplates } from '@/api/workoutTemplates'
 import { useToast } from './ToastProvider'
 import {
@@ -21,7 +21,7 @@ export function FloatingActionButton() {
   const [open, setOpen] = useState(false)
   const [showActiveDialog, setShowActiveDialog] = useState(false)
   const [loading, setLoading] = useState(false)
-  const [selectedOption, setSelectedOption] = useState<'free' | 'template' | null>(null)
+  const [selectedOption, setSelectedOption] = useState<'free' | 'template' | 'copy' | null>(null)
   const [workoutTitle, setWorkoutTitle] = useState('')
   const [startTags, setStartTags] = useState<WorkoutTagPickerValue>(emptyTagPickerValue())
 
@@ -36,6 +36,12 @@ export function FloatingActionButton() {
     queryKey: ['workout-templates'],
     queryFn: () => listWorkoutTemplates(1, 20),
     enabled: open && selectedOption === 'template',
+  })
+
+  const { data: sessionsData, isLoading: loadingSessions } = useQuery({
+    queryKey: ['workout-sessions-copy'],
+    queryFn: () => listWorkoutSessions(1, 20),
+    enabled: open && selectedOption === 'copy',
   })
 
   const handleStartFree = async () => {
@@ -82,6 +88,29 @@ export function FloatingActionButton() {
       toast({
         title: t('workout.errorStarting'),
         description: t('workout.errorStartingDescription'),
+        variant: 'error',
+      })
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleCopyWorkout = async (sourceSessionId: string) => {
+    try {
+      setLoading(true)
+      const session = await copyWorkout(sourceSessionId)
+      toast({
+        title: t('workouts.workoutCopied'),
+        description: t('workout.workoutStartedDescription'),
+        variant: 'success',
+      })
+      navigate(`/app/workouts/${session.id}`)
+      setOpen(false)
+      refetchActive()
+    } catch (error) {
+      console.error('Error copying workout:', error)
+      toast({
+        title: t('workouts.copyError'),
         variant: 'error',
       })
     } finally {
@@ -261,6 +290,25 @@ export function FloatingActionButton() {
                         </div>
                       </div>
                     </button>
+
+                    <button
+                      onClick={() => {
+                        setSelectedOption('copy')
+                      }}
+                      className="w-full p-4 rounded-lg border-2 border-gray-700 hover:border-primary bg-[#101010] text-left transition group"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 bg-primary/10 rounded-lg group-hover:bg-primary/20 transition">
+                          <Copy className="w-5 h-5 text-primary" />
+                        </div>
+                        <div className="flex-1">
+                          <div className="font-semibold text-gray-100">{t('workout.copyWorkout')}</div>
+                          <div className="text-sm text-gray-400">
+                            {t('workout.copyWorkoutDescription')}
+                          </div>
+                        </div>
+                      </div>
+                    </button>
                   </div>
                 ) : selectedOption === 'free' ? (
                   /* Confirmar treino livre */
@@ -308,7 +356,7 @@ export function FloatingActionButton() {
                       </button>
                     </div>
                   </div>
-                ) : (
+                ) : selectedOption === 'template' ? (
                   /* Escolher template */
                   <div className="space-y-4">
                     <div className="flex items-center gap-3 mb-4">
@@ -347,6 +395,50 @@ export function FloatingActionButton() {
                             <div className="font-medium text-gray-100">{template.title}</div>
                             <div className="text-xs text-gray-400 mt-1">
                               {template.items.length} {template.items.length === 1 ? t('workout.exercisesCount') : t('workout.exercisesCountPlural')}
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  /* Escolher treino para copiar */
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-3 mb-4">
+                      <button
+                        onClick={() => setSelectedOption(null)}
+                        className="text-gray-400 hover:text-gray-200 transition"
+                      >
+                        ← {t('common.back')}
+                      </button>
+                      <div className="font-semibold text-gray-100">{t('workout.chooseWorkout')}</div>
+                    </div>
+
+                    {loadingSessions ? (
+                      <div className="text-center py-8">
+                        <div className="text-gray-400">{t('workout.loadingWorkouts')}</div>
+                      </div>
+                    ) : !sessionsData?.data || sessionsData.data.length === 0 ? (
+                      <div className="text-center py-8 space-y-3">
+                        <Copy className="w-12 h-12 text-gray-600 mx-auto" />
+                        <div className="text-gray-400">{t('workout.noWorkouts')}</div>
+                      </div>
+                    ) : (
+                      <div className="space-y-2 max-h-64 overflow-y-auto">
+                        {sessionsData.data.map((session) => (
+                          <button
+                            key={session.id}
+                            onClick={() => handleCopyWorkout(session.id)}
+                            disabled={loading}
+                            className="w-full p-3 rounded-lg border border-gray-800 hover:border-primary bg-[#101010] text-left transition disabled:opacity-50"
+                          >
+                            <div className="font-medium text-gray-100">
+                              {session.title ?? t('workouts.freeWorkout')}
+                            </div>
+                            <div className="text-xs text-gray-400 mt-1">
+                              {new Date(session.startAt).toLocaleString(
+                                i18n.language === 'pt' ? 'pt-BR' : 'en-US',
+                              )}
                             </div>
                           </button>
                         ))}

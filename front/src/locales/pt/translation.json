@@ -129,6 +129,12 @@
     "currentWorkoutLabel": "Treino atual:",
     "freeWorkoutLabel": "Treino Livre",
     "loadingTemplates": "Carregando templates...",
+    "copyWorkout": "Copiar Treino",
+    "copyWorkoutDescription": "Reutilize a estrutura de um treino anterior",
+    "chooseWorkout": "Escolher Treino",
+    "noWorkouts": "Nenhum treino anterior encontrado",
+    "copying": "Copiando...",
+    "loadingWorkouts": "Carregando treinos...",
     "exercisesCount": "exercício",
     "exercisesCountPlural": "exercícios",
     "back": "Voltar",
@@ -314,7 +320,9 @@
     "freeWorkout": "Treino Livre",
     "finished": "Finalizado",
     "inProgress": "Em progresso",
-    "workoutDeleted": "Treino deletado"
+    "workoutDeleted": "Treino deletado",
+    "workoutCopied": "Treino copiado",
+    "copyError": "Não foi possível copiar o treino"
   },
   "tags": {
     "label": "Tags",
@@ -352,6 +360,8 @@
     "deleteTemplateMessage": "Deletar \"{{title}}\"?",
     "deleteWorkout": "Deletar treino",
     "deleteWorkoutMessage": "Deletar esta sessão de treino?",
+    "copyWorkout": "Copiar treino",
+    "copyWorkoutMessage": "Iniciar um novo treino com a mesma estrutura de \"{{title}}\"? Os dados registrados não serão copiados.",
     "deleteMeasurement": "Deletar medida",
     "deleteMeasurementMessage": "Tem certeza de que deseja deletar esta medida? Esta ação não pode ser desfeita.",
     "removeExercise": "Remover Exercício",

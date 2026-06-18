@@ -2,8 +2,8 @@ import { useEffect, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
-import { Eye, Trash2, Tag } from 'lucide-react'
-import { listWorkoutSessions, updateWorkoutSession, type WorkoutSession } from '@/api/workoutSession'
+import { Eye, Trash2, Tag, Copy } from 'lucide-react'
+import { listWorkoutSessions, updateWorkoutSession, copyWorkout, type WorkoutSession } from '@/api/workoutSession'
 import { listTags } from '@/api/workoutTags'
 import { useAuth } from '@/auth/AuthContext'
 import { useToast } from '@/components/ToastProvider'
@@ -35,7 +35,9 @@ export default function WorkoutLogsList() {
   })
 
   const [confirmId, setConfirmId] = useState<string | null>(null)
+  const [copyConfirmId, setCopyConfirmId] = useState<string | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [copyingId, setCopyingId] = useState<string | null>(null)
   const [editingSession, setEditingSession] = useState<WorkoutSession | null>(null)
   const [editTags, setEditTags] = useState<WorkoutTagPickerValue>({ tagIds: [], newTagNames: [] })
   const [savingTags, setSavingTags] = useState(false)
@@ -131,6 +133,26 @@ export default function WorkoutLogsList() {
     } finally {
       setDeletingId(null)
       setConfirmId(null)
+    }
+  }
+
+  async function handleCopy(id: string) {
+    setCopyingId(id)
+    try {
+      const session = await copyWorkout(id)
+      toast({
+        variant: 'success',
+        title: t('workouts.workoutCopied'),
+      })
+      navigate(`/app/workouts/${session.id}`)
+    } catch {
+      toast({
+        variant: 'error',
+        title: t('workouts.copyError'),
+      })
+    } finally {
+      setCopyingId(null)
+      setCopyConfirmId(null)
     }
   }
 
@@ -231,6 +253,23 @@ export default function WorkoutLogsList() {
                   </button>
 
                   <button
+                    onClick={() => setCopyConfirmId(s.id)}
+                    disabled={copyingId === s.id}
+                    className={`
+                    p-2 rounded-md border transition
+                    ${
+                      copyingId === s.id
+                        ? 'opacity-50 cursor-not-allowed bg-[#101010] text-gray-500 border-gray-800'
+                        : 'bg-[#101010] text-gray-400 hover:text-gray-200 border-gray-800'
+                    }
+                  `}
+                    aria-label={t('workout.copyWorkout')}
+                    title={t('workout.copyWorkout')}
+                  >
+                    <Copy className="w-4 h-4" />
+                  </button>
+
+                  <button
                     onClick={() =>
                       navigate(
                         s.endAt
@@ -263,6 +302,18 @@ export default function WorkoutLogsList() {
                   </button>
                 </div>
               </div>
+
+              <ConfirmDialog
+                open={copyConfirmId === s.id}
+                title={t('dialog.copyWorkout')}
+                message={t('dialog.copyWorkoutMessage', {
+                  title: s.title ?? t('workouts.freeWorkout'),
+                })}
+                confirmText={t('workout.copyWorkout')}
+                cancelText={t('common.cancel')}
+                onConfirm={() => handleCopy(s.id)}
+                onCancel={() => setCopyConfirmId(null)}
+              />
 
               <ConfirmDialog
                 open={confirmId === s.id}
