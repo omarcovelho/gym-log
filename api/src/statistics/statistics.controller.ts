@@ -18,6 +18,8 @@ import {
 import { StatisticsService } from './statistics.service';
 import { JwtAuthGuard } from '../auth/jwt/jwt.guard';
 import { CurrentUser } from '../common/decorators/current-user';
+import { parseTagIds } from './session-query.util';
+import type { ProgressGranularity } from './statistics.service';
 
 @ApiTags('Statistics')
 @ApiBearerAuth()
@@ -58,6 +60,18 @@ export class StatisticsController {
     type: String,
     description: 'End date (ISO string)',
   })
+  @ApiQuery({
+    name: 'tagIds',
+    required: false,
+    type: String,
+    description: 'Comma-separated workout tag IDs to filter sessions',
+  })
+  @ApiQuery({
+    name: 'granularity',
+    required: false,
+    enum: ['week', 'session'],
+    description: 'Aggregate by week or per session (default: week)',
+  })
   @ApiResponse({
     status: 200,
     description: 'Evolution statistics retrieved successfully.',
@@ -72,6 +86,8 @@ export class StatisticsController {
     @Query('weeks') weeks?: string,
     @Query('startDate') startDateStr?: string,
     @Query('endDate') endDateStr?: string,
+    @Query('tagIds') tagIdsStr?: string,
+    @Query('granularity') granularity?: string,
   ) {
     let startDate: Date | null = null;
     let endDate: Date | null = null;
@@ -94,11 +110,17 @@ export class StatisticsController {
     }
 
     const weeksNumber = weeks ? parseInt(weeks, 10) : undefined;
+    const tagIds = parseTagIds(tagIdsStr);
+    const resolvedGranularity: ProgressGranularity =
+      granularity === 'session' ? 'session' : 'week';
+
     return this.statisticsService.getEvolutionStats(
       user.id,
       startDate,
       endDate,
       weeksNumber,
+      tagIds.length > 0 ? tagIds : undefined,
+      resolvedGranularity,
     );
   }
 
@@ -116,6 +138,18 @@ export class StatisticsController {
     type: String,
     description: 'End date (ISO string)',
   })
+  @ApiQuery({
+    name: 'tagIds',
+    required: false,
+    type: String,
+    description: 'Comma-separated workout tag IDs to filter sessions',
+  })
+  @ApiQuery({
+    name: 'granularity',
+    required: false,
+    enum: ['week', 'session'],
+    description: 'Aggregate by week or per session (default: week)',
+  })
   @ApiResponse({
     status: 200,
     description: 'Exercise progression retrieved successfully.',
@@ -130,6 +164,8 @@ export class StatisticsController {
     @Param('exerciseId') exerciseId: string,
     @Query('startDate') startDateStr?: string,
     @Query('endDate') endDateStr?: string,
+    @Query('tagIds') tagIdsStr?: string,
+    @Query('granularity') granularity?: string,
   ) {
     let startDate: Date | null = null;
     let endDate: Date | null = null;
@@ -151,11 +187,17 @@ export class StatisticsController {
       }
     }
 
+    const tagIds = parseTagIds(tagIdsStr);
+    const resolvedGranularity: ProgressGranularity =
+      granularity === 'session' ? 'session' : 'week';
+
     return this.statisticsService.getExerciseProgression(
       user.id,
       exerciseId,
       startDate,
       endDate,
+      tagIds.length > 0 ? tagIds : undefined,
+      resolvedGranularity,
     );
   }
 

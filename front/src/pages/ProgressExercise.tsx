@@ -1,7 +1,11 @@
-import { useState, useMemo } from 'react'
-import { Link, useLocation } from 'react-router-dom'
+import { useMemo, useState } from 'react'
+import { Link, useLocation, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { ProgressRangeFilter } from '@/components/ProgressRangeFilter'
+import {
+  ProgressTagFilter,
+  type ProgressGranularity,
+} from '@/components/ProgressTagFilter'
 import { ExerciseProgressionChart } from '@/components/ExerciseProgressionChart'
 import type { RangePreset } from '@/utils/dateRange'
 import { calculateDateRange } from '@/utils/dateRange'
@@ -9,26 +13,54 @@ import { calculateDateRange } from '@/utils/dateRange'
 export default function ProgressExercise() {
   const { t } = useTranslation()
   const location = useLocation()
+  const [searchParams, setSearchParams] = useSearchParams()
   const [selectedRange, setSelectedRange] = useState<RangePreset>('4weeks')
 
-  // Calcular dates do range selecionado
+  const selectedTagId = searchParams.get('tagIds') || null
+  const granularity = (searchParams.get('granularity') === 'session'
+    ? 'session'
+    : 'week') as ProgressGranularity
+
   const dateRange = useMemo(() => calculateDateRange(selectedRange), [selectedRange])
+
+  const statsOptions = useMemo(
+    () => ({
+      tagIds: selectedTagId ? [selectedTagId] : undefined,
+      granularity,
+    }),
+    [selectedTagId, granularity],
+  )
+
+  function handleTagChange(tagId: string | null) {
+    const params = new URLSearchParams(searchParams)
+    if (tagId) params.set('tagIds', tagId)
+    else params.delete('tagIds')
+    setSearchParams(params)
+  }
+
+  function handleGranularityChange(next: ProgressGranularity) {
+    const params = new URLSearchParams(searchParams)
+    if (next === 'session') params.set('granularity', 'session')
+    else params.delete('granularity')
+    setSearchParams(params)
+  }
 
   const isOverviewActive = location.pathname === '/app/progress'
   const isExerciseActive = location.pathname === '/app/progress/exercise'
 
+  const tabSearch = searchParams.toString()
+  const tabSuffix = tabSearch ? `?${tabSearch}` : ''
+
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="space-y-2">
         <h1 className="text-2xl md:text-3xl font-bold">{t('progress.title')}</h1>
         <p className="text-gray-400 text-sm md:text-base">{t('progress.subtitle')}</p>
       </div>
 
-      {/* Tabs de Navegação */}
       <div className="flex w-full sm:w-fit rounded-lg border border-gray-800 bg-[#151515] p-1">
         <Link
-          to="/app/progress"
+          to={`/app/progress${tabSuffix}`}
           className={`flex-1 sm:flex-none px-4 py-2 rounded-md text-sm font-medium transition text-center ${
             isOverviewActive
               ? 'bg-primary text-black'
@@ -38,7 +70,7 @@ export default function ProgressExercise() {
           {t('progress.general', 'Geral')}
         </Link>
         <Link
-          to="/app/progress/exercise"
+          to={`/app/progress/exercise${tabSuffix}`}
           className={`flex-1 sm:flex-none px-4 py-2 rounded-md text-sm font-medium transition text-center ${
             isExerciseActive
               ? 'bg-primary text-black'
@@ -48,7 +80,7 @@ export default function ProgressExercise() {
           {t('progress.exerciseProgression', 'Por Exercício')}
         </Link>
         <Link
-          to="/app/progress/body-weight"
+          to={`/app/progress/body-weight${tabSuffix}`}
           className={`flex-1 sm:flex-none px-4 py-2 rounded-md text-sm font-medium transition text-center ${
             location.pathname === '/app/progress/body-weight'
               ? 'bg-primary text-black'
@@ -59,17 +91,23 @@ export default function ProgressExercise() {
         </Link>
       </div>
 
-      {/* Filtro de Range */}
-      <ProgressRangeFilter value={selectedRange} onChange={setSelectedRange} />
+      <div className="flex flex-col lg:flex-row gap-4">
+        <ProgressRangeFilter value={selectedRange} onChange={setSelectedRange} />
+        <ProgressTagFilter
+          selectedTagId={selectedTagId}
+          onTagChange={handleTagChange}
+          granularity={granularity}
+          onGranularityChange={handleGranularityChange}
+        />
+      </div>
 
-      {/* Seção Evolução por Exercício */}
       <div className="rounded-xl border border-gray-800 bg-[#101010] p-4 md:p-6">
         <ExerciseProgressionChart
           startDate={dateRange.startDate}
           endDate={dateRange.endDate}
+          statsOptions={statsOptions}
         />
       </div>
     </div>
   )
 }
-
