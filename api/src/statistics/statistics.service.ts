@@ -1,6 +1,24 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { estimateOneRepMaxEpley } from './one-rep-max.util';
+import { buildSessionWhere, getWeekKey } from './session-query.util';
+import { buildPeriodSummary } from './period-summary.util';
+import { buildEvolutionPeriodSummary } from './evolution-period-summary.util';
+
+export type ProgressGranularity = 'week' | 'session';
+
+const sessionInclude = {
+  exercises: {
+    include: {
+      sets: {
+        include: {
+          intensityBlocks: true,
+        },
+      },
+      exercise: true,
+    },
+  },
+} as const;
 
 @Injectable()
 export class StatisticsService {
@@ -302,18 +320,15 @@ export class StatisticsService {
     };
   }
 
-  /** Busca estatísticas de evolução (PRs e volume semanal) */
-  async getEvolutionStats(
-    userId: string,
+  /** Resolve default date range for evolution stats */
+  private resolveEvolutionDateRange(
     startDate?: Date | null,
     endDate?: Date | null,
-    weeks?: number, // Deprecated: manter apenas para compatibilidade
-  ) {
+    weeks?: number,
+  ): { dateStart: Date; dateEnd: Date } {
     const now = new Date();
-
-    // Se startDate e endDate não forem fornecidos, usar default de 4 semanas
-    let dateStart: Date | null = null;
-    let dateEnd: Date | null = null;
+    let dateStart: Date;
+    let dateEnd: Date;
 
     if (startDate && endDate) {
       dateStart = new Date(startDate);
@@ -321,7 +336,6 @@ export class StatisticsService {
       dateEnd = new Date(endDate);
       dateEnd.setHours(23, 59, 59, 999);
     } else if (weeks) {
-      // Compatibilidade: usar weeks se fornecido
       const today = new Date(now);
       today.setHours(0, 0, 0, 0);
       const dayOfWeek = today.getDay();
@@ -336,7 +350,6 @@ export class StatisticsService {
       dateEnd = new Date(now);
       dateEnd.setHours(23, 59, 59, 999);
     } else {
-      // Default: 4 semanas
       const today = new Date(now);
       today.setHours(0, 0, 0, 0);
       const dayOfWeek = today.getDay();
@@ -352,24 +365,74 @@ export class StatisticsService {
       dateEnd.setHours(23, 59, 59, 999);
     }
 
-    // Buscar todos os treinos finalizados do usuário
-    const allFinishedSessions = await this.prisma.workoutSession.findMany({
-      where: {
-        userId,
-        endAt: { not: null }, // Apenas treinos finalizados
-      },
-      include: {
-        exercises: {
-          include: {
-            sets: {
-              include: {
-                intensityBlocks: true,
-              },
-            },
-            exercise: true,
-          },
-        },
-      },
+    return { dateStart, dateEnd };
+  }
+
+  /** Accumulate volume/sets for a session into muscle-group buckets */
+  private accumulateSessionVolume(
+    session: {
+      exercises: Array<{
+        exercise: { muscleGroup: string | null; name: string };
+        sets: Array<
+          Parameters<StatisticsService['calculateSetVolume']>[0] & {
+            completed: boolean;
+          }
+        >;
+      }>;
+    },
+    target: {
+      volume: number;
+      sets: number;
+      byMuscleGroup: Map<string, { volume: number; sets: number }>;
+    },
+  ): void {
+    session.exercises.forEach((ex) => {
+      if (!ex.exercise.muscleGroup || ex.exercise.muscleGroup === 'OTHER') {
+        return;
+      }
+
+      const muscleGroup = ex.exercise.muscleGroup;
+
+      if (!target.byMuscleGroup.has(muscleGroup)) {
+        target.byMuscleGroup.set(muscleGroup, { volume: 0, sets: 0 });
+      }
+
+      const muscleGroupStats = target.byMuscleGroup.get(muscleGroup)!;
+
+      ex.sets.forEach((set) => {
+        const equivalentSets = this.calculateSetEquivalentSets(set);
+        target.sets += equivalentSets;
+        muscleGroupStats.sets += equivalentSets;
+
+        const volume = this.calculateSetVolume(set);
+        target.volume += volume;
+        muscleGroupStats.volume += volume;
+      });
+    });
+  }
+
+  /** Busca estatísticas de evolução (PRs e volume semanal) */
+  async getEvolutionStats(
+    userId: string,
+    startDate?: Date | null,
+    endDate?: Date | null,
+    weeks?: number, // Deprecated: manter apenas para compatibilidade
+    tagIds?: string[],
+    granularity: ProgressGranularity = 'week',
+  ) {
+    const { dateStart, dateEnd } = this.resolveEvolutionDateRange(
+      startDate,
+      endDate,
+      weeks,
+    );
+
+    const sessions = await this.prisma.workoutSession.findMany({
+      where: buildSessionWhere(userId, {
+        startDate: dateStart,
+        endDate: dateEnd,
+        tagIds,
+      }),
+      include: sessionInclude,
       orderBy: { startAt: 'asc' },
     });
 
@@ -388,7 +451,7 @@ export class StatisticsService {
     // Histórico de cargas por exercício (para encontrar segunda maior)
     const exerciseLoadHistory = new Map<string, number[]>();
 
-    allFinishedSessions.forEach((session) => {
+    sessions.forEach((session) => {
       session.exercises.forEach((ex) => {
         // Filtrar exercícios com muscleGroup null ou OTHER
         if (!ex.exercise.muscleGroup || ex.exercise.muscleGroup === 'OTHER') {
@@ -422,7 +485,7 @@ export class StatisticsService {
       let prDate: Date | null = null;
       let prWorkoutId: string | null = null;
 
-      for (const session of allFinishedSessions) {
+      for (const session of sessions) {
         for (const ex of session.exercises) {
           if (ex.exercise.name === exerciseName) {
             for (const set of ex.sets) {
@@ -452,15 +515,7 @@ export class StatisticsService {
       }
     });
 
-    // Filtrar PRs pelo range de data
     const recentPRs = Array.from(exercisePRs.entries())
-      .filter(([, pr]) => {
-        if (dateStart && dateEnd) {
-          return pr.date >= dateStart && pr.date <= dateEnd;
-        }
-        // Se ambos forem null, mostrar todos os PRs
-        return true;
-      })
       .map(([exerciseName, pr]) => ({
         exerciseName,
         value: pr.maxLoad,
@@ -469,9 +524,48 @@ export class StatisticsService {
         workoutId: pr.workoutId,
         unit: 'kg',
       }))
-      .sort((a, b) => b.date.getTime() - a.date.getTime()); // Mais recentes primeiro
+      .sort((a, b) => b.date.getTime() - a.date.getTime());
 
-    // Calcular volume semanal
+    const formatMuscleGroups = (
+      byMuscleGroup: Map<string, { volume: number; sets: number }>,
+    ) =>
+      Object.fromEntries(
+        Array.from(byMuscleGroup.entries()).map(([mg, data]) => [
+          mg,
+          { volume: Math.round(data.volume), sets: Math.round(data.sets) },
+        ]),
+      );
+
+    if (granularity === 'session') {
+      const sessionStats = sessions.map((session) => {
+        const acc = {
+          volume: 0,
+          sets: 0,
+          byMuscleGroup: new Map<string, { volume: number; sets: number }>(),
+        };
+        this.accumulateSessionVolume(session, acc);
+        return {
+          sessionId: session.id,
+          sessionDate: session.startAt.toISOString(),
+          volume: Math.round(acc.volume),
+          sets: Math.round(acc.sets),
+          byMuscleGroup: formatMuscleGroups(acc.byMuscleGroup),
+        };
+      });
+
+      const periodSummary = buildEvolutionPeriodSummary(
+        this.toEvolutionPeriodSummaryPoints(sessionStats),
+      );
+
+      return {
+        recentPRs,
+        granularity: 'session' as const,
+        weeklyStats: [],
+        sessionStats,
+        periodSummary,
+      };
+    }
+
     const weeklyStatsMap = new Map<
       string,
       {
@@ -481,38 +575,7 @@ export class StatisticsService {
       }
     >();
 
-    // Função para obter chave da semana (formato: "2024-11-24" - data da segunda-feira)
-    const getWeekKey = (date: Date): string => {
-      const d = new Date(date);
-      d.setHours(0, 0, 0, 0);
-      const dayOfWeek = d.getDay();
-      // Ajustar para segunda-feira (0 = domingo, 1 = segunda, etc.)
-      const diff = d.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1);
-      const monday = new Date(d);
-      monday.setDate(diff);
-
-      // Retornar data da segunda-feira no formato YYYY-MM-DD
-      const year = monday.getFullYear();
-      const month = String(monday.getMonth() + 1).padStart(2, '0');
-      const day = String(monday.getDate()).padStart(2, '0');
-
-      return `${year}-${month}-${day}`;
-    };
-
-    // Processar treinos dentro do range de data
-    const sessionsInRange = allFinishedSessions.filter((session) => {
-      const sessionDate = new Date(session.startAt);
-      if (dateStart && dateEnd) {
-        return (
-          sessionDate.getTime() >= dateStart.getTime() &&
-          sessionDate.getTime() <= dateEnd.getTime()
-        );
-      }
-      // Se ambos forem null, incluir todos os treinos
-      return true;
-    });
-
-    sessionsInRange.forEach((session) => {
+    sessions.forEach((session) => {
       const weekKey = getWeekKey(session.startAt);
 
       if (!weeklyStatsMap.has(weekKey)) {
@@ -523,55 +586,125 @@ export class StatisticsService {
         });
       }
 
-      const weekStats = weeklyStatsMap.get(weekKey)!;
-
-      session.exercises.forEach((ex) => {
-        // Filtrar exercícios com muscleGroup null ou OTHER
-        if (!ex.exercise.muscleGroup || ex.exercise.muscleGroup === 'OTHER') {
-          return;
-        }
-
-        const muscleGroup = ex.exercise.muscleGroup;
-
-        if (!weekStats.byMuscleGroup.has(muscleGroup)) {
-          weekStats.byMuscleGroup.set(muscleGroup, { volume: 0, sets: 0 });
-        }
-
-        const muscleGroupStats = weekStats.byMuscleGroup.get(muscleGroup)!;
-
-        ex.sets.forEach((set) => {
-          // Contar sets equivalentes (inclui FI)
-          const equivalentSets = this.calculateSetEquivalentSets(set);
-          weekStats.sets += equivalentSets;
-          muscleGroupStats.sets += equivalentSets;
-
-          // Calcular volume usando função helper (inclui intensity blocks e FI)
-          const volume = this.calculateSetVolume(set);
-          weekStats.volume += volume;
-          muscleGroupStats.volume += volume;
-        });
-      });
+      this.accumulateSessionVolume(session, weeklyStatsMap.get(weekKey)!);
     });
 
-    // Converter para array e ordenar por semana
     const weeklyStats = Array.from(weeklyStatsMap.entries())
       .map(([week, stats]) => ({
         week,
         volume: Math.round(stats.volume),
         sets: Math.round(stats.sets),
-        byMuscleGroup: Object.fromEntries(
-          Array.from(stats.byMuscleGroup.entries()).map(([mg, data]) => [
-            mg,
-            { volume: Math.round(data.volume), sets: Math.round(data.sets) },
-          ]),
-        ),
+        byMuscleGroup: formatMuscleGroups(stats.byMuscleGroup),
       }))
       .sort((a, b) => a.week.localeCompare(b.week));
 
+    const periodSummary = buildEvolutionPeriodSummary(
+      this.toEvolutionPeriodSummaryPoints(weeklyStats),
+    );
+
     return {
       recentPRs,
+      granularity: 'week' as const,
       weeklyStats,
+      sessionStats: [],
+      periodSummary,
     };
+  }
+
+  /** Aggregate exercise metrics from completed sets */
+  private aggregateExerciseMetrics(
+    sets: Array<{
+      completed: boolean;
+      actualLoad?: number | null;
+      actualReps?: number | null;
+      intensityType?: string | null;
+      intensityBlocks?: Array<{ reps: number | null; load?: number | null }>;
+    }>,
+  ) {
+    const loads: number[] = [];
+    const volumes: number[] = [];
+    const reps: number[] = [];
+    const e1rms: number[] = [];
+    let setsCount = 0;
+
+    sets.forEach((set) => {
+      if (!set.completed) return;
+
+      const volume = this.calculateSetVolume(set);
+      const equivalentSets = this.calculateSetEquivalentSets(set);
+      if (set.actualLoad != null) {
+        loads.push(set.actualLoad);
+      }
+      volumes.push(volume);
+      if (set.actualReps != null) {
+        reps.push(set.actualReps);
+        if (set.actualLoad != null) {
+          const e1rm = estimateOneRepMaxEpley(set.actualLoad, set.actualReps);
+          if (e1rm != null) {
+            e1rms.push(e1rm);
+          }
+        }
+      }
+      setsCount += equivalentSets;
+    });
+
+    return { loads, volumes, reps, e1rms, setsCount };
+  }
+
+  private buildProgressionPoint(data: {
+    loads: number[];
+    volumes: number[];
+    reps: number[];
+    e1rms: number[];
+    setsCount: number;
+  }) {
+    return {
+      avgLoad:
+        data.loads.length > 0
+          ? data.loads.reduce((a, b) => a + b, 0) / data.loads.length
+          : 0,
+      totalVolume: Math.round(data.volumes.reduce((a, b) => a + b, 0)),
+      avgReps:
+        data.reps.length > 0
+          ? data.reps.reduce((a, b) => a + b, 0) / data.reps.length
+          : 0,
+      bestEstimated1RM: data.e1rms.length > 0 ? Math.max(...data.e1rms) : 0,
+      setsCount: Math.round(data.setsCount),
+    };
+  }
+
+  private toPeriodSummaryPoints(
+    points: Array<{
+      week?: string;
+      sessionDate?: string;
+      avgLoad: number;
+      totalVolume: number;
+      avgReps: number;
+      bestEstimated1RM: number;
+    }>,
+  ) {
+    return points.map((point) => ({
+      avgLoad: point.avgLoad,
+      totalVolume: point.totalVolume,
+      avgReps: point.avgReps,
+      bestEstimated1RM: point.bestEstimated1RM,
+      atDate: point.sessionDate ?? point.week ?? '',
+    }));
+  }
+
+  private toEvolutionPeriodSummaryPoints(
+    points: Array<{
+      week?: string;
+      sessionDate?: string;
+      volume: number;
+      sets: number;
+    }>,
+  ) {
+    return points.map((point) => ({
+      volume: point.volume,
+      sets: point.sets,
+      atDate: point.sessionDate ?? point.week ?? '',
+    }));
   }
 
   /** Busca progressão de um exercício específico */
@@ -580,6 +713,8 @@ export class StatisticsService {
     exerciseId: string,
     startDate?: Date | null,
     endDate?: Date | null,
+    tagIds?: string[],
+    granularity: ProgressGranularity = 'week',
   ) {
     // Validar que o exercício existe
     const exercise = await this.prisma.exercise.findUnique({
@@ -589,9 +724,9 @@ export class StatisticsService {
     if (!exercise) {
       throw new BadRequestException('Exercise not found.');
     }
-    // Normalizar datas
-    let dateStart: Date | null = null;
-    let dateEnd: Date | null = null;
+
+    let dateStart: Date | undefined;
+    let dateEnd: Date | undefined;
 
     if (startDate && endDate) {
       dateStart = new Date(startDate);
@@ -600,36 +735,18 @@ export class StatisticsService {
       dateEnd.setHours(23, 59, 59, 999);
     }
 
-    // Buscar todos os treinos finalizados do exercício
-    const allFinishedSessions = await this.prisma.workoutSession.findMany({
-      where: {
-        userId,
-        endAt: { not: null },
-        exercises: {
-          some: {
-            exerciseId,
-          },
-        },
-        ...(dateStart && dateEnd
-          ? {
-              startAt: {
-                gte: dateStart,
-                lte: dateEnd,
-              },
-            }
-          : {}),
-      },
+    const sessions = await this.prisma.workoutSession.findMany({
+      where: buildSessionWhere(userId, {
+        startDate: dateStart,
+        endDate: dateEnd,
+        tagIds,
+        exerciseId,
+      }),
       include: {
         exercises: {
-          where: {
-            exerciseId,
-          },
+          where: { exerciseId },
           include: {
-            sets: {
-              include: {
-                intensityBlocks: true,
-              },
-            },
+            sets: { include: { intensityBlocks: true } },
             exercise: true,
           },
         },
@@ -637,23 +754,37 @@ export class StatisticsService {
       orderBy: { startAt: 'asc' },
     });
 
-    // Função para obter chave da semana (formato: "2024-11-24" - data da segunda-feira)
-    const getWeekKey = (date: Date): string => {
-      const d = new Date(date);
-      d.setHours(0, 0, 0, 0);
-      const dayOfWeek = d.getDay();
-      const diff = d.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1);
-      const monday = new Date(d);
-      monday.setDate(diff);
+    if (granularity === 'session') {
+      const sessionsData = sessions
+        .map((session) => {
+          const sets = session.exercises.flatMap((ex) => ex.sets);
+          if (sets.length === 0) return null;
 
-      const year = monday.getFullYear();
-      const month = String(monday.getMonth() + 1).padStart(2, '0');
-      const day = String(monday.getDate()).padStart(2, '0');
+          const metrics = this.aggregateExerciseMetrics(sets);
+          if (metrics.loads.length === 0 && metrics.volumes.length === 0) {
+            return null;
+          }
 
-      return `${year}-${month}-${day}`;
-    };
+          return {
+            sessionId: session.id,
+            sessionDate: session.startAt.toISOString(),
+            ...this.buildProgressionPoint(metrics),
+          };
+        })
+        .filter((s): s is NonNullable<typeof s> => s != null);
 
-    // Agrupar por semana
+      const periodSummary = buildPeriodSummary(
+        this.toPeriodSummaryPoints(sessionsData),
+      );
+
+      return {
+        granularity: 'session' as const,
+        weeks: [],
+        sessions: sessionsData,
+        periodSummary,
+      };
+    }
+
     const weeklyDataMap = new Map<
       string,
       {
@@ -665,7 +796,7 @@ export class StatisticsService {
       }
     >();
 
-    allFinishedSessions.forEach((session) => {
+    sessions.forEach((session) => {
       const weekKey = getWeekKey(session.startAt);
 
       if (!weeklyDataMap.has(weekKey)) {
@@ -679,124 +810,31 @@ export class StatisticsService {
       }
 
       const weekData = weeklyDataMap.get(weekKey)!;
+      const metrics = this.aggregateExerciseMetrics(
+        session.exercises.flatMap((ex) => ex.sets),
+      );
 
-      session.exercises.forEach((ex) => {
-        ex.sets.forEach((set) => {
-          if (set.completed) {
-            const volume = this.calculateSetVolume(set);
-            const equivalentSets = this.calculateSetEquivalentSets(set);
-            if (set.actualLoad != null) {
-              weekData.loads.push(set.actualLoad);
-            }
-            weekData.volumes.push(volume);
-            if (set.actualReps != null) {
-              weekData.reps.push(set.actualReps);
-              if (set.actualLoad != null) {
-                const e1rm = estimateOneRepMaxEpley(
-                  set.actualLoad,
-                  set.actualReps,
-                );
-                if (e1rm != null) {
-                  weekData.e1rms.push(e1rm);
-                }
-              }
-            }
-            weekData.setsCount += equivalentSets;
-          }
-        });
-      });
+      weekData.loads.push(...metrics.loads);
+      weekData.volumes.push(...metrics.volumes);
+      weekData.reps.push(...metrics.reps);
+      weekData.e1rms.push(...metrics.e1rms);
+      weekData.setsCount += metrics.setsCount;
     });
 
-    // Calcular estatísticas por semana
     const weeks = Array.from(weeklyDataMap.entries())
       .map(([week, data]) => ({
         week,
-        avgLoad:
-          data.loads.length > 0
-            ? data.loads.reduce((a, b) => a + b, 0) / data.loads.length
-            : 0,
-        totalVolume: Math.round(data.volumes.reduce((a, b) => a + b, 0)),
-        avgReps:
-          data.reps.length > 0
-            ? data.reps.reduce((a, b) => a + b, 0) / data.reps.length
-            : 0,
-        bestEstimated1RM: data.e1rms.length > 0 ? Math.max(...data.e1rms) : 0,
-        setsCount: Math.round(data.setsCount),
+        ...this.buildProgressionPoint(data),
       }))
       .sort((a, b) => a.week.localeCompare(b.week));
 
-    // Encontrar semana atual e anterior
-    const currentWeek = weeks.length > 0 ? weeks[weeks.length - 1] : null;
-    const previousWeek = weeks.length > 1 ? weeks[weeks.length - 2] : null;
-
-    // Calcular médias das últimas 4 semanas
-    const last4Weeks = weeks.slice(-4);
-    const avgLast4Weeks =
-      last4Weeks.length > 0
-        ? {
-            avgLoad:
-              last4Weeks.reduce((sum, w) => sum + w.avgLoad, 0) /
-              last4Weeks.length,
-            totalVolume: Math.round(
-              last4Weeks.reduce((sum, w) => sum + w.totalVolume, 0),
-            ),
-            avgReps:
-              last4Weeks.reduce((sum, w) => sum + w.avgReps, 0) /
-              last4Weeks.length,
-            bestEstimated1RM: Math.max(
-              ...last4Weeks.map((w) => w.bestEstimated1RM),
-            ),
-          }
-        : null;
-
-    // Calcular médias das 4 semanas anteriores
-    const previous4Weeks = weeks.length > 4 ? weeks.slice(-8, -4) : [];
-    const avgPrevious4Weeks =
-      previous4Weeks.length > 0
-        ? {
-            avgLoad:
-              previous4Weeks.reduce((sum, w) => sum + w.avgLoad, 0) /
-              previous4Weeks.length,
-            totalVolume: Math.round(
-              previous4Weeks.reduce((sum, w) => sum + w.totalVolume, 0),
-            ),
-            avgReps:
-              previous4Weeks.reduce((sum, w) => sum + w.avgReps, 0) /
-              previous4Weeks.length,
-            bestEstimated1RM: Math.max(
-              ...previous4Weeks.map((w) => w.bestEstimated1RM),
-            ),
-          }
-        : null;
-
-    // Determinar tendência
-    let trend: 'up' | 'down' | 'stable' = 'stable';
-    if (avgLast4Weeks && avgPrevious4Weeks) {
-      const loadDiff = avgLast4Weeks.avgLoad - avgPrevious4Weeks.avgLoad;
-      const volumeDiff =
-        avgLast4Weeks.totalVolume - avgPrevious4Weeks.totalVolume;
-      if (loadDiff > 0 || volumeDiff > 0) {
-        trend = 'up';
-      } else if (loadDiff < 0 || volumeDiff < 0) {
-        trend = 'down';
-      }
-    } else if (currentWeek && previousWeek) {
-      const loadDiff = currentWeek.avgLoad - previousWeek.avgLoad;
-      const volumeDiff = currentWeek.totalVolume - previousWeek.totalVolume;
-      if (loadDiff > 0 || volumeDiff > 0) {
-        trend = 'up';
-      } else if (loadDiff < 0 || volumeDiff < 0) {
-        trend = 'down';
-      }
-    }
+    const periodSummary = buildPeriodSummary(this.toPeriodSummaryPoints(weeks));
 
     return {
+      granularity: 'week' as const,
       weeks,
-      currentWeek,
-      previousWeek,
-      avgLast4Weeks,
-      avgPrevious4Weeks,
-      trend,
+      sessions: [],
+      periodSummary,
     };
   }
 

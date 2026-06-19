@@ -298,18 +298,63 @@ export type WeeklyStats = {
   }
 }
 
+export type SessionStats = {
+  sessionId: string
+  sessionDate: string
+  volume: number
+  sets: number
+  byMuscleGroup: {
+    [muscleGroup: string]: {
+      volume: number
+      sets: number
+    }
+  }
+}
+
+export type ProgressGranularity = 'week' | 'session'
+
+export type EvolutionPeriodSummary = {
+  pointCount: number
+  best: {
+    peakVolume: number
+    peakSets: number
+  }
+  latest: {
+    volume: number
+    sets: number
+    atDate: string
+  } | null
+  trend: {
+    volumeStart: number
+    volumeEnd: number
+    setsStart: number
+    setsEnd: number
+  } | null
+}
+
 export type EvolutionStats = {
   recentPRs: EvolutionPR[]
+  granularity: ProgressGranularity
   weeklyStats: WeeklyStats[]
+  sessionStats: SessionStats[]
+  periodSummary: EvolutionPeriodSummary
+}
+
+export type ProgressStatsOptions = {
+  tagIds?: string[]
+  granularity?: ProgressGranularity
 }
 
 export async function getEvolutionStats(
   startDate?: string | null,
   endDate?: string | null,
+  options?: ProgressStatsOptions,
 ): Promise<EvolutionStats> {
   const params: Record<string, string> = {}
   if (startDate) params.startDate = startDate
   if (endDate) params.endDate = endDate
+  if (options?.tagIds?.length) params.tagIds = options.tagIds.join(',')
+  if (options?.granularity) params.granularity = options.granularity
   const { data } = await api.get(`/statistics/evolution`, { params })
   return data
 }
@@ -323,33 +368,69 @@ export type ExerciseProgressionWeek = {
   setsCount: number
 }
 
+export type ExerciseProgressionSession = {
+  sessionId: string
+  sessionDate: string
+  avgLoad: number
+  totalVolume: number
+  avgReps: number
+  bestEstimated1RM: number
+  setsCount: number
+}
+
+export type ExerciseProgressionPoint = ExerciseProgressionWeek | ExerciseProgressionSession
+
+export type ExercisePeriodSummary = {
+  pointCount: number
+  best: {
+    avgLoad: number
+    avgLoadAt: string | null
+    totalVolume: number
+    peakVolume: number
+    avgReps: number
+    bestEstimated1RM: number
+    bestEstimated1RMAt: string | null
+  }
+  latest: {
+    avgLoad: number
+    totalVolume: number
+    avgReps: number
+    bestEstimated1RM: number
+    atDate: string
+  } | null
+  deltaVsPrevious: {
+    avgLoad: number
+    totalVolume: number
+    bestEstimated1RM: number
+  } | null
+  trend: {
+    avgLoadStart: number
+    avgLoadEnd: number
+    totalVolumeStart: number
+    totalVolumeEnd: number
+    bestEstimated1RMStart: number
+    bestEstimated1RMEnd: number
+  } | null
+}
+
 export type ExerciseProgression = {
+  granularity: ProgressGranularity
   weeks: ExerciseProgressionWeek[]
-  currentWeek: ExerciseProgressionWeek | null
-  previousWeek: ExerciseProgressionWeek | null
-  avgLast4Weeks: {
-    avgLoad: number
-    totalVolume: number
-    avgReps: number
-    bestEstimated1RM: number
-  } | null
-  avgPrevious4Weeks: {
-    avgLoad: number
-    totalVolume: number
-    avgReps: number
-    bestEstimated1RM: number
-  } | null
-  trend: 'up' | 'down' | 'stable'
+  sessions: ExerciseProgressionSession[]
+  periodSummary: ExercisePeriodSummary
 }
 
 export async function getExerciseProgression(
   exerciseId: string,
   startDate?: string | null,
   endDate?: string | null,
+  options?: ProgressStatsOptions,
 ): Promise<ExerciseProgression> {
   const params: Record<string, string> = {}
   if (startDate) params.startDate = startDate
   if (endDate) params.endDate = endDate
+  if (options?.tagIds?.length) params.tagIds = options.tagIds.join(',')
+  if (options?.granularity) params.granularity = options.granularity
   const { data } = await api.get(`/statistics/exercise/${exerciseId}/progression`, { params })
   return data
 }
