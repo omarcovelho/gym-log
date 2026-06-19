@@ -20,7 +20,13 @@ describe('StatisticsService', () => {
     muscleGroup: 'CHEST',
   };
 
-  function makeSession(id: string, startAt: Date, load: number, reps: number) {
+  function makeSession(
+    id: string,
+    startAt: Date,
+    load: number,
+    reps: number,
+    actualRir?: number | null,
+  ) {
     return {
       id,
       startAt,
@@ -34,6 +40,7 @@ describe('StatisticsService', () => {
               completed: true,
               actualLoad: load,
               actualReps: reps,
+              actualRir: actualRir ?? null,
               intensityType: 'NONE',
               intensityBlocks: [],
             },
@@ -185,6 +192,23 @@ describe('StatisticsService', () => {
       expect(result.periodSummary.deltaVsPrevious?.avgLoad).toBe(10);
       expect(result.periodSummary.trend?.avgLoadStart).toBe(80);
       expect(result.periodSummary.trend?.avgLoadEnd).toBe(90);
+    });
+
+    it('includes RIR in estimated 1RM when actualRir is logged', async () => {
+      prisma.workoutSession.findMany.mockResolvedValue([
+        makeSession('s1', new Date('2024-01-08T10:00:00'), 100, 5, 2),
+      ]);
+
+      const result = await service.getExerciseProgression(
+        userId,
+        'ex-chest',
+        startDate,
+        endDate,
+        undefined,
+        'session',
+      );
+
+      expect(result.sessions[0].bestEstimated1RM).toBe(123.3);
     });
 
     it('throws when exercise not found', async () => {

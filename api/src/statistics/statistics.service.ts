@@ -617,6 +617,7 @@ export class StatisticsService {
       completed: boolean;
       actualLoad?: number | null;
       actualReps?: number | null;
+      actualRir?: number | null;
       intensityType?: string | null;
       intensityBlocks?: Array<{ reps: number | null; load?: number | null }>;
     }>,
@@ -639,7 +640,11 @@ export class StatisticsService {
       if (set.actualReps != null) {
         reps.push(set.actualReps);
         if (set.actualLoad != null) {
-          const e1rm = estimateOneRepMaxEpley(set.actualLoad, set.actualReps);
+          const e1rm = estimateOneRepMaxEpley(
+            set.actualLoad,
+            set.actualReps,
+            set.actualRir,
+          );
           if (e1rm != null) {
             e1rms.push(e1rm);
           }
