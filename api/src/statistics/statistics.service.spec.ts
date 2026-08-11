@@ -6,7 +6,7 @@ import { PrismaService } from '../prisma/prisma.service';
 describe('StatisticsService', () => {
   let service: StatisticsService;
   let prisma: {
-    workoutSession: { findMany: jest.Mock };
+    workoutSession: { findMany: jest.Mock; count: jest.Mock };
     exercise: { findUnique: jest.Mock };
   };
 
@@ -52,7 +52,10 @@ describe('StatisticsService', () => {
 
   beforeEach(async () => {
     prisma = {
-      workoutSession: { findMany: jest.fn().mockResolvedValue([]) },
+      workoutSession: {
+        findMany: jest.fn().mockResolvedValue([]),
+        count: jest.fn().mockResolvedValue(0),
+      },
       exercise: {
         findUnique: jest.fn().mockResolvedValue(chestExercise),
       },
@@ -217,6 +220,64 @@ describe('StatisticsService', () => {
       await expect(
         service.getExerciseProgression(userId, 'missing', startDate, endDate),
       ).rejects.toThrow(BadRequestException);
+    });
+  });
+
+  describe('getExerciseHistory', () => {
+    it('queries with exerciseId and tag filters in Prisma where', async () => {
+      await service.getExerciseHistory(userId, 'ex-chest', {
+        tagIds: ['tag-base'],
+        page: 1,
+        limit: 5,
+      });
+
+      expect(prisma.workoutSession.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            userId,
+            endAt: { not: null },
+            exercises: { some: { exerciseId: 'ex-chest' } },
+            tags: { some: { tagId: { in: ['tag-base'] } } },
+          }),
+        }),
+      );
+    });
+
+    it('uses skip and take for page 2', async () => {
+      await service.getExerciseHistory(userId, 'ex-chest', {
+        page: 2,
+        limit: 5,
+      });
+
+      expect(prisma.workoutSession.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          skip: 5,
+          take: 5,
+        }),
+      );
+    });
+
+    it('returns paginated data and meta from count', async () => {
+      const session = makeSession('s1', new Date('2024-01-08T10:00:00'), 80, 8);
+      prisma.workoutSession.findMany.mockResolvedValue([
+        { ...session, title: 'Push' },
+      ]);
+      prisma.workoutSession.count.mockResolvedValue(12);
+
+      const result = await service.getExerciseHistory(userId, 'ex-chest', {
+        page: 1,
+        limit: 5,
+      });
+
+      expect(result.data).toHaveLength(1);
+      expect(result.data[0].sessionId).toBe('s1');
+      expect(result.data[0].sessionTitle).toBe('Push');
+      expect(result.meta).toEqual({
+        page: 1,
+        limit: 5,
+        total: 12,
+        totalPages: 3,
+      });
     });
   });
 });

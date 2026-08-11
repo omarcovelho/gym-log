@@ -457,12 +457,30 @@ export type ExerciseHistorySession = {
   sets: ExerciseHistorySet[]
 }
 
+export type ExerciseHistoryOptions = {
+  page?: number
+  limit?: number
+  tagIds?: string[]
+}
+
+export type ExerciseHistoryResponse = {
+  data: ExerciseHistorySession[]
+  meta: {
+    page: number
+    limit: number
+    total: number
+    totalPages: number
+  }
+}
+
 export async function getExerciseHistory(
   exerciseId: string,
-  limit?: number,
-): Promise<ExerciseHistorySession[]> {
+  options?: ExerciseHistoryOptions,
+): Promise<ExerciseHistoryResponse> {
   const params: Record<string, string> = {}
-  if (limit) params.limit = limit.toString()
+  if (options?.page) params.page = options.page.toString()
+  if (options?.limit) params.limit = options.limit.toString()
+  if (options?.tagIds?.length) params.tagIds = options.tagIds.join(',')
   const { data } = await api.get(`/statistics/exercise/${exerciseId}/history`, { params })
   return data
 }

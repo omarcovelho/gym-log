@@ -250,38 +250,67 @@ export class StatisticsController {
     summary: 'Get exercise history (previous sessions with sets)',
   })
   @ApiQuery({
+    name: 'page',
+    required: false,
+    type: Number,
+    description: 'Page number (default: 1)',
+  })
+  @ApiQuery({
     name: 'limit',
     required: false,
     type: Number,
-    description: 'Number of sessions to return (default: 5)',
+    description: 'Number of sessions per page (default: 5, max: 20)',
+  })
+  @ApiQuery({
+    name: 'tagIds',
+    required: false,
+    type: String,
+    description: 'Comma-separated tag IDs to filter sessions',
   })
   @ApiResponse({
     status: 200,
     description:
-      'Exercise history retrieved successfully. Returns empty array if no sessions found.',
+      'Exercise history retrieved successfully. Returns paginated sessions.',
   })
   @ApiResponse({ status: 401, description: 'Unauthorized.' })
-  @ApiResponse({ status: 400, description: 'Bad request (invalid limit).' })
+  @ApiResponse({
+    status: 400,
+    description: 'Bad request (invalid page or limit).',
+  })
   async getExerciseHistory(
     @CurrentUser() user,
     @Param('exerciseId') exerciseId: string,
-    @Query('limit') limit?: string,
+    @Query('page') pageStr?: string,
+    @Query('limit') limitStr?: string,
+    @Query('tagIds') tagIdsStr?: string,
   ) {
-    let limitNumber = 5;
-    if (limit) {
-      const parsed = parseInt(limit, 10);
+    let page = 1;
+    if (pageStr) {
+      const parsed = parseInt(pageStr, 10);
+      if (isNaN(parsed) || parsed < 1) {
+        throw new BadRequestException('Page must be a number greater than 0');
+      }
+      page = parsed;
+    }
+
+    let limit = 5;
+    if (limitStr) {
+      const parsed = parseInt(limitStr, 10);
       if (isNaN(parsed) || parsed < 1 || parsed > 20) {
         throw new BadRequestException(
           'Limit must be a number between 1 and 20',
         );
       }
-      limitNumber = parsed;
+      limit = parsed;
     }
-    return this.statisticsService.getExerciseHistory(
-      user.id,
-      exerciseId,
-      limitNumber,
-    );
+
+    const tagIds = parseTagIds(tagIdsStr);
+
+    return this.statisticsService.getExerciseHistory(user.id, exerciseId, {
+      page,
+      limit,
+      tagIds: tagIds.length > 0 ? tagIds : undefined,
+    });
   }
 
   @Get('workouts/export')

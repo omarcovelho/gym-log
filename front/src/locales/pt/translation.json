@@ -201,6 +201,8 @@
     "historyTitle": "Histórico de séries anteriores",
     "historyForExercise": "Histórico: {{name}}",
     "noHistory": "Nenhum histórico disponível para este exercício",
+    "noHistoryForTag": "Nenhum histórico deste exercício com as tags selecionadas",
+    "loadingMoreHistory": "Carregando mais…",
     "sessionDate": "Sessão de {{date}}",
     "today": "Hoje",
     "yesterday": "Ontem",
