@@ -941,71 +941,85 @@ export class StatisticsService {
   async getExerciseHistory(
     userId: string,
     exerciseId: string,
-    limit: number = 5,
+    options?: {
+      tagIds?: string[];
+      page?: number;
+      limit?: number;
+    },
   ) {
-    // Buscar últimas N sessões finalizadas que contêm o exercício
-    const sessions = await this.prisma.workoutSession.findMany({
-      where: {
-        userId,
-        endAt: { not: null }, // Apenas sessões finalizadas
-        exercises: {
-          some: {
-            exerciseId,
-          },
-        },
-      },
-      include: {
-        exercises: {
-          where: {
-            exerciseId,
-          },
-          include: {
-            sets: {
-              where: {
-                completed: true, // Apenas séries completadas
-              },
-              orderBy: {
-                setIndex: 'asc',
-              },
-              include: {
-                intensityBlocks: {
-                  orderBy: {
-                    blockIndex: 'asc',
+    const page = options?.page ?? 1;
+    const limit = options?.limit ?? 5;
+    const skip = (page - 1) * limit;
+    const where = buildSessionWhere(userId, {
+      exerciseId,
+      tagIds: options?.tagIds,
+    });
+
+    const [sessions, total] = await Promise.all([
+      this.prisma.workoutSession.findMany({
+        where,
+        include: {
+          exercises: {
+            where: {
+              exerciseId,
+            },
+            include: {
+              sets: {
+                where: {
+                  completed: true,
+                },
+                orderBy: {
+                  setIndex: 'asc',
+                },
+                include: {
+                  intensityBlocks: {
+                    orderBy: {
+                      blockIndex: 'asc',
+                    },
                   },
                 },
               },
             },
           },
         },
-      },
-      orderBy: {
-        startAt: 'desc', // Mais recente primeiro
-      },
-      take: limit,
-    });
+        orderBy: {
+          startAt: 'desc',
+        },
+        skip,
+        take: limit,
+      }),
+      this.prisma.workoutSession.count({ where }),
+    ]);
 
-    // Formatar resposta
-    return sessions.map((session) => ({
-      sessionId: session.id,
-      sessionTitle: session.title,
-      sessionDate: session.startAt.toISOString(),
-      sets: session.exercises
-        .flatMap((ex) => ex.sets)
-        .map((set) => ({
-          setIndex: set.setIndex,
-          actualLoad: set.actualLoad,
-          actualReps: set.actualReps,
-          actualRir: set.actualRir,
-          completed: set.completed,
-          intensityType: set.intensityType,
-          intensityBlocks: set.intensityBlocks.map((block) => ({
-            blockIndex: block.blockIndex,
-            reps: block.reps,
-            restSeconds: block.restSeconds,
-            load: block.load,
+    return {
+      data: sessions.map((session) => ({
+        sessionId: session.id,
+        sessionTitle: session.title,
+        sessionDate: session.startAt.toISOString(),
+        sets: session.exercises
+          .flatMap((ex) => ex.sets)
+          .map((set) => ({
+            setIndex: set.setIndex,
+            actualLoad: set.actualLoad,
+            actualReps: set.actualReps,
+            actualRir: set.actualRir,
+            completed: set.completed,
+            intensityType: set.intensityType,
+            intensityBlocks: set.intensityBlocks.map((block) => ({
+              blockIndex: block.blockIndex,
+              reps: block.reps,
+              restSeconds: block.restSeconds,
+              load: block.load,
+            })),
           })),
-        })),
-    }));
+      })),
+      meta: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit) || 0,
+      },
+    };
   }
 
   /** Exporta histórico completo de treinos finalizados para análise */

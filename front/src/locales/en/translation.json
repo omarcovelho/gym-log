@@ -201,6 +201,8 @@
     "historyTitle": "Previous sets history",
     "historyForExercise": "History: {{name}}",
     "noHistory": "No history available for this exercise",
+    "noHistoryForTag": "No history for this exercise with the selected tags",
+    "loadingMoreHistory": "Loading more…",
     "sessionDate": "Session from {{date}}",
     "today": "Today",
     "yesterday": "Yesterday",
